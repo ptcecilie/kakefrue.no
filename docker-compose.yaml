@@ -1,0 +1,43 @@
+services:
+  kakefrue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT:-3306}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_FROM=${SMTP_FROM:-post@kakefrue.no}
+      - SUMUP_API_KEY=${SUMUP_API_KEY:-}
+      - SUMUP_MERCHANT_CODE=${SUMUP_MERCHANT_CODE:-}
+      - PORT=3000
+      - NODE_ENV=production
+    expose:
+      - "3000"
+    networks:
+      - coolify
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.http.middlewares.gzip.compress=true
+      - traefik.http.routers.kakefrue-http.entryPoints=http
+      - traefik.http.routers.kakefrue-http.middlewares=gzip
+      - traefik.http.routers.kakefrue-http.rule=Host(`kakefrue.coolify.niax.net`)
+      - traefik.http.routers.kakefrue-http.service=kakefrue-svc
+      - traefik.http.services.kakefrue-svc.loadbalancer.server.port=3000
+      - caddy_0=http://kakefrue.coolify.niax.net
+      - caddy_0.encode=zstd gzip
+      - caddy_0.handle_path=/*
+      - caddy_0.handle_path.0_reverse_proxy={{upstreams 3000}}
+      - caddy_0.header=-Server
+      - caddy_ingress_network=coolify
+
+networks:
+  coolify:
+    external: true
