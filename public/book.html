@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book din kake – Kakefrue</title>
+  <meta name="description" content="Book din håndlagde kake fra Kakefrue i Porsgrunn. Enkel bestilling i noen få steg.">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/booking.css">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-logo">Kake<span>frue</span></a>
+  <div class="nav-center">
+    <ul class="nav-links">
+      <li><a href="/meny.html">Meny</a></li>
+      <li><a href="/anbefalinger.html">Anbefalinger</a></li>
+      <li><a href="/provesmaking.html">Prøvesmaking</a></li>
+      <li><a href="/kurs.html">Kurs</a></li>
+      <li><a href="/om-kakefrue.html">Om Kakefrue</a></li>
+    </ul>
+  </div>
+  <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="/meny.html">Meny</a>
+  <a href="/anbefalinger.html">Anbefalinger</a>
+  <a href="/provesmaking.html">Prøvesmaking</a>
+  <a href="/kurs.html">Kurs</a>
+  <a href="/om-kakefrue.html">Om Kakefrue</a>
+</div>
+
+<div class="page-content">
+
+  <!-- Progress Bar -->
+  <div class="booking-progress" id="bookingProgress">
+    <div class="progress-inner">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill" style="width:12.5%"></div>
+      </div>
+      <div class="progress-steps">
+        <div class="progress-step active" data-step="1"><div class="step-num">1</div><span>Deg</span></div>
+        <div class="progress-step" data-step="2"><div class="step-num">2</div><span>Dato</span></div>
+        <div class="progress-step" data-step="3"><div class="step-num">3</div><span>Anledning</span></div>
+        <div class="progress-step" data-step="4"><div class="step-num">4</div><span>Type</span></div>
+        <div class="progress-step" data-step="5"><div class="step-num">5</div><span>Allergier</span></div>
+        <div class="progress-step" data-step="6"><div class="step-num">6</div><span>Detaljer</span></div>
+        <div class="progress-step" data-step="7"><div class="step-num">7</div><span>Design</span></div>
+        <div class="progress-step" data-step="8"><div class="step-num">8</div><span>Oppsummering</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="booking-wrap">
+    <div class="booking-card" id="bookingCard">
+
+      <!-- ========== STEP 1: Contact Info ========== -->
+      <div class="step active" id="step1">
+        <div class="booking-card-header">
+          <h2 class="booking-step-title">Hvem er du?</h2>
+          <p class="booking-step-sub">Fyll inn kontaktinfo – vi lagrer dette trygt og bruker det kun til din bestilling.</p>
+        </div>
+        <div class="booking-card-body">
+          <div id="step1Error" class="alert alert-error hidden"></div>
+          <div class="form-group">
+            <label class="form-label" for="full_name">Fullt navn *</label>
+            <input class="form-input" type="text" id="full_name" placeholder="Ditt fulle navn" autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="phone">Telefonnummer *</label>
+            <input class="form-input" type="tel" id="phone" placeholder="Ditt mobilnummer" autocomplete="tel">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="email">E-post <span style="font-weight:400; opacity:0.6;">(anbefalt – for bekreftelse)</span></label>
+            <input class="form-input" type="email" id="email" placeholder="din@epost.no" autocomplete="email">
+          </div>
+        </div>
+        <div class="booking-card-footer">
+          <span></span>
+          <button class="btn btn-primary" id="step1Next">Neste &rarr;</button>
+        </div>
+      </div>
+
+      <!-- ========== STEP 2: Date ========== -->
+      <div class="step" id="step2">
+        <div class="booking-card-header">
+          <h2 class="booking-step-title">Velg dato</h2>
+          <p class="booking-step-sub">Vi anbefaler å hente kaken dagen før arrangementet for best resultat.</p>
+        </div>
+        <div class="booking-card-body">
+          <div id="step2Error" class="alert alert-error hidden"></div>
+          <div class="calendar-header">
+            <button class="calendar-nav" id="calPrev">&larr;</button>
+            <span class="calendar-month" id="calMonth"></span>
+            <button class="calendar-nav" id="calNext">&rarr;</button>
+          </div>
+          <div class="calendar-grid" id="calendarDayHeaders"></div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <div id="calendarInfo" style="margin-top:16px; font-size:0.85rem; display:none;">
+            <div style="display:flex; gap:16px; flex-wrap:wrap; opacity:0.7;">
+              <span style="display:flex; align-items:center; gap:6px;"><span style="width:12px;height:12px;border-radius:3px;background:rgba(139,158,122,0.3);display:inline-block;"></span>Ledig dato</span>
+              <span style="display:flex; align-items:center; gap:6px;"><span style="width:12px;height:12px;border-radius:3px;background:var(--gold);display:inline-block;"></span>Valgt dato</span>
+            </div>
+          </div>
+          <div id="noAvailDates" class="alert alert-info hidden" style="margin-top:16px;">
+            Det er ingen ledige datoer denne måneden. Prøv neste måned, eller kontakt oss direkte.
+          </div>
+          <div id="selectedDateDisplay" style="margin-top:20px; display:none;">
+            <div style="background:rgba(201,168,132,0.1); border-radius:var(--radius-sm); padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-weight:700;">Valgt dato:</span>
+              <span id="selectedDateText" style="color:var(--gold-dark); font-weight:700;"></span>
+            </div>
+          </div>
+          <div style="margin-top:16px; padding:14px 16px; background:rgba(232,170,170,0.1); border-radius:var(--radius-sm); font-size:0.85rem;">
+            <strong>Tips:</strong> Hent gjerne dagen før arrangementet. Kaker med krem holdes kjølig og smaker best fersk.
+          </div>
+        </div>
+        <div class="booking-card-footer">
+          <button class="btn btn-outline" id="step2Back">&larr; Tilbake</button>
+          <button class="btn btn-primary" id="step2Next">Neste &rarr;</button>
+        </div>
+      </div>
+
+      <!-- ========== STEP 3: Occasion ========== -->
+      <div class="step" id="step3">
+        <div class="booking-card-header">
+          <h2 class="booking-step-title">Hva skal feires?</h2>
+          <p class="booking-step-sub">Velg anledning og antall gjester – hjelper oss å planlegge størrelse.</p>
+        </div>
+        <div class="booking-card-body">
+          <div class="option-grid cols-3">
+            <div class="option-card" data-occasion="bryllup"><div class="option-icon">💒</div><div class="option-label">Bryllup</div></div>
+            <div class="option-card" data-occasion="konfirmasjon"><div class="option-icon">🎓</div><div class="option-label">Konfirmasjon</div></div>
+            <div class="option-card" data-occasion="dåp"><div class="option-icon">👶</div><div class="option-label">Dåp</div></div>
+            <div class="option-card" data-occasion="navnefest"><div class="option-icon">🌸</div><div class="option-label">Navnefest</div></div>
+            <div class="option-card" data-occasion="bursdag"><div class="option-icon">🎂</div><div class="option-label">Bursdag</div></div>
+            <div class="option-card" data-occasion="17mai"><div class="option-icon">🇳🇴</div><div class="option-label">17. mai</div></div>
+            <div class="option-card" data-occasion="jul"><div class="option-icon">🎄</div><div class="option-label">Jul</div></div>
+            <div class="option-card" data-occasion="julebord"><div class="option-icon">🥂</div><div class="option-label">Julebord</div></div>
+            <div class="option-card" data-occasion="jobbfest"><div class="option-icon">💼</div><div class="option-label">Jobbfest</div></div>
+            <div class="option-card" data-occasion="avskjed"><div class="option-icon">👋</div><div class="option-label">Avskjed</div></div>
+            <div class="option-card" data-occasion="begravelse"><div class="option-icon">🕊️</div><div class="option-label">Begravelse</div></div>
+            <div class="option-card" data-occasion="annen"><div class="option-icon">✨</div><div class="option-label">Annen</div></div>
+          </div>
+          <div id="occasionCustomWrap" class="form-group hidden">
+            <label class="form-label">Beskriv anledningen</label>
+            <input class="form-input" id="occasionCustom" type="text" placeholder="Fortell oss mer...">
+          </div>
+          <div class="form-group" style="margin-top:8px;">
+            <label class="form-label" for="guestCount">Antall gjester (ca.)</label>
+            <input class="form-input" type="number" id="guestCount" placeholder="F.eks. 30" min="1" max="500" style="max-width:180px;">
+            <p class="form-hint">Hjelper oss å anbefale riktig størrelse</p>
+          </div>
+        </div>
+        <div class="booking-card-footer">
+          <button class="btn btn-outline" id="step3Back">&larr; Tilbake</button>
+          <button class="btn btn-primary" id="step3Next">Neste &rarr;</button>
+        </div>
+      </div>
+
+      <!-- ========== STEP 4: Category ========== -->
+      <div class="step" id="step4">
+        <div class="booking-card-header">
+          <h2 class="booking-step-title">Hva ønsker du?</h2>
+          <p class="booking-step-sub">Du kan velge flere kategorier. Varer merket "spesialbestilling" kontakter vi deg om.</p>
+        </div>
+        <div class="booking-card-body">
+          <div id="step4Error" class="alert alert-error hidden"></div>
+          <div class="option-grid cols-2">
+            <div class="option-card" data-category="kake">
+              <div class="option-icon">🎂</div>
+              <div class="option-label">Bestillingskake</div>
+              <div class="option-sublabel">Lagkake, etasjekake</div>
+            </div>
+            <div class="option-card" data-category="cupcakes">
+              <div class="option-icon">🧁</div>
+              <div class="option-label">Cupcakes</div>
+              <div class="option-sublabel">Enkeltvis eller sett</div>
+            </div>
+            <div class="option-card" data-category="standard">
+              <div class="option-icon">🍰</div>
+              <div class="option-label">Standardkake</div>
+              <div class="option-sublabel">Sjokolade, bløtkake, marsipan…</div>
+            </div>
+            <div class="option-card" data-category="sesong">
+              <div class="option-icon">❄️</div>
+              <div class="option-label">Sesong / Jul</div>
+              <div class="option-sublabel">Kling, lefse, pepperkaker…</div>
+            </div>
+            <div class="option-card" data-category="spesial" style="grid-column:1/-1;">
+              <div class="option-icon">💌</div>
+              <div class="option-label">Spesialbestilling</div>
+              <div class="option-sublabel">Noe helt unikt? Vi tar kontakt!</div>
+            </div>
+          </div>
+        </div>
+        <div class="booking-card-footer">
+          <button class="btn btn-outline" id="step4Back">&larr; Tilbake</button>
+          <button class="btn btn-primary" id="step4Next">Neste &rarr;</button>
+        </div>
+      </div>
+
+      <!-- ========== STEP 5: Allergens ========== -->
+      <div class="step" id="step5">
+        <div class="booking-card-header">
+          <h2 class="booking-step-title">Allergier og preferanser</h2>
+          <p class="booking-step-sub">Viktig at du opplyser om dette – allergivennlige tilpasninger medfører et lite tillegg.</p>
+        </div>
+        <div class="booking-card-body">
+          <div class="checkbox-group">
+            <label class="checkbox-label" data-allergen="glutenfritt">
+              <input type="checkbox" value="glutenfritt">
+              <div class="checkbox-box">✓</div>
+              <div class="checkbox-text">
+                <strong>Glutenfritt</strong>
+                <span>Tilpasses for glutenintoleranser og cøliaki</span>
+              </div>
+              <span class="checkbox-surcharge">+ kr 150,-</span>
+            </label>
+            <label class="checkbox-label" data-allergen="nøtter">
+              <input type="checkbox" value="nøtter">
+              <div class="checkbox-box">✓</div>
+              <div class="checkbox-text">
+                <strong>Nøttefritt</strong>
+                <span>Ingen nøtter i deig eller dekor</span>
+              </div>
+              <span class="checkbox-surcharge">+ kr 100,-</span>
+            </label>
+            <label class="checkbox-label" data-allergen="laktosefritt">
+              <input type="checkbox" value="laktosefritt">
+              <div class="checkbox-box">✓</div>
+              <div class="checkbox-text">
+                <strong>Laktosefritt</strong>
+                <span>Laktosefrie alternativer brukes</span>
+              </div>
+              <span class="checkbox-surcharge">+ kr 100,-</span>
+            </label>
+            <label class="checkbox-label" data-allergen="melkefritt">
+              <input type="checkbox" value="melkefritt">
+              <div class="checkbox-box">✓</div>
+              <div class="checkbox-text">
+                <strong>Melkefritt</strong>
+                <span>Helt melkefrie ingredienser</span>
+              </div>
+              <span class="checkbox-surcharge">+ kr 150,-</span>
+            </label>
+            <label class="checkbox-label" data-allergen="egg">
+              <input type="checkbox" value="egg">
+              <div class="checkbox-box">✓</div>
+              <div class="checkbox-text">
+                <strong>Eggfritt</strong>
+                <span>Tilpasses eggallergi</span>
+              </div>
+              <span class="checkbox-surcharge">+ kr 150,-</span>
+            </label>
+          </div>
+          <p style="font-size:0.8rem; opacity:0.55; margin-top:16px;">Kakefrue produserer i et kjøkken der allergener forekommer. Vi kan ikke garantere fullstendig fravær av krysskontaminering.</p>
+        </div>
+        <div class="booking-card-footer">
+          <button class="btn btn-outline" id="step5Back">&larr; Tilbake</button>
+          <button class="btn btn-primary" id="step5Next">Neste &rarr;</button>
+        </div>
+      </div>
+
+      <!-- ========== STEP 6: Details ========== -->
+      <div class="step" id="step6">
+        <div class="booking-card-header">
+          <h2 class="booking-step-title">Fortell oss mer</h2>
+          <p class="booking-step-sub">Detaljer om smak, fyll og størrelse for det du har valgt.</p>
+        </div>
+        <div class="booking-card-body">
+
+          <!-- 6.0 Kake -->
+          <div class="sub-step" id="substep-kake">
+            <div class="sub-step-title">🎂 Bestillingskake</div>
+            <div class="form-group">
+              <label class="form-label">Kakesmak *</label>
+              <select class="form-select" id="kakeSmak">
+                <option value="">Velg smak</option>
+                <option value="sjokolade">Sjokolade</option>
+                <option value="vanilje">Vanilje</option>
+                <option value="krydder">Krydder</option>
+                <option value="gulrot">Gulrot</option>
+                <option value="sukkerbrød">Sukkerbrød</option>
+                <option value="red velvet">Red Velvet</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Antall etasjer</label>
+              <div class="option-grid cols-3" style="max-width:300px;">
+                <div class="option-card" data-etasje="1"><div class="option-label">1 etasje</div><div class="option-sublabel">ca. 12–16 porsjoner</div></div>
+                <div class="option-card" data-etasje="2"><div class="option-label">2 etasjer</div><div class="option-sublabel">ca. 25–35 porsjoner</div></div>
+                <div class="option-card" data-etasje="3"><div class="option-label">3 etasjer</div><div class="option-sublabel">ca. 50+ porsjoner</div></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fyll (velg opp til 2) *</label>
+              <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:8px;" id="fillGrid">
+                <label class="checkbox-label" style="padding:10px 12px;"><input type="checkbox" value="vaniljesmørkrem"><div class="checkbox-box">✓</div><div class="checkbox-text"><strong style="font-size:0.85rem;">Vaniljesmørkrem</strong></div></label>
+                <label class="checkbox-label" style="padding:10px 12px;"><input type="checkbox" value="karamellkrem"><div class="checkbox-box">✓</div><div class="checkbox-text"><strong style="font-size:0.85rem;">Karamellkrem</strong></div></label>
+                <label class="checkbox-label" style="padding:10px 12px;"><input type="checkbox" value="kinderkrem"><div class="checkbox-box">✓</div><div class="checkbox-text"><strong style="font-size:0.85rem;">Kinderkrem</strong></div></label>
+                <label class="checkbox-label" style="padding:10px 12px;"><input type="checkbox" value="sjokoladekrem"><div class="checkbox-box">✓</div><div class="checkbox-text"><strong style="font-size:0.85rem;">Sjokoladekrem</strong></div></label>
+                <label class="checkbox-label" style="padding:10px 12px;"><input type="checkbox" value="ostesmørkrem"><div class="checkbox-box">✓</div><div class="checkbox-text"><strong style="font-size:0.85rem;">Ostesmørkrem</strong></div></label>
+                <label class="checkbox-label" style="padding:10px 12px;"><input type="checkbox" value="oreokrem"><div class="checkbox-box">✓</div><div class="checkbox-text"><strong style="font-size:0.85rem;">Oreokrem</strong></div></label>
+                <label class="checkbox-label" style="padding:10px 12px;"><input type="checkbox" value="vaniljekrem"><div class="checkbox-box">✓</div><div class="checkbox-text"><strong style="font-size:0.85rem;">Vaniljekrem</strong></div></label>
+                <label class="checkbox-label" style="padding:10px 12px;"><input type="checkbox" value="vanlig krem"><div class="checkbox-box">✓</div><div class="checkbox-text"><strong style="font-size:0.85rem;">Vanlig krem</strong></div></label>
+                <label class="checkbox-label" style="padding:10px 12px;"><input type="checkbox" value="bringebærkrem"><div class="checkbox-box">✓</div><div class="checkbox-text"><strong style="font-size:0.85rem;">Bringebærkrem</strong></div></label>
+                <label class="checkbox-label" style="padding:10px 12px;"><input type="checkbox" value="jordbærkrem"><div class="checkbox-box">✓</div><div class="checkbox-text"><strong style="font-size:0.85rem;">Jordbærkrem</strong></div></label>
+                <label class="checkbox-label" style="padding:10px 12px;"><input type="checkbox" value="sjokoladebiter"><div class="checkbox-box">✓</div><div class="checkbox-text"><strong style="font-size:0.85rem;">Sjokoladebiter</strong></div></label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Utside</label>
+              <select class="form-select" id="kakeUtside">
+                <option value="smørkrem">Smørkrem</option>
+                <option value="smørkrem+fondant">Smørkrem + fondant</option>
+                <option value="smørkrem+marsipan">Smørkrem + marsipan</option>
+                <option value="krem+marsipan">Krem + marsipan</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fargeønske / inspo</label>
+              <input class="form-input" type="text" id="kakeColor" placeholder="F.eks. 'rosa og gull' eller 'naturlige farger'">
+            </div>
+          </div>
+
+          <!-- 6.1 Cupcakes -->
+          <div class="sub-step" id="substep-cupcakes">
+            <div class="sub-step-title">🧁 Cupcakes</div>
+            <div class="form-group">
+              <label class="form-label">Antall cupcakes *</label>
+              <input class="form-input" type="number" id="cupcakeCount" placeholder="F.eks. 12" min="6" max="200" style="max-width:180px;">
+              <p class="form-hint">Minimum 6 stk · kr 45,- per stk</p>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Smak</label>
+              <select class="form-select" id="cupcakeSmak">
+                <option value="sjokolade">Sjokolade</option>
+                <option value="vanilje">Vanilje</option>
+                <option value="gulrot">Gulrot</option>
+                <option value="krydder">Krydder</option>
+                <option value="red velvet">Red Velvet</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Topping</label>
+              <select class="form-select" id="cupcakeTopping">
+                <option value="vaniljesmørkrem+farge">Vaniljesmørkrem (med fargevalg)</option>
+                <option value="karamellkrem">Karamellkrem</option>
+                <option value="kinderkrem">Kinderkrem</option>
+                <option value="sjokoladesmørkrem">Sjokoladesmørkrem</option>
+                <option value="oreokrem">Oreokrem</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fargeønske / tema</label>
+              <input class="form-input" type="text" id="cupcakeColor" placeholder="F.eks. 'lilla og hvit' eller 'regnbue'">
+            </div>
+          </div>
+
+          <!-- 6.2 Standard -->
+          <div class="sub-step" id="substep-standard">
+            <div class="sub-step-title">🍰 Standardkake</div>
+            <div class="form-group">
+              <label class="form-label">Kakevalg *</label>
+              <select class="form-select" id="standardKake">
+                <option value="">Velg kake</option>
+                <option value="sjokoladekake">Sjokoladekake m/sjokoladesmørkrem</option>
+                <option value="bløtkake">Vanlig bløtkake</option>
+                <option value="marsipankake">Marsipankake</option>
+                <option value="ostekake">Ostekake</option>
+                <option value="gulrotkake">Gulrotkake</option>
+                <option value="oreokake">Oreokake</option>
+                <option value="eplekake">Eplekake</option>
+                <option value="kransekake">Kransekake (18 ringer)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Størrelse</label>
+              <div class="option-grid cols-2" style="max-width:340px;">
+                <div class="option-card" data-standardsize="24cm"><div class="option-label">24 cm rund</div><div class="option-sublabel">ca. 10–14 porsjoner</div></div>
+                <div class="option-card" data-standardsize="langpanne"><div class="option-label">Langpanne 30×40</div><div class="option-sublabel">ca. 20–30 porsjoner</div></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ekstra dekorasjonsnotater</label>
+              <textarea class="form-textarea" id="standardNotes" placeholder="Navn på kaken, fargeønske, spesielle ønsker…" rows="3"></textarea>
+            </div>
+          </div>
+
+          <!-- 6.3 Sesong -->
+          <div class="sub-step" id="substep-sesong">
+            <div class="sub-step-title">❄️ Sesong / Jul</div>
+            <div id="sesongItems">
+              <div class="sesong-item">
+                <div class="sesong-info"><h4>Kling</h4><p>6 stk · kr 180,-</p></div>
+                <div class="quantity-control"><button class="qty-btn" data-sesong="kling" data-action="minus">−</button><span class="qty-value" id="qty-kling">0</span><button class="qty-btn" data-sesong="kling" data-action="plus">+</button></div>
+              </div>
+              <div class="sesong-item">
+                <div class="sesong-info"><h4>Nordlandslefse</h4><p>6 stk · kr 150,-</p></div>
+                <div class="quantity-control"><button class="qty-btn" data-sesong="lefse" data-action="minus">−</button><span class="qty-value" id="qty-lefse">0</span><button class="qty-btn" data-sesong="lefse" data-action="plus">+</button></div>
+              </div>
+              <div class="sesong-item">
+                <div class="sesong-info"><h4>Krumkaker</h4><p>12 stk · kr 200,-</p></div>
+                <div class="quantity-control"><button class="qty-btn" data-sesong="krumkaker" data-action="minus">−</button><span class="qty-value" id="qty-krumkaker">0</span><button class="qty-btn" data-sesong="krumkaker" data-action="plus">+</button></div>
+              </div>
+              <div class="sesong-item">
+                <div class="sesong-info"><h4>Chocolate Chip Cookies</h4><p>12 stk · kr 180,-</p></div>
+                <div class="quantity-control"><button class="qty-btn" data-sesong="cookies" data-action="minus">−</button><span class="qty-value" id="qty-cookies">0</span><button class="qty-btn" data-sesong="cookies" data-action="plus">+</button></div>
+              </div>
+              <div class="sesong-item">
+                <div class="sesong-info"><h4>Kransekakestenger</h4><p>12 stk · kr 220,-</p></div>
+                <div class="quantity-control"><button class="qty-btn" data-sesong="kransekakestenger" data-action="minus">−</button><span class="qty-value" id="qty-kransekakestenger">0</span><button class="qty-btn" data-sesong="kransekakestenger" data-action="plus">+</button></div>
+              </div>
+              <div class="sesong-item">
+                <div class="sesong-info"><h4>Kransekake (18 ringer)</h4><p>1 stk · kr 850,-</p></div>
+                <div class="quantity-control"><button class="qty-btn" data-sesong="kransekake18" data-action="minus">−</button><span class="qty-value" id="qty-kransekake18">0</span><button class="qty-btn" data-sesong="kransekake18" data-action="plus">+</button></div>
+              </div>
+              <div class="sesong-item">
+                <div class="sesong-info"><h4>Pepperkaker</h4><p>12 stk · kr 150,-</p></div>
+                <div class="quantity-control"><button class="qty-btn" data-sesong="pepperkaker" data-action="minus">−</button><span class="qty-value" id="qty-pepperkaker">0</span><button class="qty-btn" data-sesong="pepperkaker" data-action="plus">+</button></div>
+              </div>
+              <div class="sesong-item">
+                <div class="sesong-info"><h4>Mandelkake</h4><p>1 stk · kr 350,-</p></div>
+                <div class="quantity-control"><button class="qty-btn" data-sesong="mandelkake" data-action="minus">−</button><span class="qty-value" id="qty-mandelkake">0</span><button class="qty-btn" data-sesong="mandelkake" data-action="plus">+</button></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="booking-card-footer">
+          <button class="btn btn-outline" id="step6Back">&larr; Tilbake</button>
+          <button class="btn btn-primary" id="step6Next">Neste &rarr;</button>
+        </div>
+      </div>
+
+      <!-- ========== STEP 7: Design Level ========== -->
+      <div class="step" id="step7">
+        <div class="booking-card-header">
+          <h2 class="booking-step-title">Velg designnivå</h2>
+          <p class="booking-step-sub">Gjelder for kaker med dekor. Sesongprodukter hoppes over.</p>
+        </div>
+        <div class="booking-card-body">
+          <div id="step7Error" class="alert alert-error hidden"></div>
+          <div id="deliverySection">
+            <h4 style="margin-bottom:12px; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.05em; opacity:0.6;">Henting eller levering</h4>
+            <div class="option-grid cols-2" style="margin-bottom:28px;">
+              <div class="option-card" data-delivery="henting">
+                <div class="option-icon">🏠</div>
+                <div class="option-label">Henting</div>
+                <div class="option-sublabel">Gratis · Porsgrunn</div>
+              </div>
+              <div class="option-card" data-delivery="levering">
+                <div class="option-icon">🚗</div>
+                <div class="option-label">Levering</div>
+                <div class="option-sublabel">+ kr 200,- · Lokal levering</div>
+              </div>
+            </div>
+            <div id="deliveryAddressWrap" class="form-group hidden">
+              <label class="form-label">Leveringsadresse</label>
+              <input class="form-input" id="deliveryAddress" type="text" placeholder="Gate, postnummer og sted">
+            </div>
+            <hr class="divider">
+          </div>
+
+          <h4 style="margin-bottom:16px; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.05em; opacity:0.6;">Designnivå</h4>
+          <div id="designCards">
+            <div class="design-card" data-design="enkel">
+              <div class="design-card-icon">🕊️</div>
+              <div class="design-card-info">
+                <div class="design-card-title">Enkel</div>
+                <div class="design-card-desc">Glatt kremdekor, enkel blomst eller pynt. Elegant og rent.</div>
+                <div class="design-card-price">Inkludert i grunnpris</div>
+              </div>
+              <div class="design-card-check">✓</div>
+            </div>
+            <div class="design-card" data-design="standard">
+              <div class="design-card-icon">🌸</div>
+              <div class="design-card-info">
+                <div class="design-card-title">Standard</div>
+                <div class="design-card-desc">Kremblomster, piping, personlige detaljer og fargevalg.</div>
+                <div class="design-card-price">+ kr 300,-</div>
+              </div>
+              <div class="design-card-check">✓</div>
+            </div>
+            <div class="design-card" data-design="avansert">
+              <div class="design-card-icon">✨</div>
+              <div class="design-card-info">
+                <div class="design-card-title">Avansert</div>
+                <div class="design-card-desc">Fondant, skulpturelle elementer, komplekse mønstre og figurer.</div>
+                <div class="design-card-price">+ kr 700,-</div>
+              </div>
+              <div class="design-card-check">✓</div>
+            </div>
+          </div>
+        </div>
+        <div class="booking-card-footer">
+          <button class="btn btn-outline" id="step7Back">&larr; Tilbake</button>
+          <button class="btn btn-primary" id="step7Next">Neste &rarr;</button>
+        </div>
+      </div>
+
+      <!-- ========== STEP 8: Summary & Payment ========== -->
+      <div class="step" id="step8">
+        <div class="booking-card-header">
+          <h2 class="booking-step-title">Oppsummering</h2>
+          <p class="booking-step-sub">Se over bestillingen din før du bekrefter og betaler depositum.</p>
+        </div>
+        <div class="booking-card-body">
+          <div id="step8Error" class="alert alert-error hidden"></div>
+
+          <div class="summary-section">
+            <h4>Kontakt</h4>
+            <div class="summary-row"><span>Navn</span><strong id="sum-name">—</strong></div>
+            <div class="summary-row"><span>Telefon</span><strong id="sum-phone">—</strong></div>
+            <div class="summary-row"><span>E-post</span><strong id="sum-email">—</strong></div>
+          </div>
+
+          <div class="summary-section">
+            <h4>Bestilling</h4>
+            <div class="summary-row"><span>Dato</span><strong id="sum-date">—</strong></div>
+            <div class="summary-row"><span>Anledning</span><strong id="sum-occasion">—</strong></div>
+            <div class="summary-row"><span>Antall gjester</span><strong id="sum-guests">—</strong></div>
+            <div class="summary-row"><span>Henting/levering</span><strong id="sum-delivery">—</strong></div>
+          </div>
+
+          <div class="summary-section">
+            <h4>Produkter</h4>
+            <div id="sum-items">—</div>
+          </div>
+
+          <div class="summary-section">
+            <h4>Priser</h4>
+            <div id="sum-price-rows"></div>
+          </div>
+
+          <div class="summary-total">
+            <div class="summary-row"><span>Estimert totalsum</span><strong id="sum-total" style="font-size:1.3rem; color:var(--gold-dark);">—</strong></div>
+          </div>
+
+          <div class="deposit-note">
+            <strong>Depositum (30%):</strong> <span id="sum-deposit">—</span><br>
+            <span style="opacity:0.75; font-size:0.85rem;">Restbeløpet betales ved henting/levering. Endelig pris kan variere noe basert på detaljert design.</span>
+          </div>
+
+          <div style="margin-top:24px;">
+            <h4 style="margin-bottom:12px; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.05em; opacity:0.6;">Betalingsmetode</h4>
+            <div class="option-grid cols-2">
+              <div class="option-card selected" data-payment="sumup">
+                <div class="option-icon">💳</div>
+                <div class="option-label">Kort / SumUp</div>
+                <div class="option-sublabel">Betaling via kortleser</div>
+              </div>
+              <div class="option-card" data-payment="vipps" style="opacity:0.5; cursor:not-allowed;">
+                <div class="option-icon">📱</div>
+                <div class="option-label">Vipps</div>
+                <div class="option-sublabel">Kommer snart</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px; padding:14px 16px; background:rgba(139,158,122,0.1); border-radius:var(--radius-sm); font-size:0.85rem;">
+            Ved å bekrefte godtar du våre <a href="/vilkar.html" target="_blank" style="color:var(--gold-dark);">vilkår og betingelser</a>.
+          </div>
+        </div>
+        <div class="booking-card-footer">
+          <button class="btn btn-outline" id="step8Back">&larr; Rediger</button>
+          <button class="btn btn-primary btn-lg" id="step8Pay">Betal depositum 💳</button>
+        </div>
+      </div>
+
+      <!-- ========== SUCCESS ========== -->
+      <div class="step" id="stepSuccess">
+        <div class="success-screen">
+          <div class="success-icon">🎉</div>
+          <h2>Bestilling bekreftet!</h2>
+          <p>Tusen takk! Din kakebestilling er mottatt og depositum er betalt. Vi gleder oss til å lage noe spesielt for deg.</p>
+          <p style="font-size:0.9rem; margin-top:0;">Se etter en bekreftelse på e-post. Vi tar kontakt med deg for å bekrefte detaljer nærmere datoen.</p>
+          <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-top:32px;">
+            <a href="/" class="btn btn-primary">Tilbake til forsiden</a>
+            <a href="/anbefalinger.html" class="btn btn-outline">Les anbefalinger</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== SPECIAL REQUEST SENT ========== -->
+      <div class="step" id="stepSpecial">
+        <div class="success-screen">
+          <div class="success-icon">💌</div>
+          <h2>Forespørsel sendt!</h2>
+          <p>Vi har mottatt din spesialbestilling og tar kontakt med deg innen 1–2 virkedager for å diskutere detaljer og pris.</p>
+          <div style="margin-top:32px;">
+            <a href="/" class="btn btn-primary">Tilbake til forsiden</a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /booking-card -->
+  </div><!-- /booking-wrap -->
+
+</div><!-- /page-content -->
+
+<script src="/js/booking.js"></script>
+<script>
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+hamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+</script>
+</body>
+</html>

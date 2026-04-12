@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prøvesmaking – Kakefrue</title>
+  <meta name="description" content="Book prøvesmaking hos Kakefrue. Perfekt for brudepar. Kr 400,- trekkes fra bryllupskaken.">
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-logo">Kake<span>frue</span></a>
+  <div class="nav-center">
+    <ul class="nav-links">
+      <li><a href="/meny.html">Meny</a></li>
+      <li><a href="/anbefalinger.html">Anbefalinger</a></li>
+      <li><a href="/provesmaking.html">Prøvesmaking</a></li>
+      <li><a href="/kurs.html">Kurs</a></li>
+      <li><a href="/om-kakefrue.html">Om Kakefrue</a></li>
+      <li><a href="/book.html" class="nav-cta">Book din kake</a></li>
+    </ul>
+  </div>
+  <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="/meny.html">Meny</a>
+  <a href="/anbefalinger.html">Anbefalinger</a>
+  <a href="/provesmaking.html">Prøvesmaking</a>
+  <a href="/kurs.html">Kurs</a>
+  <a href="/om-kakefrue.html">Om Kakefrue</a>
+  <a href="/vilkar.html">Vilkår</a>
+  <a href="/book.html" class="btn btn-primary" style="margin-top:12px;text-align:center;">Book din kake</a>
+</div>
+
+<div class="page-content">
+
+  <div class="page-hero">
+    <span class="tag tag-rose" style="margin-bottom:12px;">For brudepar</span>
+    <h1>Prøvesmaking</h1>
+    <p>Finn den perfekte smaken til din store dag. Smak deg frem – vi hjelper deg med resten.</p>
+  </div>
+
+  <!-- How it works -->
+  <section style="background: var(--white);">
+    <div class="container" style="max-width: 860px;">
+      <h2 class="section-title">Slik fungerer det</h2>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:32px; margin-top:40px;">
+        <div style="text-align:center;">
+          <div style="width:64px; height:64px; background:rgba(201,168,132,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 16px;">📝</div>
+          <h4 style="margin-bottom:8px;">1. Book en tid</h4>
+          <p style="font-size:0.9rem; opacity:0.7;">Fyll ut skjemaet nedenfor med ønsket dato og dine tre smaksvalg.</p>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:64px; height:64px; background:rgba(232,170,170,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 16px;">💳</div>
+          <h4 style="margin-bottom:8px;">2. Betal kr 400,-</h4>
+          <p style="font-size:0.9rem; opacity:0.7;">Betalingen bekrefter bookingen og trekkes fra din bryllupskakebestilling.</p>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:64px; height:64px; background:rgba(139,158,122,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 16px;">🎂</div>
+          <h4 style="margin-bottom:8px;">3. Smak og velg</h4>
+          <p style="font-size:0.9rem; opacity:0.7;">Vi møtes hos oss i Porsgrunn. Du smaker opp til 3 varianter og bestemmer deg.</p>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:64px; height:64px; background:rgba(201,168,132,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 16px;">💒</div>
+          <h4 style="margin-bottom:8px;">4. Book bryllupskaken</h4>
+          <p style="font-size:0.9rem; opacity:0.7;">Etter prøvesmakingen booker du bryllupskaken. Kr 400 trekkes automatisk fra.</p>
+        </div>
+      </div>
+
+      <div style="background: rgba(201,168,132,0.1); border-radius:var(--radius); padding:24px; margin-top:40px; display:flex; gap:16px; align-items:flex-start;">
+        <span style="font-size:1.5rem; flex-shrink:0;">💡</span>
+        <div>
+          <strong>Viktig å vite:</strong>
+          <p style="margin-top:4px; font-size:0.9rem; opacity:0.8; margin-bottom:0;">Prøvesmakingen koster kr 400,-. Dette beløpet trekkes i sin helhet fra den endelige prisen på bryllupskaken din. Bestiller du ikke bryllupskake etterpå, refunderes ikke beløpet.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Booking Form -->
+  <section>
+    <div class="container" style="max-width: 620px;">
+      <h2 class="section-title">Book prøvesmaking</h2>
+      <p class="section-subtitle">Vi tar kontakt for å bekrefte tidspunkt</p>
+
+      <div id="formSuccess" class="alert alert-success hidden">
+        <strong>Forespørsel mottatt!</strong> Vi tar kontakt for å bekrefte din prøvesmakingstid. Gleder oss til å møte deg!
+      </div>
+      <div id="formError" class="alert alert-error hidden"></div>
+
+      <div style="background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); padding:36px;" id="formWrap">
+        <form id="tastingForm">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label" for="full_name">Fullt navn *</label>
+              <input class="form-input" type="text" id="full_name" name="full_name" placeholder="Ditt fulle navn" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="phone">Telefon *</label>
+              <input class="form-input" type="tel" id="phone" name="phone" placeholder="Ditt mobilnummer" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="email">E-post</label>
+              <input class="form-input" type="email" id="email" name="email" placeholder="din@epost.no">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label" for="preferred_date">Ønsket dato</label>
+              <input class="form-input" type="date" id="preferred_date" name="preferred_date">
+              <p class="form-hint">Vi bekrefter dato pr telefon. Fleksibel? La feltet stå tomt.</p>
+            </div>
+          </div>
+
+          <hr class="divider">
+          <h4 style="margin-bottom:4px;">Smaksvalg</h4>
+          <p style="font-size:0.85rem; opacity:0.65; margin-bottom:20px;">Velg opp til 3 smaker du ønsker å prøve</p>
+
+          <div class="form-group">
+            <label class="form-label" for="choice_1">1. valg *</label>
+            <select class="form-select" id="choice_1" name="choice_1" required>
+              <option value="">-- Velg smak --</option>
+              <optgroup label="Kakesmak">
+                <option>Sjokoladekake</option>
+                <option>Vaniljekake</option>
+                <option>Krydderkake</option>
+                <option>Gulrotkake</option>
+                <option>Sukkerbrødkake</option>
+                <option>Red Velvet</option>
+              </optgroup>
+              <optgroup label="Fyll">
+                <option>Vaniljesmørkrem</option>
+                <option>Karamellkrem</option>
+                <option>Kinderkrem</option>
+                <option>Sjokoladekrem</option>
+                <option>Ostesmørkrem</option>
+                <option>Oreokrem</option>
+                <option>Bringebærkrem</option>
+                <option>Jordbærkrem</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="choice_2">2. valg</label>
+            <select class="form-select" id="choice_2" name="choice_2">
+              <option value="">-- Velg smak (valgfritt) --</option>
+              <optgroup label="Kakesmak">
+                <option>Sjokoladekake</option>
+                <option>Vaniljekake</option>
+                <option>Krydderkake</option>
+                <option>Gulrotkake</option>
+                <option>Sukkerbrødkake</option>
+                <option>Red Velvet</option>
+              </optgroup>
+              <optgroup label="Fyll">
+                <option>Vaniljesmørkrem</option>
+                <option>Karamellkrem</option>
+                <option>Kinderkrem</option>
+                <option>Sjokoladekrem</option>
+                <option>Ostesmørkrem</option>
+                <option>Oreokrem</option>
+                <option>Bringebærkrem</option>
+                <option>Jordbærkrem</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="choice_3">3. valg</label>
+            <select class="form-select" id="choice_3" name="choice_3">
+              <option value="">-- Velg smak (valgfritt) --</option>
+              <optgroup label="Kakesmak">
+                <option>Sjokoladekake</option>
+                <option>Vaniljekake</option>
+                <option>Krydderkake</option>
+                <option>Gulrotkake</option>
+                <option>Sukkerbrødkake</option>
+                <option>Red Velvet</option>
+              </optgroup>
+              <optgroup label="Fyll">
+                <option>Vaniljesmørkrem</option>
+                <option>Karamellkrem</option>
+                <option>Kinderkrem</option>
+                <option>Sjokoladekrem</option>
+                <option>Ostesmørkrem</option>
+                <option>Oreokrem</option>
+                <option>Bringebærkrem</option>
+                <option>Jordbærkrem</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:8px;" id="submitBtn">
+            Send forespørsel
+          </button>
+          <p style="text-align:center; font-size:0.8rem; opacity:0.5; margin-top:12px;">Vi tar kontakt innen 1–2 virkedager for å bekrefte tid og sende betalingslenke.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand"><h3>Kake<span>frue</span></h3></div>
+    <div class="footer-col"><h4>Sider</h4><a href="/meny.html">Meny</a><a href="/book.html">Book kake</a><a href="/vilkar.html">Vilkår</a></div>
+    <div class="footer-col"><h4>Kontakt</h4><a href="mailto:post@kakefrue.no">post@kakefrue.no</a></div>
+  </div>
+  <div class="footer-bottom"><span>© 2024 Kakefrue</span></div>
+</footer>
+
+<script src="/js/provesmaking.js"></script>
+<script>
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+hamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+</script>
+</body>
+</html>

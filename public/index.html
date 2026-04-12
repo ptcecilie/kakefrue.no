@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kakefrue – Håndlagde kaker i Porsgrunn</title>
+  <meta name="description" content="Kakefrue lager unike, håndlagde kaker til dine spesielle anledninger i Porsgrunn. Bryllupskaker, bursdagskaker, konfirmasjonskaker og mer.">
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+  <a href="/" class="nav-logo">Kake<span>frue</span></a>
+  <div class="nav-center">
+    <ul class="nav-links">
+      <li><a href="/meny.html">Meny</a></li>
+      <li><a href="/anbefalinger.html">Anbefalinger</a></li>
+      <li><a href="/provesmaking.html">Prøvesmaking</a></li>
+      <li><a href="/kurs.html">Kurs</a></li>
+      <li><a href="/om-kakefrue.html">Om Kakefrue</a></li>
+      <li><a href="/book.html" class="nav-cta">Book din kake</a></li>
+    </ul>
+  </div>
+  <button class="hamburger" id="hamburger" aria-label="Meny">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="/meny.html">Meny</a>
+  <a href="/anbefalinger.html">Anbefalinger</a>
+  <a href="/provesmaking.html">Prøvesmaking</a>
+  <a href="/kurs.html">Kurs</a>
+  <a href="/om-kakefrue.html">Om Kakefrue</a>
+  <a href="/vilkar.html">Vilkår</a>
+  <a href="/book.html" class="btn btn-primary" style="margin-top:12px;text-align:center;">Book din kake</a>
+</div>
+
+<div class="page-content">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <span class="hero-eyebrow">Håndlagde kaker fra Porsgrunn</span>
+      <h1>Kaker laget med<br><em>kjærlighet</em></h1>
+      <p class="hero-sub">Hver kake er laget spesielt for deg og din anledning. Ingen er like – og det er akkurat slik det skal være.</p>
+      <div class="hero-actions">
+        <a href="/book.html" class="btn btn-primary btn-lg">Book din kake</a>
+        <a href="/meny.html" class="btn btn-secondary btn-lg">Se hva vi lager</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Snippet -->
+  <section style="background: var(--white); padding: 80px 24px;">
+    <div class="container" style="max-width: 800px;">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;">
+        <div>
+          <span class="tag tag-gold" style="margin-bottom:16px;">Om Kakefrue</span>
+          <h2>Mer enn bare en kake</h2>
+          <p style="margin-top:16px;">Kakefrue er skapt av kjærligheten til det søte liv og troen på at de viktigste øyeblikkene fortjener noe ekstra. Hvert produkt lages for hånd, med utvalgte råvarer og et øye for detaljer.</p>
+          <p>Vi holder til i Porsgrunn og leverer med glede til deg som vil feire livet – stort som smått.</p>
+          <a href="/om-kakefrue.html" class="btn btn-outline" style="margin-top:8px;">Les mer om oss</a>
+        </div>
+        <div>
+          <div class="gallery-placeholder" style="aspect-ratio:4/5; background: linear-gradient(135deg, #F5EDE0, #EDD9C0); border-radius: var(--radius); display:flex; align-items:center; justify-content:center; font-size: 5rem;">🎂</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">Litt av det vi lager</h2>
+      <p class="section-subtitle">Hver kake forteller en egen historie</p>
+      <div class="gallery-grid">
+        <div class="gallery-item">
+          <div class="gallery-placeholder" style="background: linear-gradient(135deg, #F5EDE0, #E8C8A8); width:100%; height:100%;">🎂</div>
+        </div>
+        <div class="gallery-item">
+          <div class="gallery-placeholder" style="background: linear-gradient(135deg, #FDE8E8, #F5B8B8); width:100%; height:100%;">💒</div>
+        </div>
+        <div class="gallery-item">
+          <div class="gallery-placeholder" style="background: linear-gradient(135deg, #E8F0E8, #C8DCC8); width:100%; height:100%;">🧁</div>
+        </div>
+        <div class="gallery-item">
+          <div class="gallery-placeholder" style="background: linear-gradient(135deg, #EDE8F5, #C8B8E8); width:100%; height:100%;">🎀</div>
+        </div>
+        <div class="gallery-item">
+          <div class="gallery-placeholder" style="background: linear-gradient(135deg, #F5F0E0, #E8D8A8); width:100%; height:100%;">✨</div>
+        </div>
+        <div class="gallery-item">
+          <div class="gallery-placeholder" style="background: linear-gradient(135deg, #E8F5F5, #A8D8D8); width:100%; height:100%;">🌸</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reviews -->
+  <section style="background: var(--white);">
+    <div class="container">
+      <h2 class="section-title">Hva kundene sier</h2>
+      <p class="section-subtitle">Ekte tilbakemeldinger fra glade kunder</p>
+      <div class="reviews-carousel">
+        <div class="reviews-track" id="reviewsTrack">
+          <!-- Loaded from API -->
+          <div class="review-card">
+            <div class="review-stars">★★★★★</div>
+            <p class="review-text">"Absolutt den vakreste bryllupskaken jeg har sett. Og smaken! Gjestene snakker om den ennå."</p>
+            <span class="review-author">— Marianne S.</span>
+          </div>
+          <div class="review-card">
+            <div class="review-stars">★★★★★</div>
+            <p class="review-text">"Bestilte konfirmasjonskake – og fikk et kunstverk. Kakefrue forstår virkelig hva det betyr å gjøre noe spesielt."</p>
+            <span class="review-author">— Thomas og Hanne</span>
+          </div>
+          <div class="review-card">
+            <div class="review-stars">★★★★★</div>
+            <p class="review-text">"Cupcakesene ble nøyaktig som jeg hadde drømt om. Profesjonell, rask og utrolig vennlig å jobbe med."</p>
+            <span class="review-author">— Line K.</span>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:32px;">
+        <a href="/anbefalinger.html" class="btn btn-outline">Se alle anbefalinger</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Location / Delivery -->
+  <section>
+    <div class="container" style="max-width: 800px; text-align: center;">
+      <span class="tag tag-sage" style="margin-bottom: 16px;">Porsgrunn og omegn</span>
+      <h2>Vi holder til i Porsgrunn</h2>
+      <p style="margin-top: 16px; font-size: 1.05rem; opacity: 0.75;">Kaker hentes hos oss, eller leveres mot et lite tillegg. Vi anbefaler alltid henting dagen før for de beste resultatene.</p>
+      <div style="display:flex; gap:24px; justify-content:center; margin-top:32px; flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-size: 2rem; margin-bottom:8px;">📍</div>
+          <strong>Henting i Porsgrunn</strong>
+          <p style="font-size:0.85rem; opacity:0.65; margin-top:4px;">Avtal tid ved bestilling</p>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size: 2rem; margin-bottom:8px;">🚗</div>
+          <strong>Levering mot tillegg</strong>
+          <p style="font-size:0.85rem; opacity:0.65; margin-top:4px;">Porsgrunn og nærmeste omegn</p>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size: 2rem; margin-bottom:8px;">📅</div>
+          <strong>Bestill god tid i forveien</strong>
+          <p style="font-size:0.85rem; opacity:0.65; margin-top:4px;">Gjerne 2–4 uker før</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust / Mattilsynet -->
+  <div class="trust-section">
+    <div class="container">
+      <div class="trust-grid">
+        <div class="trust-item">
+          <span class="trust-icon">🏛️</span>
+          <span>Registrert hos Mattilsynet</span>
+        </div>
+        <div class="trust-item">
+          <span class="trust-icon">❤️</span>
+          <span>Laget med lokale råvarer</span>
+        </div>
+        <div class="trust-item">
+          <span class="trust-icon">🌿</span>
+          <span>Allergivennlige tilpasninger</span>
+        </div>
+        <div class="trust-item">
+          <span class="trust-icon">⭐</span>
+          <span>Mer enn 100 fornøyde kunder</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA Banner -->
+  <section style="background: linear-gradient(135deg, var(--brown) 0%, #6B4D38 100%); color: var(--white); text-align: center;">
+    <div class="container" style="max-width: 600px;">
+      <h2 style="color: var(--white); margin-bottom: 16px;">Klar for å bestille?</h2>
+      <p style="color: rgba(255,255,255,0.7); margin-bottom: 32px;">Fortell oss om anledningen din – så lager vi noe du ikke glemmer.</p>
+      <a href="/book.html" class="btn btn-primary btn-lg">Start din bestilling</a>
+    </div>
+  </section>
+
+</div><!-- /page-content -->
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <h3>Kake<span>frue</span></h3>
+      <p style="font-size: 0.9rem; margin-bottom: 16px;">Håndlagde kaker laget med kjærlighet i Porsgrunn.</p>
+      <div class="social-links">
+        <a href="#" aria-label="Facebook" title="Facebook">&#x1F426;</a>
+        <a href="#" aria-label="Instagram" title="Instagram">📷</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Navigasjon</h4>
+      <a href="/meny.html">Meny</a>
+      <a href="/anbefalinger.html">Anbefalinger</a>
+      <a href="/provesmaking.html">Prøvesmaking</a>
+      <a href="/kurs.html">Kurs</a>
+      <a href="/om-kakefrue.html">Om Kakefrue</a>
+    </div>
+    <div class="footer-col">
+      <h4>Bestilling</h4>
+      <a href="/book.html">Book din kake</a>
+      <a href="/vilkar.html">Vilkår og betingelser</a>
+    </div>
+    <div class="footer-col">
+      <h4>Kontakt</h4>
+      <a href="mailto:post@kakefrue.no">post@kakefrue.no</a>
+      <a href="https://instagram.com/kakefrue" target="_blank">@kakefrue</a>
+      <p style="color:rgba(255,255,255,0.5); font-size:0.85rem; margin-top:8px;">Porsgrunn, Telemark</p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2024 Kakefrue. Alle rettigheter forbeholdt.</span>
+    <span>Registrert hos Mattilsynet</span>
+  </div>
+</footer>
+
+<script>
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+hamburger.addEventListener('click', () => {
+  mobileMenu.classList.toggle('open');
+});
+
+// Load reviews from API
+fetch('/api/reviews').then(r => r.json()).then(reviews => {
+  if (!reviews.length) return;
+  const track = document.getElementById('reviewsTrack');
+  track.innerHTML = reviews.map(r => `
+    <div class="review-card">
+      <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+      <p class="review-text">"${r.review_text}"</p>
+      <span class="review-author">— ${r.customer_name}</span>
+    </div>
+  `).join('');
+}).catch(() => {});
+</script>
+</body>
+</html>

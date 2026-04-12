@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – Kakefrue</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    body { background: #F4EEE6; }
+    .admin-layout { display: flex; min-height: 100vh; padding-top: 0; }
+
+    /* Sidebar */
+    .admin-sidebar {
+      width: 240px;
+      background: var(--brown);
+      color: var(--white);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 200;
+      overflow-y: auto;
+    }
+    .admin-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 8px;
+    }
+    .admin-logo h2 { font-family: var(--font-heading); color: var(--white); font-size: 1.4rem; margin: 0; }
+    .admin-logo h2 span { color: var(--gold); }
+    .admin-logo p { font-size: 0.75rem; opacity: 0.5; margin: 4px 0 0; }
+    .admin-nav { flex: 1; padding: 8px 0; }
+    .admin-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      cursor: pointer;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.9rem;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    .admin-nav-item:hover { background: rgba(255,255,255,0.05); color: var(--white); }
+    .admin-nav-item.active { background: rgba(201,168,132,0.15); color: var(--white); border-left-color: var(--gold); }
+    .admin-nav-item .icon { font-size: 1.1rem; width: 20px; text-align: center; }
+    .admin-nav-badge {
+      margin-left: auto;
+      background: var(--rose);
+      color: var(--white);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 100px;
+      min-width: 20px;
+      text-align: center;
+    }
+    .admin-sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      font-size: 0.8rem;
+      opacity: 0.4;
+    }
+
+    /* Main content */
+    .admin-main {
+      margin-left: 240px;
+      flex: 1;
+      padding: 32px;
+      min-height: 100vh;
+    }
+    .admin-panel { display: none; }
+    .admin-panel.active { display: block; }
+
+    /* Login screen */
+    .admin-login {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--cream), #F0E6D8);
+    }
+    .login-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+    .login-card h2 { margin-bottom: 8px; }
+    .login-card p { opacity: 0.6; font-size: 0.9rem; margin-bottom: 28px; }
+
+    /* Data table */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--brown);
+      opacity: 0.5;
+      border-bottom: 2px solid rgba(201,168,132,0.2);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(201,168,132,0.12);
+      font-size: 0.9rem;
+      vertical-align: middle;
+    }
+    .data-table tr:hover td { background: rgba(201,168,132,0.04); }
+    .data-table-wrap { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .data-table-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(201,168,132,0.15);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .data-table-header h3 { margin: 0; font-size: 1rem; }
+
+    /* Stat cards */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: var(--white); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+    .stat-card .stat-value { font-family: var(--font-heading); font-size: 2rem; color: var(--gold-dark); line-height: 1; margin-bottom: 4px; }
+    .stat-card .stat-label { font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* Section header */
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .section-header h2 { margin: 0; font-size: 1.4rem; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(74,55,40,0.4);
+      z-index: 500;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .modal-backdrop.hidden { display: none; }
+    .modal {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-hover);
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      padding: 24px 28px 20px;
+      border-bottom: 1px solid rgba(201,168,132,0.15);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h3 { margin: 0; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.5; padding: 0 4px; }
+    .modal-body { padding: 24px 28px; }
+    .modal-footer { padding: 16px 28px; border-top: 1px solid rgba(201,168,132,0.15); display: flex; gap: 12px; justify-content: flex-end; }
+
+    /* Calendar admin */
+    .admin-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .admin-cal-day {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border: 1.5px solid rgba(74,55,40,0.1);
+      transition: all 0.2s;
+      padding: 4px;
+    }
+    .admin-cal-day.open { background: rgba(139,158,122,0.15); border-color: rgba(139,158,122,0.3); }
+    .admin-cal-day.open:hover { background: rgba(139,158,122,0.25); }
+    .admin-cal-day.past { opacity: 0.3; cursor: default; }
+    .admin-cal-day .day-num { font-weight: 700; font-size: 0.9rem; }
+    .admin-cal-day .day-info { font-size: 0.65rem; opacity: 0.65; text-align: center; }
+    .admin-cal-day .day-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sage); margin-top: 2px; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .admin-sidebar { width: 100%; height: auto; position: relative; }
+      .admin-layout { flex-direction: column; }
+      .admin-main { margin-left: 0; padding: 20px; }
+      .admin-nav { display: flex; overflow-x: auto; padding: 0; }
+      .admin-nav-item { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; padding: 12px 16px; }
+      .admin-nav-item.active { border-bottom-color: var(--gold); border-left-color: transparent; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="loginScreen" class="admin-login">
+  <div class="login-card">
+    <div style="font-size:3rem; margin-bottom:16px;">🎂</div>
+    <h2>Kakefrue Admin</h2>
+    <p>Logg inn for å administrere bookinger og innstillinger</p>
+    <div id="loginError" class="alert alert-error hidden" style="text-align:left;"></div>
+    <div class="form-group" style="text-align:left;">
+      <label class="form-label">Passord</label>
+      <input class="form-input" type="password" id="adminPassword" placeholder="Adminpassord" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" style="width:100%; justify-content:center;" id="loginBtn">Logg inn</button>
+  </div>
+</div>
+
+<!-- Admin App -->
+<div id="adminApp" class="admin-layout hidden">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="admin-logo">
+      <h2>Kake<span>frue</span></h2>
+      <p>Administrasjonspanel</p>
+    </div>
+    <nav class="admin-nav">
+      <div class="admin-nav-item active" data-panel="oversikt"><span class="icon">📊</span> Oversikt</div>
+      <div class="admin-nav-item" data-panel="kalender"><span class="icon">📅</span> Kalender</div>
+      <div class="admin-nav-item" data-panel="bestillinger"><span class="icon">🎂</span> Bestillinger <span class="admin-nav-badge" id="badge-bestillinger" style="display:none;"></span></div>
+      <div class="admin-nav-item" data-panel="ufullstendige"><span class="icon">⏳</span> Ufullstendige <span class="admin-nav-badge" id="badge-ufullstendige" style="display:none;"></span></div>
+      <div class="admin-nav-item" data-panel="provesmaking"><span class="icon">🍰</span> Prøvesmaking <span class="admin-nav-badge" id="badge-provesmaking" style="display:none;"></span></div>
+      <div class="admin-nav-item" data-panel="kurs"><span class="icon">👩‍🍳</span> Kurs</div>
+      <div class="admin-nav-item" data-panel="anbefalinger"><span class="icon">⭐</span> Anbefalinger</div>
+      <div class="admin-nav-item" data-panel="priser"><span class="icon">💰</span> Priser</div>
+      <div class="admin-nav-item" data-panel="innstillinger"><span class="icon">⚙️</span> Innstillinger</div>
+    </nav>
+    <div class="admin-sidebar-footer">© 2024 Kakefrue</div>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+
+    <!-- Oversikt -->
+    <div class="admin-panel active" id="panel-oversikt">
+      <div class="section-header"><h2>Oversikt</h2><button class="btn btn-outline btn-sm" onclick="loadStats()">↻ Oppdater</button></div>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Totale bestillinger</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-pending">—</div><div class="stat-label">Venter bekreftelse</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-upcoming">—</div><div class="stat-label">Kommende</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-abandoned">—</div><div class="stat-label">Ufullstendige</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-tastings">—</div><div class="stat-label">Prøvesmakinger</div></div>
+      </div>
+      <div class="data-table-wrap">
+        <div class="data-table-header"><h3>Siste bestillinger</h3></div>
+        <div style="overflow-x:auto;"><table class="data-table" id="recentTable">
+          <thead><tr><th>#</th><th>Kunde</th><th>Dato</th><th>Anledning</th><th>Status</th><th>Depositum</th></tr></thead>
+          <tbody id="recentBookings"><tr><td colspan="6" style="text-align:center; padding:32px; opacity:0.5;">Laster...</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- Kalender -->
+    <div class="admin-panel" id="panel-kalender">
+      <div class="section-header">
+        <h2>Kalender</h2>
+        <button class="btn btn-primary btn-sm" onclick="openAddDateModal()">+ Legg til dato</button>
+      </div>
+      <div style="background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+          <button class="calendar-nav" onclick="adminCalPrev()">←</button>
+          <h3 id="adminCalMonth" style="margin:0;"></h3>
+          <button class="calendar-nav" onclick="adminCalNext()">→</button>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:8px;">
+          <div style="text-align:center;font-size:0.75rem;font-weight:700;opacity:0.4;padding:6px 0;">Man</div>
+          <div style="text-align:center;font-size:0.75rem;font-weight:700;opacity:0.4;padding:6px 0;">Tir</div>
+          <div style="text-align:center;font-size:0.75rem;font-weight:700;opacity:0.4;padding:6px 0;">Ons</div>
+          <div style="text-align:center;font-size:0.75rem;font-weight:700;opacity:0.4;padding:6px 0;">Tor</div>
+          <div style="text-align:center;font-size:0.75rem;font-weight:700;opacity:0.4;padding:6px 0;">Fre</div>
+          <div style="text-align:center;font-size:0.75rem;font-weight:700;opacity:0.4;padding:6px 0;">Lør</div>
+          <div style="text-align:center;font-size:0.75rem;font-weight:700;opacity:0.4;padding:6px 0;">Søn</div>
+        </div>
+        <div class="admin-cal-grid" id="adminCalGrid"></div>
+        <div style="margin-top:20px; display:flex; gap:20px; font-size:0.82rem; opacity:0.65;">
+          <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(139,158,122,0.3);vertical-align:middle;margin-right:4px;"></span>Åpen dato</span>
+          <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(232,170,170,0.3);vertical-align:middle;margin-right:4px;"></span>Fullt booket</span>
+        </div>
+      </div>
+      <div class="data-table-wrap" style="margin-top:24px;">
+        <div class="data-table-header"><h3>Åpne datoer</h3></div>
+        <div style="overflow-x:auto;"><table class="data-table">
+          <thead><tr><th>Dato</th><th>Kapasitet</th><th>Bookinger</th><th>Levering</th><th>Notater</th><th>Handlinger</th></tr></thead>
+          <tbody id="datesTableBody"><tr><td colspan="6" style="text-align:center;padding:32px;opacity:0.5;">Laster...</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- Bestillinger -->
+    <div class="admin-panel" id="panel-bestillinger">
+      <div class="section-header"><h2>Bestillinger</h2></div>
+      <div class="data-table-wrap">
+        <div class="data-table-header">
+          <h3>Alle bestillinger</h3>
+          <input class="form-input" type="text" placeholder="Søk..." id="bookingSearch" style="max-width:220px;" oninput="filterBookings()">
+        </div>
+        <div style="overflow-x:auto;"><table class="data-table">
+          <thead><tr><th>#</th><th>Kunde</th><th>Dato</th><th>Anledning</th><th>Design</th><th>Status</th><th>Depositum</th><th>Handlinger</th></tr></thead>
+          <tbody id="bookingsTableBody"><tr><td colspan="8" style="text-align:center;padding:32px;opacity:0.5;">Laster...</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- Ufullstendige -->
+    <div class="admin-panel" id="panel-ufullstendige">
+      <div class="section-header"><h2>Ufullstendige bestillinger</h2></div>
+      <div style="background:rgba(255,248,225,0.7); border-radius:var(--radius-sm); padding:16px 20px; margin-bottom:20px; font-size:0.9rem;">
+        Disse kundene startet en bestilling (trinn 1) men fullførte den ikke. Ta kontakt for å hjelpe dem videre!
+      </div>
+      <div class="data-table-wrap">
+        <div style="overflow-x:auto;"><table class="data-table">
+          <thead><tr><th>Navn</th><th>Telefon</th><th>E-post</th><th>Siste steg</th><th>Dato</th><th>Kontaktet</th><th>Handlinger</th></tr></thead>
+          <tbody id="abandonedTableBody"><tr><td colspan="7" style="text-align:center;padding:32px;opacity:0.5;">Laster...</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- Prøvesmaking -->
+    <div class="admin-panel" id="panel-provesmaking">
+      <div class="section-header"><h2>Prøvesmaking</h2></div>
+      <div class="data-table-wrap">
+        <div style="overflow-x:auto;"><table class="data-table">
+          <thead><tr><th>Navn</th><th>Telefon</th><th>E-post</th><th>Ønsket dato</th><th>Valg 1</th><th>Status</th><th>Betalt</th><th>Handlinger</th></tr></thead>
+          <tbody id="tastingsTableBody"><tr><td colspan="8" style="text-align:center;padding:32px;opacity:0.5;">Laster...</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- Kurs -->
+    <div class="admin-panel" id="panel-kurs">
+      <div class="section-header">
+        <h2>Kurs</h2>
+        <button class="btn btn-primary btn-sm" onclick="openCourseModal()">+ Nytt kurs</button>
+      </div>
+      <div id="coursesList"></div>
+    </div>
+
+    <!-- Anbefalinger -->
+    <div class="admin-panel" id="panel-anbefalinger">
+      <div class="section-header">
+        <h2>Anbefalinger</h2>
+        <button class="btn btn-primary btn-sm" onclick="openReviewModal()">+ Legg til anbefaling</button>
+      </div>
+      <div class="data-table-wrap">
+        <div style="overflow-x:auto;"><table class="data-table">
+          <thead><tr><th>Navn</th><th>Tekst</th><th>Rating</th><th>Godkjent</th><th>Dato</th><th>Handlinger</th></tr></thead>
+          <tbody id="reviewsTableBody"><tr><td colspan="6" style="text-align:center;padding:32px;opacity:0.5;">Laster...</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- Priser -->
+    <div class="admin-panel" id="panel-priser">
+      <div class="section-header"><h2>Priser</h2><button class="btn btn-primary btn-sm" onclick="openPriceModal()">+ Ny pris</button></div>
+      <div id="pricingContent"></div>
+    </div>
+
+    <!-- Innstillinger -->
+    <div class="admin-panel" id="panel-innstillinger">
+      <div class="section-header"><h2>Innstillinger</h2></div>
+      <div style="background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); padding:32px; max-width:560px;">
+        <div id="settingsSuccess" class="alert alert-success hidden">Innstillinger lagret!</div>
+        <h3 style="margin-bottom:20px;">Generelle innstillinger</h3>
+        <div class="form-group">
+          <label class="form-label">Depositum-prosent (%)</label>
+          <input class="form-input" type="number" id="set-deposit" placeholder="30" style="max-width:150px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Leveringsgebyr (kr)</label>
+          <input class="form-input" type="number" id="set-delivery" placeholder="200" style="max-width:150px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prøvesmakingspris (kr)</label>
+          <input class="form-input" type="number" id="set-tasting" placeholder="400" style="max-width:150px;">
+        </div>
+        <hr class="divider">
+        <h3 style="margin-bottom:20px;">Endre adminpassord</h3>
+        <div class="form-group">
+          <label class="form-label">Nytt passord</label>
+          <input class="form-input" type="password" id="set-newpass" placeholder="Nytt passord" style="max-width:280px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bekreft nytt passord</label>
+          <input class="form-input" type="password" id="set-newpass2" placeholder="Gjenta passord" style="max-width:280px;">
+        </div>
+        <button class="btn btn-primary" onclick="saveSettings()">Lagre innstillinger</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modals -->
+<div class="modal-backdrop hidden" id="modalBackdrop">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>

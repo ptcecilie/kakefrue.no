@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anbefalinger – Kakefrue</title>
+  <meta name="description" content="Les hva kundene sier om Kakefrue. Ekte tilbakemeldinger fra fornøyde kunder.">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+    .review-full-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+    }
+    .review-full-card .stars { color: var(--gold); font-size: 1.1rem; margin-bottom: 12px; }
+    .review-full-card .text { flex: 1; font-style: italic; opacity: 0.85; margin-bottom: 16px; line-height: 1.7; }
+    .review-full-card .author { font-weight: 700; font-size: 0.9rem; color: var(--gold-dark); }
+    .review-full-card .date { font-size: 0.8rem; opacity: 0.5; margin-top: 2px; }
+    .review-img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+      margin-bottom: 16px;
+    }
+    .review-img-placeholder {
+      width: 100%;
+      aspect-ratio: 4/3;
+      border-radius: var(--radius-sm);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+    }
+    #loading { text-align: center; padding: 48px; }
+    #empty { display: none; text-align: center; padding: 64px 24px; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-logo">Kake<span>frue</span></a>
+  <div class="nav-center">
+    <ul class="nav-links">
+      <li><a href="/meny.html">Meny</a></li>
+      <li><a href="/anbefalinger.html">Anbefalinger</a></li>
+      <li><a href="/provesmaking.html">Prøvesmaking</a></li>
+      <li><a href="/kurs.html">Kurs</a></li>
+      <li><a href="/om-kakefrue.html">Om Kakefrue</a></li>
+      <li><a href="/book.html" class="nav-cta">Book din kake</a></li>
+    </ul>
+  </div>
+  <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="/meny.html">Meny</a>
+  <a href="/anbefalinger.html">Anbefalinger</a>
+  <a href="/provesmaking.html">Prøvesmaking</a>
+  <a href="/kurs.html">Kurs</a>
+  <a href="/om-kakefrue.html">Om Kakefrue</a>
+  <a href="/vilkar.html">Vilkår</a>
+  <a href="/book.html" class="btn btn-primary" style="margin-top:12px;text-align:center;">Book din kake</a>
+</div>
+
+<div class="page-content">
+
+  <div class="page-hero">
+    <span class="tag tag-gold" style="margin-bottom:12px;">Ekte tilbakemeldinger</span>
+    <h1>Hva kundene sier</h1>
+    <p>Ingenting gjør oss gladere enn fornøyde kunder. Her er noen av tilbakemeldingene vi har fått.</p>
+  </div>
+
+  <section>
+    <div class="container">
+      <div id="loading">
+        <div class="spinner"></div>
+        <p style="opacity:0.5;">Laster anbefalinger...</p>
+      </div>
+
+      <div id="empty">
+        <div style="font-size:3rem; margin-bottom:16px;">💬</div>
+        <h3>Ingen anbefalinger ennå</h3>
+        <p style="opacity:0.6; margin-top:8px;">Kom tilbake snart – vi samler på gode historier.</p>
+      </div>
+
+      <div class="reviews-grid" id="reviewsGrid" style="display:none;"></div>
+    </div>
+  </section>
+
+  <!-- Leave a review nudge -->
+  <section style="background: var(--white);">
+    <div class="container" style="max-width:600px; text-align:center;">
+      <div style="font-size:2.5rem; margin-bottom:16px;">⭐</div>
+      <h2>Har du bestilt fra oss?</h2>
+      <p style="margin-top:12px; opacity:0.7;">Vi setter stor pris på tilbakemeldinger. Send oss gjerne en melding på Instagram eller e-post – vi vil gjerne dele din opplevelse!</p>
+      <div style="display:flex; gap:16px; justify-content:center; margin-top:28px; flex-wrap:wrap;">
+        <a href="https://instagram.com/kakefrue" target="_blank" class="btn btn-secondary">Instagram</a>
+        <a href="mailto:post@kakefrue.no" class="btn btn-outline">Send e-post</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section style="background: var(--brown); text-align:center; padding: 64px 24px;">
+    <h2 style="color:var(--white); margin-bottom:16px;">Bli neste fornøyde kunde</h2>
+    <p style="color:rgba(255,255,255,0.7); margin-bottom:32px;">Book din kake i dag – laget spesielt for deg.</p>
+    <a href="/book.html" class="btn btn-primary btn-lg">Book din kake</a>
+  </section>
+
+</div>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand"><h3>Kake<span>frue</span></h3></div>
+    <div class="footer-col"><h4>Sider</h4><a href="/meny.html">Meny</a><a href="/book.html">Book kake</a><a href="/vilkar.html">Vilkår</a></div>
+    <div class="footer-col"><h4>Kontakt</h4><a href="mailto:post@kakefrue.no">post@kakefrue.no</a></div>
+  </div>
+  <div class="footer-bottom"><span>© 2024 Kakefrue</span></div>
+</footer>
+
+<script>
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+hamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+
+const loading = document.getElementById('loading');
+const empty = document.getElementById('empty');
+const grid = document.getElementById('reviewsGrid');
+
+const gradients = [
+  'linear-gradient(135deg, #F5EDE0, #E8C8A8)',
+  'linear-gradient(135deg, #FDE8E8, #F5B8B8)',
+  'linear-gradient(135deg, #E8F0E8, #C8DCC8)',
+  'linear-gradient(135deg, #EDE8F5, #C8B8E8)',
+  'linear-gradient(135deg, #E8F5F5, #A8D8D8)',
+];
+const emojis = ['🎂','🧁','💒','🌸','✨','🎀','🍰','🥂'];
+
+fetch('/api/reviews')
+  .then(r => r.json())
+  .then(reviews => {
+    loading.style.display = 'none';
+    if (!reviews.length) {
+      empty.style.display = 'block';
+      return;
+    }
+    grid.style.display = 'grid';
+    grid.innerHTML = reviews.map((r, i) => `
+      <div class="review-full-card">
+        ${r.image_url
+          ? `<img src="${r.image_url}" alt="Kakebilde" class="review-img">`
+          : `<div class="review-img-placeholder" style="background:${gradients[i % gradients.length]}">${emojis[i % emojis.length]}</div>`
+        }
+        <div class="stars">${'★'.repeat(r.rating || 5)}${'☆'.repeat(5 - (r.rating || 5))}</div>
+        <p class="text">"${r.review_text}"</p>
+        <span class="author">— ${r.customer_name}</span>
+        <span class="date">${new Date(r.created_at).toLocaleDateString('nb-NO', {year:'numeric', month:'long'})}</span>
+      </div>
+    `).join('');
+  })
+  .catch(() => {
+    loading.style.display = 'none';
+    empty.style.display = 'block';
+  });
+</script>
+</body>
+</html>
