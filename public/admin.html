@@ -164,9 +164,13 @@
     .modal-footer { padding: 16px 28px; border-top: 1px solid rgba(201,168,132,0.15); display: flex; gap: 12px; justify-content: flex-end; }
 
     /* Calendar admin */
-    .admin-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .admin-cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-auto-rows: calc((100vh - 310px) / 6);
+      gap: 6px;
+    }
     .admin-cal-day {
-      aspect-ratio: 1;
       border-radius: 8px;
       display: flex;
       flex-direction: column;
@@ -177,6 +181,7 @@
       border: 1.5px solid rgba(74,55,40,0.1);
       transition: all 0.2s;
       padding: 4px;
+      min-height: 0;
     }
     .admin-cal-day.open { background: rgba(139,158,122,0.15); border-color: rgba(139,158,122,0.3); }
     .admin-cal-day.open:hover { background: rgba(139,158,122,0.25); }
