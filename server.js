@@ -439,6 +439,41 @@ app.get('/api/admin/abandoned', requireAdmin, async (req, res) => {
   }
 });
 
+// POST /api/admin/send-sms
+app.post('/api/admin/send-sms', requireAdmin, async (req, res) => {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const fromNumber = process.env.TWILIO_FROM;
+  if (!accountSid || !authToken || !fromNumber) {
+    return res.status(503).json({ error: 'SMS ikke konfigurert' });
+  }
+  const { to, message } = req.body;
+  try {
+    const params = new URLSearchParams();
+    params.append('From', fromNumber);
+    params.append('To', to);
+    params.append('Body', message);
+    const twilioRes = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: params.toString()
+      }
+    );
+    if (!twilioRes.ok) {
+      const errData = await twilioRes.json().catch(() => ({}));
+      return res.status(502).json({ error: errData.message || 'Twilio-feil' });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil ved SMS-sending' });
+  }
+});
+
 // PUT /api/admin/abandoned/:id
 app.put('/api/admin/abandoned/:id', requireAdmin, async (req, res) => {
   const { contacted } = req.body;

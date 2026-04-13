@@ -29,6 +29,13 @@ function statusBadge(s) {
   const labels = { pending:'Venter', confirmed:'Bekreftet', cancelled:'Avlyst', completed:'Fullført' };
   return `<span class="tag ${map[s] || 'tag-gold'}">${labels[s] || s}</span>`;
 }
+function showAlert(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.textContent = message;
+  toast.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;border-radius:8px;font-size:0.9rem;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.15);background:${type === 'error' ? '#c0392b' : '#4a7c59'};color:#fff;transition:opacity 0.4s;`;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3000);
+}
 function openModal(html) {
   $('modalContent').innerHTML = html;
   $('modalBackdrop').classList.remove('hidden');
@@ -367,7 +374,7 @@ async function loadAbandoned() {
         <td>${formatDate(r.created_at)}</td>
         <td>${r.contacted ? '<span style="color:var(--sage);">✓ Ja</span>' : '<span style="opacity:0.4;">Nei</span>'}</td>
         <td>
-          ${!r.contacted ? `<button class="btn btn-outline btn-sm" onclick="markContacted(${r.id})">Marker kontaktet</button>` : '—'}
+          ${!r.contacted ? `<button class="btn btn-outline btn-sm" onclick="markContacted(${r.id})">Marker kontaktet</button> <button class="btn btn-primary btn-sm" onclick="openSmsModal(${r.id}, '${r.phone}', '${r.full_name}')">📱 Send SMS</button>` : '—'}
         </td>
       </tr>
     `).join('');
@@ -376,6 +383,53 @@ async function loadAbandoned() {
 
 async function markContacted(id) {
   try { await api('/api/admin/abandoned/' + id, { method: 'PUT', body: JSON.stringify({ contacted: true }) }); loadAbandoned(); loadStats(); } catch {}
+}
+
+// ── SMS Modal ──────────────────────────────────────────────
+let activeSmsId = null;
+let activeSmsPhone = null;
+
+function openSmsModal(id, phone, name) {
+  activeSmsId = id;
+  activeSmsPhone = phone;
+  const template = `Hei ${name}! 🎂 Jeg ser du startet en bestilling hos Kakefrue. Kan jeg hjelpe deg videre, eller har du spørsmål? Svar gjerne her! – Cecilie`;
+  const textarea = $('smsMessageText');
+  const label = $('smsRecipientLabel');
+  const lenEl = $('smsMsgLen');
+  label.textContent = `${name} (${phone})`;
+  textarea.value = template;
+  lenEl.textContent = template.length;
+  textarea.oninput = () => { lenEl.textContent = textarea.value.length; };
+  $('smsModal').classList.remove('hidden');
+}
+
+function closeSmsModal() {
+  $('smsModal').classList.add('hidden');
+  activeSmsId = null;
+  activeSmsPhone = null;
+}
+
+async function sendSms() {
+  const message = $('smsMessageText').value.trim();
+  if (!message) return;
+  const btn = $('smsSendBtn');
+  btn.textContent = 'Sender...';
+  btn.disabled = true;
+  try {
+    await api('/api/admin/send-sms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: activeSmsPhone, message })
+    });
+    showAlert('SMS sendt! ✓', 'success');
+    await markContacted(activeSmsId);
+    closeSmsModal();
+  } catch (e) {
+    showAlert(e.message || 'Nettverksfeil – kunne ikke sende SMS', 'error');
+  } finally {
+    btn.textContent = 'Send SMS';
+    btn.disabled = false;
+  }
 }
 
 // ── Tastings ───────────────────────────────────────────────

@@ -408,6 +408,28 @@
   <div class="modal" id="modalContent"></div>
 </div>
 
+<!-- SMS Modal -->
+<div class="modal-backdrop hidden" id="smsModal" onclick="if(event.target===this)closeSmsModal()">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3>📱 Send SMS</h3>
+      <button class="modal-close" onclick="closeSmsModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:16px; font-size:0.9rem; opacity:0.7;">Til: <strong id="smsRecipientLabel"></strong></p>
+      <div class="form-group">
+        <label class="form-label">Melding</label>
+        <textarea id="smsMessageText" class="form-textarea" rows="5" style="resize:vertical;width:100%;"></textarea>
+        <div style="font-size:0.78rem; opacity:0.5; margin-top:4px; text-align:right;"><span id="smsMsgLen">0</span>/160 tegn</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="closeSmsModal()">Avbryt</button>
+      <button class="btn btn-primary btn-sm" onclick="sendSms()" id="smsSendBtn">Send SMS</button>
+    </div>
+  </div>
+</div>
+
 <script src="/js/admin.js"></script>
 </body>
 </html>
