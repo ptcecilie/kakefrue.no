@@ -103,13 +103,18 @@ function gotoPanel(panel) {
   loadPanel(panel);
 }
 
+function clearBadge(panel) {
+  const badge = document.getElementById('badge-' + panel);
+  if (badge) badge.style.display = 'none';
+}
+
 function loadPanel(panel) {
   switch (panel) {
     case 'oversikt': loadStats(); loadRecentBookings(); break;
     case 'kalender': loadDates(); break;
-    case 'bestillinger': loadBookings(); break;
-    case 'ufullstendige': loadAbandoned(); break;
-    case 'provesmaking': loadTastings(); break;
+    case 'bestillinger': loadBookings(); clearBadge('bestillinger'); break;
+    case 'ufullstendige': loadAbandoned(); clearBadge('ufullstendige'); break;
+    case 'provesmaking': loadTastings(); clearBadge('provesmaking'); break;
     case 'kurs': loadCourses(); break;
     case 'anbefalinger': loadReviews(); break;
     case 'priser': loadPricing(); break;
