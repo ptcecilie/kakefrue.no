@@ -128,6 +128,8 @@
     .stat-card { background: var(--white); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
     .stat-card .stat-value { font-family: var(--font-heading); font-size: 2rem; color: var(--gold-dark); line-height: 1; margin-bottom: 4px; }
     .stat-card .stat-label { font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-card[data-goto] { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .stat-card[data-goto]:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
 
     /* Section header */
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
@@ -248,11 +250,11 @@
     <div class="admin-panel active" id="panel-oversikt">
       <div class="section-header"><h2>Oversikt</h2><button class="btn btn-outline btn-sm" onclick="loadStats()">↻ Oppdater</button></div>
       <div class="stats-grid" id="statsGrid">
-        <div class="stat-card"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Totale bestillinger</div></div>
-        <div class="stat-card"><div class="stat-value" id="stat-pending">—</div><div class="stat-label">Venter bekreftelse</div></div>
-        <div class="stat-card"><div class="stat-value" id="stat-upcoming">—</div><div class="stat-label">Kommende</div></div>
-        <div class="stat-card"><div class="stat-value" id="stat-abandoned">—</div><div class="stat-label">Ufullstendige</div></div>
-        <div class="stat-card"><div class="stat-value" id="stat-tastings">—</div><div class="stat-label">Prøvesmakinger</div></div>
+        <div class="stat-card" data-goto="bestillinger"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Totale bestillinger</div></div>
+        <div class="stat-card" data-goto="bestillinger"><div class="stat-value" id="stat-pending">—</div><div class="stat-label">Venter bekreftelse</div></div>
+        <div class="stat-card" data-goto="kalender"><div class="stat-value" id="stat-upcoming">—</div><div class="stat-label">Kommende</div></div>
+        <div class="stat-card" data-goto="ufullstendige"><div class="stat-value" id="stat-abandoned">—</div><div class="stat-label">Ufullstendige</div></div>
+        <div class="stat-card" data-goto="provesmaking"><div class="stat-value" id="stat-tastings">—</div><div class="stat-label">Prøvesmakinger</div></div>
       </div>
       <div class="data-table-wrap">
         <div class="data-table-header"><h3>Siste bestillinger</h3></div>

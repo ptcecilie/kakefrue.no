@@ -92,6 +92,15 @@ document.querySelectorAll('.admin-nav-item').forEach(item => {
   });
 });
 
+// ── Stat card navigation ────────────────────────────────────
+document.querySelectorAll('.stat-card[data-goto]').forEach(card => {
+  card.addEventListener('click', () => {
+    const target = card.dataset.goto;
+    const navItem = document.querySelector(`.admin-nav-item[data-panel="${target}"]`);
+    if (navItem) navItem.click();
+  });
+});
+
 function loadPanel(panel) {
   switch (panel) {
     case 'oversikt': loadStats(); loadRecentBookings(); break;
