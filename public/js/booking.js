@@ -35,7 +35,7 @@ const state = {
   // Step 6 — standard
   standard: { kake: '', size: '24cm', notes: '' },
   // Step 6 — sesong quantities
-  sesong: { kling:0, lefse:0, krumkaker:0, cookies:0, kransekakestenger:0, kransekake18:0, pepperkaker:0, mandelkake:0 },
+  sesong: { kling:0, lefse:0, krumkaker:0, cookies:0, kransekakestenger:0, kransekake18:0, mandelkake:0 },
 
   // Step 7
   designLevel: '',
@@ -47,7 +47,7 @@ const state = {
 
 const SESONG_PRICES = {
   kling:180, lefse:150, krumkaker:200, cookies:180,
-  kransekakestenger:220, kransekake18:850, pepperkaker:150, mandelkake:350
+  kransekakestenger:220, kransekake18:850, mandelkake:350
 };
 const ALLERGEN_PRICES = { glutenfritt:150, 'nøtter':100, laktosefritt:100, melkefritt:150, egg:150 };
 const DESIGN_PRICES = { enkel:0, standard:300, avansert:700 };
@@ -342,7 +342,7 @@ async function sendSpecialRequest() {
     $('stepSpecial').classList.add('active');
     $('bookingProgress').style.display = 'none';
   } catch (e) {
-    alert('Noe gikk galt. Kontakt oss direkte på post@kakefrue.no');
+    alert('Noe gikk galt. Kontakt oss direkte på cecilie@kakefrue.no');
   }
 }
 
