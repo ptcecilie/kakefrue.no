@@ -107,9 +107,12 @@ async function loadStats() {
     $('stat-abandoned').textContent = s.abandoned_count;
     $('stat-tastings').textContent = s.pending_tastings;
 
-    if (s.pending_bookings > 0) { $('badge-bestillinger').textContent = s.pending_bookings; $('badge-bestillinger').style.display = ''; }
-    if (s.abandoned_count > 0) { $('badge-ufullstendige').textContent = s.abandoned_count; $('badge-ufullstendige').style.display = ''; }
-    if (s.pending_tastings > 0) { $('badge-provesmaking').textContent = s.pending_tastings; $('badge-provesmaking').style.display = ''; }
+    const badgeBest = $('badge-bestillinger');
+    if (s.pending_bookings > 0) { badgeBest.textContent = s.pending_bookings; badgeBest.style.display = ''; } else { badgeBest.style.display = 'none'; }
+    const badgeUfull = $('badge-ufullstendige');
+    if (s.abandoned_count > 0) { badgeUfull.textContent = s.abandoned_count; badgeUfull.style.display = ''; } else { badgeUfull.style.display = 'none'; }
+    const badgeProv = $('badge-provesmaking');
+    if (s.pending_tastings > 0) { badgeProv.textContent = s.pending_tastings; badgeProv.style.display = ''; } else { badgeProv.style.display = 'none'; }
   } catch {}
 }
 
