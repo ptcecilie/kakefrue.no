@@ -127,4 +127,4 @@ async function sendTastingConfirmation(tasting) {
   });
 }
 
-module.exports = { sendBookingConfirmation, sendCourseConfirmation, sendTastingConfirmation };
+module.exports = { sendBookingConfirmation, sendCourseConfirmation, sendTastingConfirmation, createTransporter };

@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 const { pool, initDB } = require('./db');
 const { createSumUpCheckout, getSumUpCheckoutStatus, handlePaymentSuccess } = require('./payments');
-const { sendTastingConfirmation, sendCourseConfirmation } = require('./email');
+const { sendTastingConfirmation, sendCourseConfirmation, createTransporter } = require('./email');
 
 const app = express();
 app.use(express.json());
@@ -482,6 +482,45 @@ app.put('/api/admin/abandoned/:id', requireAdmin, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// DELETE /api/admin/abandoned/:id
+app.delete('/api/admin/abandoned/:id', requireAdmin, async (req, res) => {
+  try {
+    await pool.query(`DELETE FROM abandoned_bookings WHERE id = ?`, [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// POST /api/admin/send-email
+app.post('/api/admin/send-email', requireAdmin, async (req, res) => {
+  const { to, name, subject, message } = req.body;
+  if (!to || !subject || !message) return res.status(400).json({ error: 'Mangler felt' });
+  const transporter = createTransporter();
+  const html = `
+    <div style="font-family: 'Lato', sans-serif; max-width: 600px; margin: 0 auto; background: #F5F2EC; padding: 32px; border-radius: 12px;">
+      <h1 style="font-family: 'Playfair Display', serif; color: #2A1E3E; text-align: center;">Kakefrue</h1>
+      <p>Hei ${name || ''},</p>
+      <div style="white-space: pre-wrap; line-height: 1.7; margin: 20px 0;">${message.replace(/\n/g, '<br>')}</div>
+      <div style="text-align: center; margin-top: 32px; color: #7A9E82;">
+        <p>Med kjærlig hilsen,<br><strong>Cecilie – Kakefrue</strong></p>
+        <p style="font-size: 12px;">Porsgrunn · post@kakefrue.no</p>
+      </div>
+    </div>
+  `;
+  try {
+    await transporter.sendMail({
+      from: `"Kakefrue" <${process.env.SMTP_FROM || 'post@kakefrue.no'}>`,
+      to,
+      subject,
+      html
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil ved e-postsending' });
   }
 });
 

@@ -430,6 +430,31 @@
   </div>
 </div>
 
+<!-- E-post modal -->
+<div class="modal-overlay" id="emailModalOverlay" style="display:none;" onclick="if(event.target===this)closeEmailModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>✉️ Send e-post</h3>
+      <button class="modal-close" onclick="closeEmailModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:16px; font-size:0.9rem; opacity:0.7;">Til: <strong id="emailRecipientLabel"></strong></p>
+      <div class="form-group">
+        <label class="form-label">Emne</label>
+        <input id="emailSubjectText" class="form-input" type="text" placeholder="F.eks. Oppdatering om bestillingen din" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Melding</label>
+        <textarea id="emailMessageText" class="form-textarea" rows="7" style="resize:vertical;width:100%;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="closeEmailModal()">Avbryt</button>
+      <button class="btn btn-primary btn-sm" onclick="sendEmail()" id="emailSendBtn">Send e-post</button>
+    </div>
+  </div>
+</div>
+
 <script src="/js/admin.js"></script>
 </body>
 </html>

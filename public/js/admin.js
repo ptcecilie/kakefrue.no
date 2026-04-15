@@ -291,7 +291,10 @@ function renderBookingsTable(bookings) {
       <td>${b.design_level || '—'}</td>
       <td>${statusBadge(b.status)}</td>
       <td>${b.deposit_paid ? '<span style="color:var(--sage);font-weight:700;">✓</span>' : '<span style="opacity:0.4;">Nei</span>'}</td>
-      <td><button class="btn btn-outline btn-sm" onclick="openBookingDetail(${b.id})">Detaljer</button></td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-outline btn-sm" onclick="openBookingDetail(${b.id})">Detaljer</button>
+        ${b.email ? `<button class="btn btn-outline btn-sm" onclick="openEmailModal('${b.email}', '${b.full_name}')">✉️</button>` : ''}
+      </td>
     </tr>
   `).join('');
 }
@@ -373,8 +376,11 @@ async function loadAbandoned() {
         <td>Steg ${r.last_step}</td>
         <td>${formatDate(r.created_at)}</td>
         <td>${r.contacted ? '<span style="color:var(--sage);">✓ Ja</span>' : '<span style="opacity:0.4;">Nei</span>'}</td>
-        <td>
-          ${!r.contacted ? `<button class="btn btn-outline btn-sm" onclick="markContacted(${r.id})">Marker kontaktet</button> <button class="btn btn-primary btn-sm" onclick="openSmsModal(${r.id}, '${r.phone}', '${r.full_name}')">📱 Send SMS</button>` : '—'}
+        <td style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${!r.contacted ? `<button class="btn btn-outline btn-sm" onclick="markContacted(${r.id})">Marker kontaktet</button>` : ''}
+          ${r.phone ? `<button class="btn btn-primary btn-sm" onclick="openSmsModal(${r.id}, '${r.phone}', '${r.full_name}')">📱 SMS</button>` : ''}
+          ${r.email ? `<button class="btn btn-outline btn-sm" onclick="openEmailModal('${r.email}', '${r.full_name}')">✉️ E-post</button>` : ''}
+          <button class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828;" onclick="deleteAbandoned(${r.id})">Slett</button>
         </td>
       </tr>
     `).join('');
@@ -383,6 +389,11 @@ async function loadAbandoned() {
 
 async function markContacted(id) {
   try { await api('/api/admin/abandoned/' + id, { method: 'PUT', body: JSON.stringify({ contacted: true }) }); loadAbandoned(); loadStats(); } catch {}
+}
+
+async function deleteAbandoned(id) {
+  if (!confirm('Slette denne ufullstendige bestillingen?')) return;
+  try { await api('/api/admin/abandoned/' + id, { method: 'DELETE' }); loadAbandoned(); loadStats(); } catch {}
 }
 
 // ── SMS Modal ──────────────────────────────────────────────
@@ -428,6 +439,48 @@ async function sendSms() {
     showAlert(e.message || 'Nettverksfeil – kunne ikke sende SMS', 'error');
   } finally {
     btn.textContent = 'Send SMS';
+    btn.disabled = false;
+  }
+}
+
+// ── E-post Modal ───────────────────────────────────────────
+let activeEmailTo = null;
+let activeEmailName = null;
+
+function openEmailModal(email, name) {
+  activeEmailTo = email;
+  activeEmailName = name;
+  $('emailRecipientLabel').textContent = `${name} (${email})`;
+  $('emailSubjectText').value = '';
+  $('emailMessageText').value = '';
+  $('emailModalOverlay').style.display = 'flex';
+}
+
+function closeEmailModal() {
+  $('emailModalOverlay').style.display = 'none';
+  activeEmailTo = null;
+  activeEmailName = null;
+}
+
+async function sendEmail() {
+  const subject = $('emailSubjectText').value.trim();
+  const message = $('emailMessageText').value.trim();
+  if (!subject || !message) { showAlert('Fyll inn emne og melding', 'error'); return; }
+  const btn = $('emailSendBtn');
+  btn.textContent = 'Sender...';
+  btn.disabled = true;
+  try {
+    await api('/api/admin/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: activeEmailTo, name: activeEmailName, subject, message })
+    });
+    showAlert('E-post sendt! ✓', 'success');
+    closeEmailModal();
+  } catch (e) {
+    showAlert(e.message || 'Kunne ikke sende e-post', 'error');
+  } finally {
+    btn.textContent = 'Send e-post';
     btn.disabled = false;
   }
 }
