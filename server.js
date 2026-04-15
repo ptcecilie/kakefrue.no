@@ -133,15 +133,60 @@ app.post('/api/bookings', async (req, res) => {
   }
 });
 
-// GET /api/courses
+// GET /api/courses — include interest count per course
 app.get('/api/courses', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT * FROM courses WHERE active = TRUE AND (date IS NULL OR date >= CURDATE()) ORDER BY date ASC`
+      `SELECT c.*, COUNT(ci.id) as interest_count
+       FROM courses c
+       LEFT JOIN course_interests ci ON ci.course_id = c.id
+       WHERE c.active = TRUE AND (c.date IS NULL OR c.date >= CURDATE())
+       GROUP BY c.id
+       ORDER BY c.date ASC`
     );
     res.json(rows);
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// POST /api/course-interests
+app.post('/api/course-interests', async (req, res) => {
+  const { course_id, full_name, phone } = req.body;
+  if (!course_id || !full_name || !phone) return res.status(400).json({ error: 'Navn og telefon er påkrevd' });
+  try {
+    await pool.query(
+      `INSERT INTO course_interests (course_id, full_name, phone) VALUES (?, ?, ?)`,
+      [course_id, full_name.trim(), phone.trim()]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// GET /api/admin/course-interests
+app.get('/api/admin/course-interests', requireAdmin, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT ci.*, c.title as course_title
+      FROM course_interests ci
+      JOIN courses c ON ci.course_id = c.id
+      ORDER BY c.id ASC, ci.created_at DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// DELETE /api/admin/course-interests/:id
+app.delete('/api/admin/course-interests/:id', requireAdmin, async (req, res) => {
+  try {
+    await pool.query(`DELETE FROM course_interests WHERE id = ?`, [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
   }
 });

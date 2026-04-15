@@ -115,7 +115,7 @@ function loadPanel(panel) {
     case 'bestillinger': loadBookings(); clearBadge('bestillinger'); break;
     case 'ufullstendige': loadAbandoned(); clearBadge('ufullstendige'); break;
     case 'provesmaking': loadTastings(); clearBadge('provesmaking'); break;
-    case 'kurs': loadCourses(); break;
+    case 'kurs': loadCourses(); loadCourseInterests(); break;
     case 'anbefalinger': loadReviews(); break;
     case 'priser': loadPricing(); break;
     case 'kunder': loadCustomers(); break;
@@ -829,6 +829,52 @@ async function updateTasting(id) {
 }
 
 // ── Courses ────────────────────────────────────────────────
+async function loadCourseInterests() {
+  try {
+    const rows = await api('/api/admin/course-interests');
+    const container = $('courseInterestsList');
+    if (!rows.length) {
+      container.innerHTML = '<p style="opacity:0.5;">Ingen har meldt interesse ennå.</p>';
+      return;
+    }
+    // Group by course
+    const byCourse = {};
+    rows.forEach(r => {
+      if (!byCourse[r.course_title]) byCourse[r.course_title] = [];
+      byCourse[r.course_title].push(r);
+    });
+    container.innerHTML = Object.entries(byCourse).map(([title, people]) => `
+      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h4 style="margin:0;">${title}</h4>
+          <span class="tag tag-sage">${people.length} interesserte</span>
+        </div>
+        <table class="data-table" style="width:100%;">
+          <thead><tr><th>Navn</th><th>Telefon</th><th>Dato</th><th></th></tr></thead>
+          <tbody>
+            ${people.map(p => `
+              <tr>
+                <td><strong>${p.full_name}</strong></td>
+                <td><a href="tel:${p.phone}">${p.phone}</a></td>
+                <td>${formatDate(p.created_at)}</td>
+                <td><button class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828;" onclick="deleteCourseInterest(${p.id})">Slett</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+async function deleteCourseInterest(id) {
+  if (!confirm('Slette denne interessen?')) return;
+  try {
+    await api('/api/admin/course-interests/' + id, { method: 'DELETE' });
+    loadCourseInterests();
+  } catch (e) { console.error(e); }
+}
+
 async function loadCourses() {
   try {
     const courses = await api('/api/admin/courses');

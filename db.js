@@ -164,6 +164,17 @@ async function initDB() {
     `);
 
     await conn.query(`
+      CREATE TABLE IF NOT EXISTS course_interests (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        course_id INT NOT NULL,
+        full_name VARCHAR(255) NOT NULL,
+        phone VARCHAR(20) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    await conn.query(`
       CREATE TABLE IF NOT EXISTS photos (
         id INT PRIMARY KEY AUTO_INCREMENT,
         filename VARCHAR(255) NOT NULL,
@@ -216,6 +227,16 @@ async function initDB() {
       ('standard', 'oreokake', 'Oreokake', 450, '24cm'),
       ('standard', 'eplekake', 'Eplekake', 380, 'Langpanne 30x40'),
       ('standard', 'kransekake', 'Kransekake (18 ringer)', 850, 'Klassisk kransekake')
+    `);
+
+    // Seed interest courses
+    await conn.query(`
+      INSERT IGNORE INTO courses (id, title, description, active) VALUES
+      (1, 'Klingkurs', 'Lær å lage kling fra bunnen av – den tradisjonelle og elskverdige julesnacken. Vi går gjennom deig, steking og servering.', TRUE),
+      (2, 'Fondant og dekorering', 'Lær å jobbe med fondant og lag vakre detaljer og figurer til kaker. Passer for alle nivåer.', TRUE),
+      (3, 'Smørkrem og rosetter', 'Bli kjent med pipingteknikker og lag vakre roser, rosetter og border med smørkrem.', TRUE),
+      (4, 'Kransekake', 'Lag en hel klassisk kransekake fra bunnen – perfekt til bursdager og høytider.', TRUE),
+      (5, 'Cupcakes for nybegynnere', 'Stek og dekorer egne cupcakes med smørkrem og enkel pynt. Lavterskel og gøy!', TRUE)
     `);
 
     console.log('Database initialized successfully');

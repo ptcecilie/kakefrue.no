@@ -123,7 +123,8 @@
   <!-- Course listings -->
   <section>
     <div class="container" style="max-width: 820px;">
-      <h2 class="section-title">Kommende kurs</h2>
+      <h2 class="section-title">Kurs jeg vurderer</h2>
+      <p class="section-subtitle">Meld din interesse – når nok er påmeldt setter vi en dato!</p>
 
       <div id="coursesLoading" style="text-align:center; padding:48px;">
         <div class="spinner"></div>
@@ -132,9 +133,9 @@
 
       <div id="coursesEmpty" class="hidden" style="text-align:center; padding:64px 24px;">
         <div style="font-size:3rem; margin-bottom:16px;">📅</div>
-        <h3>Ingen kurs planlagt ennå</h3>
-        <p style="opacity:0.6; margin-top:8px;">Følg Kakefrue på Instagram for å bli varslet om nye kurs!</p>
-        <a href="https://instagram.com/kakefrue" target="_blank" class="btn btn-secondary" style="margin-top:20px;">Følg @kakefrue</a>
+        <h3>Ingen kurs ennå</h3>
+        <p style="opacity:0.6; margin-top:8px;">Følg Kakefrue på Instagram for oppdateringer!</p>
+        <a href="https://instagram.com/kakefrue90" target="_blank" class="btn btn-secondary" style="margin-top:20px;">Følg @kakefrue90</a>
       </div>
 
       <div id="coursesList"></div>
@@ -187,94 +188,69 @@ fetch('/api/courses')
       return;
     }
     const list = document.getElementById('coursesList');
-    list.innerHTML = courses.map(c => {
-      const full = c.current_participants >= c.max_participants;
-      return `
-        <div class="course-card">
-          <div class="course-header">
-            <div>
-              <h3 style="margin-bottom:8px;">${c.title}</h3>
-              <div class="course-meta">
-                <div class="course-meta-item"><span>📅</span><span>${formatDate(c.date)}</span></div>
-                ${c.time_start ? `<div class="course-meta-item"><span>🕐</span><span>Kl. ${c.time_start.substring(0,5)}</span></div>` : ''}
-                <div class="course-meta-item"><span>⏱️</span><span>${c.duration_hours} timer</span></div>
-                <div class="course-meta-item"><span>👥</span><span>${spotsLabel(c)}</span></div>
-              </div>
-            </div>
-            <div style="text-align:right; flex-shrink:0;">
-              ${c.price ? `<div style="font-family:var(--font-heading); font-size:1.8rem; color:var(--gold-dark);">kr ${Number(c.price).toLocaleString('nb-NO')},-</div>` : ''}
-              ${!full ? `<button class="btn btn-primary btn-sm" style="margin-top:12px;" onclick="toggleReg(${c.id}, this)">Meld meg på</button>`
-                      : `<button class="btn btn-outline btn-sm" style="margin-top:12px;" disabled>Fullt</button>`}
-            </div>
+    list.innerHTML = courses.map(c => `
+      <div class="course-card">
+        <div class="course-header">
+          <div>
+            <h3 style="margin-bottom:8px;">${c.title}</h3>
+            ${c.interest_count > 0 ? `<div style="font-size:0.85rem; color:var(--sage); font-weight:600; margin-top:4px;">👥 ${c.interest_count} person${c.interest_count !== 1 ? 'er' : ''} har meldt interesse</div>` : ''}
           </div>
-          <div class="course-body">
-            ${c.description ? `<p style="opacity:0.75; margin-bottom:0;">${c.description}</p>` : ''}
-            ${c.what_to_bring ? `<p style="font-size:0.85rem; margin-top:12px; padding:12px 16px; background:var(--cream); border-radius:var(--radius-sm); margin-bottom:0;"><strong>Ta med:</strong> ${c.what_to_bring}</p>` : ''}
+          <button class="btn btn-primary btn-sm" style="flex-shrink:0;" onclick="toggleInterest(${c.id}, this)">Meld interesse</button>
+        </div>
+        <div class="course-body">
+          ${c.description ? `<p style="opacity:0.75; margin-bottom:0;">${c.description}</p>` : ''}
 
-            <div class="reg-form" id="regForm-${c.id}">
-              <h4 style="margin-bottom:16px;">Påmelding – ${c.title}</h4>
-              <div id="regSuccess-${c.id}" class="alert alert-success hidden">Du er påmeldt! Sjekk e-posten din for bekreftelse.</div>
-              <div id="regError-${c.id}" class="alert alert-error hidden"></div>
-              <form onsubmit="submitReg(event, ${c.id})">
-                <div class="reg-grid">
-                  <div class="form-group">
-                    <label class="form-label">Fullt navn *</label>
-                    <input class="form-input" name="full_name" type="text" placeholder="Ditt navn" required>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Telefon *</label>
-                    <input class="form-input" name="phone" type="tel" placeholder="Mobilnummer" required>
-                  </div>
-                  <div class="form-group" style="grid-column:1/-1;">
-                    <label class="form-label">E-post *</label>
-                    <input class="form-input" name="email" type="email" placeholder="din@epost.no" required>
-                  </div>
+          <div class="reg-form" id="interestForm-${c.id}">
+            <div id="interestSuccess-${c.id}" class="alert alert-success hidden">Takk! Jeg tar kontakt når kurset er klart. 🎂</div>
+            <div id="interestError-${c.id}" class="alert alert-error hidden"></div>
+            <form onsubmit="submitInterest(event, ${c.id})">
+              <div class="reg-grid">
+                <div class="form-group">
+                  <label class="form-label">Navn *</label>
+                  <input class="form-input" name="full_name" type="text" placeholder="Ditt navn" required>
                 </div>
-                <p style="font-size:0.8rem; opacity:0.6; margin-bottom:16px;">Betaling skjer via betalingslenke jeg sender på e-post etter påmelding.</p>
-                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Bekreft påmelding</button>
-              </form>
-            </div>
+                <div class="form-group">
+                  <label class="form-label">Telefon *</label>
+                  <input class="form-input" name="phone" type="tel" placeholder="Mobilnummer" required>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:4px;">Send interesse ✓</button>
+            </form>
           </div>
         </div>
-      `;
-    }).join('');
+      </div>
+    `).join('');
   })
   .catch(() => {
     document.getElementById('coursesLoading').style.display = 'none';
     document.getElementById('coursesEmpty').classList.remove('hidden');
   });
 
-function toggleReg(courseId, btn) {
-  const form = document.getElementById('regForm-' + courseId);
+function toggleInterest(courseId, btn) {
+  const form = document.getElementById('interestForm-' + courseId);
   const isOpen = form.classList.contains('open');
   form.classList.toggle('open');
-  btn.textContent = isOpen ? 'Meld meg på' : 'Avbryt';
+  btn.textContent = isOpen ? 'Meld interesse' : 'Avbryt';
 }
 
-async function submitReg(e, courseId) {
+async function submitInterest(e, courseId) {
   e.preventDefault();
   const form = e.target;
-  const data = {
-    course_id: courseId,
-    full_name: form.full_name.value,
-    phone: form.phone.value,
-    email: form.email.value
-  };
-  const successEl = document.getElementById('regSuccess-' + courseId);
-  const errorEl = document.getElementById('regError-' + courseId);
+  const successEl = document.getElementById('interestSuccess-' + courseId);
+  const errorEl = document.getElementById('interestError-' + courseId);
   successEl.classList.add('hidden');
   errorEl.classList.add('hidden');
-
   try {
-    const res = await fetch('/api/course-registrations', {
+    const res = await fetch('/api/course-interests', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify({ course_id: courseId, full_name: form.full_name.value, phone: form.phone.value })
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Noe gikk galt');
     successEl.classList.remove('hidden');
     form.reset();
+    form.closest('.reg-form').querySelector('form').style.display = 'none';
   } catch (err) {
     errorEl.textContent = err.message;
     errorEl.classList.remove('hidden');
