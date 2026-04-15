@@ -44,27 +44,41 @@ function closeModal() { $('modalBackdrop').classList.add('hidden'); }
 $('modalBackdrop').addEventListener('click', e => { if (e.target === $('modalBackdrop')) closeModal(); });
 
 // ── Login ──────────────────────────────────────────────────
+async function attemptLogin(pw) {
+  adminPassword = pw;
+  await api('/api/admin/stats');
+  localStorage.setItem('kakefrue_admin_pw', pw);
+  $('loginScreen').classList.add('hidden');
+  $('adminApp').classList.remove('hidden');
+  initAdmin();
+}
+
 $('loginBtn').addEventListener('click', async () => {
   const pw = $('adminPassword').value.trim();
   if (!pw) return;
   $('loginBtn').disabled = true;
   $('loginBtn').textContent = 'Logger inn...';
   try {
-    adminPassword = pw;
-    await api('/api/admin/stats');
-    $('loginScreen').classList.add('hidden');
-    $('adminApp').classList.remove('hidden');
-    initAdmin();
+    await attemptLogin(pw);
   } catch {
     $('loginError').textContent = 'Feil passord. Prøv igjen.';
     $('loginError').classList.remove('hidden');
     adminPassword = '';
+    localStorage.removeItem('kakefrue_admin_pw');
   } finally {
     $('loginBtn').disabled = false;
     $('loginBtn').textContent = 'Logg inn';
   }
 });
 $('adminPassword').addEventListener('keydown', e => { if (e.key === 'Enter') $('loginBtn').click(); });
+
+// Auto-login fra localStorage
+(async () => {
+  const saved = localStorage.getItem('kakefrue_admin_pw');
+  if (saved) {
+    try { await attemptLogin(saved); } catch { localStorage.removeItem('kakefrue_admin_pw'); }
+  }
+})();
 
 // ── Navigation ─────────────────────────────────────────────
 document.querySelectorAll('.admin-nav-item').forEach(item => {

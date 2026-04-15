@@ -454,12 +454,22 @@
               <div class="option-card" data-delivery="levering">
                 <div class="option-icon">🚗</div>
                 <div class="option-label">Levering</div>
-                <div class="option-sublabel">+ kr 200,- · Lokal levering</div>
+                <div class="option-sublabel" id="deliveryPriceLabel">kr 8,- per km</div>
               </div>
             </div>
-            <div id="deliveryAddressWrap" class="form-group hidden">
-              <label class="form-label">Leveringsadresse</label>
-              <input class="form-input" id="deliveryAddress" type="text" placeholder="Gate, postnummer og sted">
+            <div id="deliveryAddressWrap" class="hidden">
+              <div class="form-group">
+                <label class="form-label">Postnummer</label>
+                <input class="form-input" id="deliveryZip" type="text" inputmode="numeric" maxlength="4" placeholder="F.eks. 3915" style="max-width:160px;">
+                <div class="form-hint">Vi beregner leveringsprisen ut fra avstand fra Porsgrunn (3901)</div>
+              </div>
+              <div id="deliveryCostResult" style="display:none; background:rgba(122,158,130,0.1); border-radius:var(--radius-sm); padding:12px 16px; margin-bottom:16px; font-size:0.9rem;">
+                <span id="deliveryCostText"></span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Leveringsadresse</label>
+                <input class="form-input" id="deliveryAddress" type="text" placeholder="Gate og sted">
+              </div>
             </div>
             <div class="info-notice" style="background: var(--cream); border-left: 3px solid var(--gold); padding: 12px 16px; border-radius: 0 var(--radius) var(--radius) 0; margin-bottom: 20px; font-size: 0.9rem; color: var(--brown); opacity: 0.85;">
               Eksakt klokkeslett for henting/levering avtales direkte med deg etter at bestillingen er bekreftet.

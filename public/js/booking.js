@@ -41,6 +41,8 @@ const state = {
   designLevel: '',
   deliveryType: 'henting',
   deliveryAddress: '',
+  deliveryZip: '',
+  deliveryFee: 0,
 };
 
 const SESONG_PRICES = {
@@ -51,7 +53,27 @@ const ALLERGEN_PRICES = { glutenfritt:150, 'nøtter':100, laktosefritt:100, melk
 const DESIGN_PRICES = { enkel:0, standard:300, avansert:700 };
 const KAKE_BASE = { 1:600, 2:1100, 3:1600 };
 const CUPCAKE_PRICE = 45;
-const DELIVERY_FEE = 200;
+const DELIVERY_KR_PER_KM = 8;
+const DELIVERY_MIN_FEE = 50; // minimumsavgift
+
+// Postnummer → ca. km fra Porsgrunn 3901 (begge veier, rundet)
+const ZIP_DISTANCES = {
+  '3901':0,'3902':0,'3903':0,'3904':0,'3905':0,'3906':0,'3907':0,'3908':0,'3909':0,
+  '3910':4,'3911':6,'3912':5,'3913':8,'3914':10,'3915':12,'3916':9,'3917':10,
+  '3918':16,'3919':14,'3920':18,'3921':20,'3925':22,'3929':24,
+  '3930':28,'3940':32,'3950':38,'3960':44,
+  '3970':30,'3980':38,'3990':60,
+  '3700':18,'3710':22,'3720':20,'3730':24,'3740':30,'3750':34,'3760':38,'3770':42,'3780':48,'3790':55,
+  '3800':55,'3810':58,'3820':62,'3825':65,'3830':68,
+  '3940':50,'3945':55,
+};
+
+function getDeliveryFee(zip) {
+  const km = ZIP_DISTANCES[zip];
+  if (km === undefined) return null; // ukjent postnummer
+  if (km === 0) return 0;
+  return Math.max(DELIVERY_MIN_FEE, Math.round(km * 2 * DELIVERY_KR_PER_KM));
+}
 
 // ── Utility ───────────────────────────────────────────────
 function $(id) { return document.getElementById(id); }
@@ -409,10 +431,43 @@ document.querySelectorAll('[data-delivery]').forEach(card => {
     document.querySelectorAll('[data-delivery]').forEach(c => c.classList.remove('selected'));
     card.classList.add('selected');
     state.deliveryType = card.dataset.delivery;
+    state.deliveryFee = 0;
     const addrWrap = $('deliveryAddressWrap');
     if (state.deliveryType === 'levering') addrWrap.classList.remove('hidden');
-    else addrWrap.classList.add('hidden');
+    else { addrWrap.classList.add('hidden'); $('deliveryCostResult').style.display = 'none'; }
   });
+});
+
+// Live km-kalkulator
+$('deliveryZip') && $('deliveryZip').addEventListener('input', () => {
+  const zip = $('deliveryZip').value.trim();
+  const resultEl = $('deliveryCostResult');
+  const textEl = $('deliveryCostText');
+  const labelEl = $('deliveryPriceLabel');
+  if (zip.length === 4) {
+    const fee = getDeliveryFee(zip);
+    if (fee === null) {
+      textEl.textContent = 'Ukjent postnummer – leveringspris avtales direkte.';
+      resultEl.style.display = 'block';
+      state.deliveryFee = 0;
+      if (labelEl) labelEl.textContent = 'kr 8,- per km';
+    } else if (fee === 0) {
+      textEl.textContent = '🎉 Gratis levering – du er i Porsgrunn!';
+      resultEl.style.display = 'block';
+      state.deliveryFee = 0;
+      if (labelEl) labelEl.textContent = 'Gratis';
+    } else {
+      const km = ZIP_DISTANCES[zip];
+      textEl.textContent = `📍 Ca. ${km} km fra Porsgrunn (begge veier: ${km*2} km) → leveringskostnad: kr ${fee},-`;
+      resultEl.style.display = 'block';
+      state.deliveryFee = fee;
+      if (labelEl) labelEl.textContent = `+ kr ${fee},-`;
+    }
+  } else {
+    resultEl.style.display = 'none';
+    state.deliveryFee = 0;
+    if (labelEl) labelEl.textContent = 'kr 8,- per km';
+  }
 });
 
 document.querySelectorAll('.design-card').forEach(card => {
@@ -431,7 +486,9 @@ $('step7Next').addEventListener('click', () => {
   hideError('step7Error');
   if (!state.designLevel) return showError('step7Error', 'Velg et designnivå.');
   if (state.deliveryType === 'levering') {
+    state.deliveryZip = $('deliveryZip').value.trim();
     state.deliveryAddress = $('deliveryAddress').value.trim();
+    if (!state.deliveryZip || state.deliveryZip.length !== 4) return showError('step7Error', 'Fyll inn postnummer (4 siffer).');
     if (!state.deliveryAddress) return showError('step7Error', 'Fyll inn leveringsadresse.');
   }
   buildSummary();
@@ -487,9 +544,9 @@ function calcTotal() {
   });
 
   // Delivery
-  if (state.deliveryType === 'levering') {
-    total += DELIVERY_FEE;
-    breakdown.push({ label: 'Levering', price: DELIVERY_FEE });
+  if (state.deliveryType === 'levering' && state.deliveryFee > 0) {
+    total += state.deliveryFee;
+    breakdown.push({ label: `Levering (${state.deliveryZip})`, price: state.deliveryFee });
   }
 
   return { total, breakdown, deposit: Math.ceil(total * 0.3) };
@@ -503,7 +560,7 @@ function buildSummary() {
   $('sum-occasion').textContent = state.occasion + (state.occasionCustom ? ': ' + state.occasionCustom : '');
   $('sum-guests').textContent = state.guestCount ? state.guestCount + ' gjester' : '—';
   $('sum-delivery').textContent = state.deliveryType === 'levering'
-    ? 'Levering til: ' + (state.deliveryAddress || '—')
+    ? `Levering til ${state.deliveryZip} ${state.deliveryAddress}${state.deliveryFee > 0 ? ' (kr ' + state.deliveryFee + ',-)' : ' (gratis)'}`
     : 'Henting i Porsgrunn';
 
   // Items summary
@@ -578,6 +635,8 @@ $('step8Pay').addEventListener('click', async () => {
         guest_count: state.guestCount,
         delivery_type: state.deliveryType,
         delivery_address: state.deliveryAddress || null,
+        delivery_zip: state.deliveryZip || null,
+        delivery_fee: state.deliveryFee || 0,
         allergens: state.allergens,
         design_level: state.designLevel || null,
         items,
