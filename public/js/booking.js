@@ -575,7 +575,11 @@ function calcTotal() {
     breakdown.push({ label: `Levering (${state.deliveryZip})`, price: state.deliveryFee });
   }
 
-  return { total, breakdown, deposit: Math.ceil(total * 0.3) };
+  // Deposit based on design level
+  const DEPOSIT_BY_LEVEL = { enkel: 300, standard: 600, avansert: 1000 };
+  const deposit = DEPOSIT_BY_LEVEL[state.designLevel] || Math.ceil(total * 0.3);
+
+  return { total, breakdown, deposit };
 }
 
 function buildSummary() {

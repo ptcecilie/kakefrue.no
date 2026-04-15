@@ -93,13 +93,15 @@ document.querySelectorAll('.admin-nav-item').forEach(item => {
 });
 
 // ── Stat card navigation ────────────────────────────────────
-document.querySelectorAll('.stat-card[data-goto]').forEach(card => {
-  card.addEventListener('click', () => {
-    const target = card.dataset.goto;
-    const navItem = document.querySelector(`.admin-nav-item[data-panel="${target}"]`);
-    if (navItem) navItem.click();
-  });
-});
+function gotoPanel(panel) {
+  document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+  const navItem = document.querySelector(`.admin-nav-item[data-panel="${panel}"]`);
+  if (navItem) navItem.classList.add('active');
+  const panelEl = document.getElementById('panel-' + panel);
+  if (panelEl) panelEl.classList.add('active');
+  loadPanel(panel);
+}
 
 function loadPanel(panel) {
   switch (panel) {
@@ -111,8 +113,93 @@ function loadPanel(panel) {
     case 'kurs': loadCourses(); break;
     case 'anbefalinger': loadReviews(); break;
     case 'priser': loadPricing(); break;
+    case 'statistikk': loadStatistikk(); break;
     case 'innstillinger': loadSettings(); break;
   }
+}
+
+// ── Statistikk ─────────────────────────────────────────────
+async function loadStatistikk() {
+  try {
+    const [stats, bookings] = await Promise.all([
+      api('/api/admin/stats'),
+      api('/api/admin/bookings')
+    ]);
+
+    // Nøkkeltall
+    const confirmed = bookings.filter(b => b.status === 'confirmed' || b.status === 'completed');
+    const totalRevenue = confirmed.reduce((s, b) => s + (b.total_amount || 0), 0);
+    const avgOrder = confirmed.length ? Math.round(totalRevenue / confirmed.length) : 0;
+    document.getElementById('statstkGrid').innerHTML = `
+      <div class="stat-card"><div class="stat-value">${stats.total_bookings}</div><div class="stat-label">Totale bestillinger</div></div>
+      <div class="stat-card"><div class="stat-value">kr ${totalRevenue.toLocaleString('nb-NO')}</div><div class="stat-label">Estimert omsetning</div></div>
+      <div class="stat-card"><div class="stat-value">kr ${avgOrder.toLocaleString('nb-NO')}</div><div class="stat-label">Snitt per bestilling</div></div>
+      <div class="stat-card"><div class="stat-value">${stats.completed_bookings || 0}</div><div class="stat-label">Fullførte</div></div>
+    `;
+
+    // Bestillinger per måned (siste 12 mnd)
+    const monthlyCounts = {};
+    const monthlyRevenue = {};
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.toISOString().slice(0, 7);
+      monthlyCounts[key] = 0;
+      monthlyRevenue[key] = 0;
+    }
+    bookings.forEach(b => {
+      if (!b.booking_date) return;
+      const key = b.booking_date.slice(0, 7);
+      if (key in monthlyCounts) {
+        monthlyCounts[key]++;
+        monthlyRevenue[key] += (b.total_amount || 0);
+      }
+    });
+
+    renderBarChart('chartMonthly', monthlyCounts, v => v, '#8B72BE');
+    renderBarChart('chartRevenue', monthlyRevenue, v => `kr ${Math.round(v/1000)}k`, '#7A9E82');
+
+    // Anledning
+    const occasions = {};
+    bookings.forEach(b => { const o = b.occasion || 'Annet'; occasions[o] = (occasions[o] || 0) + 1; });
+    renderPillList('chartOccasion', occasions, stats.total_bookings);
+
+    // Designnivå
+    const designs = {};
+    bookings.forEach(b => { const d = b.design_level || 'ukjent'; designs[d] = (designs[d] || 0) + 1; });
+    renderPillList('chartDesign', designs, stats.total_bookings);
+
+  } catch (e) { console.error(e); }
+}
+
+function renderBarChart(containerId, data, labelFn, color) {
+  const keys = Object.keys(data);
+  const values = Object.values(data);
+  const max = Math.max(...values, 1);
+  const el = document.getElementById(containerId);
+  el.innerHTML = keys.map((k, i) => {
+    const pct = Math.round((values[i] / max) * 100);
+    const shortKey = k.length === 7 ? new Date(k + '-01').toLocaleDateString('nb-NO', { month:'short', year:'2-digit' }) : k;
+    return `<div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; position:relative;">
+      <div style="font-size:0.65rem; opacity:0.6; position:absolute; top:-18px;">${values[i] > 0 ? labelFn(values[i]) : ''}</div>
+      <div style="width:100%; background:${color}; border-radius:4px 4px 0 0; height:${pct}%; min-height:${values[i] > 0 ? 3 : 0}px; transition:height 0.3s;"></div>
+      <div style="font-size:0.6rem; opacity:0.55; white-space:nowrap; position:absolute; bottom:-22px;">${shortKey}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderPillList(containerId, data, total) {
+  const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
+  const colors = ['#8B72BE','#7A9E82','#D4A96A','#D8CCEE','#B5C9A8','#F0D5A0'];
+  document.getElementById(containerId).innerHTML = sorted.map(([k, v], i) => {
+    const pct = total ? Math.round((v / total) * 100) : 0;
+    return `<div style="margin-bottom:10px;">
+      <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;"><span>${k}</span><span style="opacity:0.6;">${v} (${pct}%)</span></div>
+      <div style="background:rgba(0,0,0,0.06); border-radius:100px; height:8px; overflow:hidden;">
+        <div style="width:${pct}%; background:${colors[i % colors.length]}; height:100%; border-radius:100px; transition:width 0.4s;"></div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function initAdmin() {

@@ -238,6 +238,7 @@
       <div class="admin-nav-item" data-panel="kurs"><span class="icon">👩‍🍳</span> Kurs</div>
       <div class="admin-nav-item" data-panel="anbefalinger"><span class="icon">⭐</span> Anbefalinger</div>
       <div class="admin-nav-item" data-panel="priser"><span class="icon">💰</span> Priser</div>
+      <div class="admin-nav-item" data-panel="statistikk"><span class="icon">📈</span> Statistikk</div>
       <div class="admin-nav-item" data-panel="innstillinger"><span class="icon">⚙️</span> Innstillinger</div>
     </nav>
     <div class="admin-sidebar-footer">© 2024 Kakefrue</div>
@@ -250,11 +251,11 @@
     <div class="admin-panel active" id="panel-oversikt">
       <div class="section-header"><h2>Oversikt</h2><button class="btn btn-outline btn-sm" onclick="loadStats()">↻ Oppdater</button></div>
       <div class="stats-grid" id="statsGrid">
-        <div class="stat-card" data-goto="bestillinger"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Totale bestillinger</div></div>
-        <div class="stat-card" data-goto="bestillinger"><div class="stat-value" id="stat-pending">—</div><div class="stat-label">Venter bekreftelse</div></div>
-        <div class="stat-card" data-goto="kalender"><div class="stat-value" id="stat-upcoming">—</div><div class="stat-label">Kommende</div></div>
-        <div class="stat-card" data-goto="ufullstendige"><div class="stat-value" id="stat-abandoned">—</div><div class="stat-label">Ufullstendige</div></div>
-        <div class="stat-card" data-goto="provesmaking"><div class="stat-value" id="stat-tastings">—</div><div class="stat-label">Prøvesmakinger</div></div>
+        <div class="stat-card" data-goto="bestillinger" onclick="gotoPanel('bestillinger')"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Totale bestillinger</div></div>
+        <div class="stat-card" data-goto="bestillinger" onclick="gotoPanel('bestillinger')"><div class="stat-value" id="stat-pending">—</div><div class="stat-label">Venter bekreftelse</div></div>
+        <div class="stat-card" data-goto="kalender" onclick="gotoPanel('kalender')"><div class="stat-value" id="stat-upcoming">—</div><div class="stat-label">Kommende</div></div>
+        <div class="stat-card" data-goto="ufullstendige" onclick="gotoPanel('ufullstendige')"><div class="stat-value" id="stat-abandoned">—</div><div class="stat-label">Ufullstendige</div></div>
+        <div class="stat-card" data-goto="provesmaking" onclick="gotoPanel('provesmaking')"><div class="stat-value" id="stat-tastings">—</div><div class="stat-label">Prøvesmakinger</div></div>
       </div>
       <div class="data-table-wrap">
         <div class="data-table-header"><h3>Siste bestillinger</h3></div>
@@ -371,6 +372,38 @@
     </div>
 
     <!-- Innstillinger -->
+    <!-- Statistikk -->
+    <div class="admin-panel" id="panel-statistikk">
+      <div class="section-header"><h2>Statistikk</h2><button class="btn btn-outline btn-sm" onclick="loadStatistikk()">↻ Oppdater</button></div>
+
+      <!-- Nøkkeltall -->
+      <div class="stats-grid" id="statstkGrid" style="margin-bottom:32px;"></div>
+
+      <!-- Bestillinger per måned -->
+      <div style="background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px; margin-bottom:24px;">
+        <h3 style="margin-bottom:20px;">Bestillinger per måned</h3>
+        <div id="chartMonthly" style="display:flex; align-items:flex-end; gap:8px; height:180px; padding-bottom:28px; position:relative; border-bottom:2px solid rgba(0,0,0,0.07);"></div>
+      </div>
+
+      <!-- Inntekt per måned -->
+      <div style="background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px; margin-bottom:24px;">
+        <h3 style="margin-bottom:20px;">Inntekt per måned (estimert)</h3>
+        <div id="chartRevenue" style="display:flex; align-items:flex-end; gap:8px; height:180px; padding-bottom:28px; position:relative; border-bottom:2px solid rgba(0,0,0,0.07);"></div>
+      </div>
+
+      <!-- Fordeling -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+        <div style="background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px;">
+          <h3 style="margin-bottom:20px;">Anledning</h3>
+          <div id="chartOccasion"></div>
+        </div>
+        <div style="background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px;">
+          <h3 style="margin-bottom:20px;">Designnivå</h3>
+          <div id="chartDesign"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="admin-panel" id="panel-innstillinger">
       <div class="section-header"><h2>Innstillinger</h2></div>
       <div style="background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); padding:32px; max-width:560px;">

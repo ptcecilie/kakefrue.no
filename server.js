@@ -324,8 +324,9 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     const [[{ abandoned_count }]] = await pool.query(`SELECT COUNT(*) as abandoned_count FROM abandoned_bookings WHERE contacted = FALSE`);
     const [[{ upcoming_bookings }]] = await pool.query(`SELECT COUNT(*) as upcoming_bookings FROM bookings WHERE booking_date >= CURDATE() AND status != 'cancelled'`);
     const [[{ pending_tastings }]] = await pool.query(`SELECT COUNT(*) as pending_tastings FROM tastings WHERE status = 'pending'`);
+    const [[{ completed_bookings }]] = await pool.query(`SELECT COUNT(*) as completed_bookings FROM bookings WHERE status = 'completed'`);
 
-    res.json({ total_bookings, pending_bookings, abandoned_count, upcoming_bookings, pending_tastings });
+    res.json({ total_bookings, pending_bookings, abandoned_count, upcoming_bookings, pending_tastings, completed_bookings });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Serverfeil' });
