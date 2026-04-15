@@ -543,8 +543,8 @@
 </div>
 
 <!-- E-post modal -->
-<div class="modal-overlay" id="emailModalOverlay" style="display:none;" onclick="if(event.target===this)closeEmailModal()">
-  <div class="modal-box">
+<div class="modal-backdrop hidden" id="emailModalOverlay" onclick="if(event.target===this)closeEmailModal()">
+  <div class="modal" style="max-width:500px;">
     <div class="modal-header">
       <h3>✉️ Send e-post</h3>
       <button class="modal-close" onclick="closeEmailModal()">×</button>
@@ -595,6 +595,6 @@
   </div>
 </div>
 
-<script src="/js/admin.js?v=1.6"></script>
+<script src="/js/admin.js?v=1.8"></script>
 </body>
 </html>

@@ -106,6 +106,11 @@ function gotoPanel(panel) {
 function clearBadge(panel) {
   const badge = document.getElementById('badge-' + panel);
   if (badge) badge.style.display = 'none';
+  localStorage.setItem('badge_cleared_' + panel, Date.now());
+}
+
+function isBadgeCleared(panel) {
+  return !!localStorage.getItem('badge_cleared_' + panel);
 }
 
 function loadPanel(panel) {
@@ -151,6 +156,7 @@ function renderCustomers(list) {
       <td>${c.booking_count > 0 ? `<span style="color:var(--sage);font-weight:600;">${c.booking_count} bestilling${c.booking_count !== 1 ? 'er' : ''}</span>` : '<span style="opacity:0.35;">0</span>'}</td>
       <td style="display:flex;gap:6px;">
         ${c.email ? `<button class="btn btn-outline btn-sm" data-email="${c.email}" data-name="${c.full_name.replace(/"/g,'&quot;')}" onclick="openEmailModal(this.dataset.email,this.dataset.name)">✉️</button>` : ''}
+        <button class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828;" onclick="deleteCustomer(${c.id})">Slett</button>
       </td>
     </tr>
   `).join('');
@@ -174,6 +180,17 @@ function openAddCustomerModal() {
 
 function closeAddCustomerModal() {
   $('addCustomerModal').classList.add('hidden');
+}
+
+async function deleteCustomer(id) {
+  if (!confirm('Slette denne kunden? Dette kan ikke angres.')) return;
+  try {
+    await api('/api/admin/customers/' + id, { method: 'DELETE' });
+    showAlert('Kunde slettet', 'success');
+    loadCustomers();
+  } catch (e) {
+    showAlert(e.message || 'Noe gikk galt', 'error');
+  }
 }
 
 async function saveNewCustomer() {
@@ -381,11 +398,11 @@ async function loadStats() {
     $('stat-tastings').textContent = s.pending_tastings;
 
     const badgeBest = $('badge-bestillinger');
-    if (s.pending_bookings > 0) { badgeBest.textContent = s.pending_bookings; badgeBest.style.display = ''; } else { badgeBest.style.display = 'none'; }
+    if (s.pending_bookings > 0 && !isBadgeCleared('bestillinger')) { badgeBest.textContent = s.pending_bookings; badgeBest.style.display = ''; } else { badgeBest.style.display = 'none'; }
     const badgeUfull = $('badge-ufullstendige');
-    if (s.abandoned_count > 0) { badgeUfull.textContent = s.abandoned_count; badgeUfull.style.display = ''; } else { badgeUfull.style.display = 'none'; }
+    if (s.abandoned_count > 0 && !isBadgeCleared('ufullstendige')) { badgeUfull.textContent = s.abandoned_count; badgeUfull.style.display = ''; } else { badgeUfull.style.display = 'none'; }
     const badgeProv = $('badge-provesmaking');
-    if (s.pending_tastings > 0) { badgeProv.textContent = s.pending_tastings; badgeProv.style.display = ''; } else { badgeProv.style.display = 'none'; }
+    if (s.pending_tastings > 0 && !isBadgeCleared('provesmaking')) { badgeProv.textContent = s.pending_tastings; badgeProv.style.display = ''; } else { badgeProv.style.display = 'none'; }
   } catch {}
 }
 
@@ -729,11 +746,11 @@ function openEmailModal(email, name) {
   $('emailRecipientLabel').textContent = `${name} (${email})`;
   $('emailSubjectText').value = '';
   $('emailMessageText').value = '';
-  $('emailModalOverlay').style.display = 'flex';
+  $('emailModalOverlay').classList.remove('hidden');
 }
 
 function closeEmailModal() {
-  $('emailModalOverlay').style.display = 'none';
+  $('emailModalOverlay').classList.add('hidden');
   activeEmailTo = null;
   activeEmailName = null;
 }

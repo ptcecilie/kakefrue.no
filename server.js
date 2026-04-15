@@ -573,6 +573,16 @@ app.post('/api/admin/customers', requireAdmin, async (req, res) => {
   }
 });
 
+// DELETE /api/admin/customers/:id
+app.delete('/api/admin/customers/:id', requireAdmin, async (req, res) => {
+  try {
+    await pool.query(`DELETE FROM customers WHERE id = ?`, [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil – kunden kan ha tilknyttede bestillinger' });
+  }
+});
+
 // POST /api/admin/send-email
 app.post('/api/admin/send-email', requireAdmin, async (req, res) => {
   const { to, name, subject, message } = req.body;
