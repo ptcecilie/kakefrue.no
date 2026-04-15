@@ -118,9 +118,76 @@ function loadPanel(panel) {
     case 'kurs': loadCourses(); break;
     case 'anbefalinger': loadReviews(); break;
     case 'priser': loadPricing(); break;
+    case 'kunder': loadCustomers(); break;
     case 'bilder': loadPhotos(); break;
     case 'statistikk': loadStatistikk(); break;
     case 'innstillinger': loadSettings(); break;
+  }
+}
+
+// ── Kunder ─────────────────────────────────────────────────
+let allCustomers = [];
+
+async function loadCustomers() {
+  try {
+    allCustomers = await api('/api/admin/customers');
+    renderCustomers(allCustomers);
+  } catch (e) { console.error(e); }
+}
+
+function renderCustomers(list) {
+  const tbody = $('customersTableBody');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;opacity:0.5;">Ingen kunder ennå</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(c => `
+    <tr>
+      <td style="opacity:0.4;">${c.id}</td>
+      <td><strong>${c.full_name}</strong></td>
+      <td><a href="tel:${c.phone}">${c.phone}</a></td>
+      <td>${c.email ? `<a href="mailto:${c.email}">${c.email}</a>` : '<span style="opacity:0.35;">—</span>'}</td>
+      <td>${formatDate(c.created_at)}</td>
+      <td>${c.booking_count > 0 ? `<span style="color:var(--sage);font-weight:600;">${c.booking_count} bestilling${c.booking_count !== 1 ? 'er' : ''}</span>` : '<span style="opacity:0.35;">0</span>'}</td>
+      <td style="display:flex;gap:6px;">
+        ${c.email ? `<button class="btn btn-outline btn-sm" data-email="${c.email}" data-name="${c.full_name.replace(/"/g,'&quot;')}" onclick="openEmailModal(this.dataset.email,this.dataset.name)">✉️</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterCustomers() {
+  const q = $('customerSearch').value.toLowerCase();
+  renderCustomers(allCustomers.filter(c =>
+    c.full_name.toLowerCase().includes(q) ||
+    c.phone.includes(q) ||
+    (c.email || '').toLowerCase().includes(q)
+  ));
+}
+
+function openAddCustomerModal() {
+  $('newCustomerName').value = '';
+  $('newCustomerPhone').value = '';
+  $('newCustomerEmail').value = '';
+  $('addCustomerModal').classList.remove('hidden');
+}
+
+function closeAddCustomerModal() {
+  $('addCustomerModal').classList.add('hidden');
+}
+
+async function saveNewCustomer() {
+  const full_name = $('newCustomerName').value.trim();
+  const phone = $('newCustomerPhone').value.trim();
+  const email = $('newCustomerEmail').value.trim();
+  if (!full_name || !phone) { showAlert('Navn og telefon er påkrevd', 'error'); return; }
+  try {
+    await api('/api/admin/customers', { method: 'POST', body: JSON.stringify({ full_name, phone, email }) });
+    closeAddCustomerModal();
+    showAlert('Kunde lagret! ✓', 'success');
+    loadCustomers();
+  } catch (e) {
+    showAlert(e.message || 'Noe gikk galt', 'error');
   }
 }
 
@@ -502,7 +569,7 @@ function renderBookingsTable(bookings) {
       <td>${b.deposit_paid ? '<span style="color:var(--sage);font-weight:700;">✓</span>' : '<span style="opacity:0.4;">Nei</span>'}</td>
       <td style="display:flex;gap:6px;">
         <button class="btn btn-outline btn-sm" onclick="openBookingDetail(${b.id})">Detaljer</button>
-        ${b.email ? `<button class="btn btn-outline btn-sm" onclick="openEmailModal('${b.email}', '${b.full_name}')">✉️</button>` : ''}
+        ${b.email ? `<button class="btn btn-outline btn-sm" data-email="${b.email}" data-name="${b.full_name.replace(/"/g,'&quot;')}" onclick="openEmailModal(this.dataset.email, this.dataset.name)">✉️</button>` : ''}
       </td>
     </tr>
   `).join('');
@@ -587,8 +654,8 @@ async function loadAbandoned() {
         <td>${r.contacted ? '<span style="color:var(--sage);">✓ Ja</span>' : '<span style="opacity:0.4;">Nei</span>'}</td>
         <td style="display:flex;gap:6px;flex-wrap:wrap;">
           ${!r.contacted ? `<button class="btn btn-outline btn-sm" onclick="markContacted(${r.id})">Marker kontaktet</button>` : ''}
-          ${r.phone ? `<button class="btn btn-primary btn-sm" onclick="openSmsModal(${r.id}, '${r.phone}', '${r.full_name}')">📱 SMS</button>` : ''}
-          ${r.email ? `<button class="btn btn-outline btn-sm" onclick="openEmailModal('${r.email}', '${r.full_name}')">✉️ E-post</button>` : ''}
+          ${r.phone ? `<button class="btn btn-primary btn-sm" onclick="openSmsModal(${r.id}, '${r.phone}', '${encodeURIComponent(r.full_name)}')">📱 SMS</button>` : ''}
+          ${r.email ? `<button class="btn btn-outline btn-sm" data-email="${r.email}" data-name="${r.full_name.replace(/"/g,'&quot;')}" onclick="openEmailModal(this.dataset.email, this.dataset.name)">✉️ E-post</button>` : ''}
           <button class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828;" onclick="deleteAbandoned(${r.id})">Slett</button>
         </td>
       </tr>

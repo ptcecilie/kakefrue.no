@@ -246,6 +246,7 @@
       <div class="admin-nav-item" data-panel="kurs"><span class="icon">👩‍🍳</span> Kurs</div>
       <div class="admin-nav-item" data-panel="anbefalinger"><span class="icon">⭐</span> Anbefalinger</div>
       <div class="admin-nav-item" data-panel="priser"><span class="icon">💰</span> Priser</div>
+      <div class="admin-nav-item" data-panel="kunder"><span class="icon">👥</span> Kunder</div>
       <div class="admin-nav-item" data-panel="bilder"><span class="icon">🖼️</span> Bilder</div>
       <div class="admin-nav-item" data-panel="statistikk"><span class="icon">📈</span> Statistikk</div>
       <div class="admin-nav-item" data-panel="innstillinger"><span class="icon">⚙️</span> Innstillinger</div>
@@ -255,6 +256,18 @@
 
   <!-- Main -->
   <main class="admin-main">
+
+    <script>
+    function gotoPanel(panel) {
+      document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
+      document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+      var navItem = document.querySelector('.admin-nav-item[data-panel="' + panel + '"]');
+      if (navItem) navItem.classList.add('active');
+      var panelEl = document.getElementById('panel-' + panel);
+      if (panelEl) panelEl.classList.add('active');
+      if (typeof loadPanel === 'function') loadPanel(panel);
+    }
+    </script>
 
     <!-- Oversikt -->
     <div class="admin-panel active" id="panel-oversikt">
@@ -381,6 +394,26 @@
     </div>
 
     <!-- Innstillinger -->
+    <!-- Kunder -->
+    <div class="admin-panel" id="panel-kunder">
+      <div class="section-header">
+        <h2>Kunder</h2>
+        <button class="btn btn-primary btn-sm" onclick="openAddCustomerModal()">+ Legg til kunde</button>
+      </div>
+
+      <!-- Search -->
+      <div style="margin-bottom:20px;">
+        <input class="form-input" id="customerSearch" type="text" placeholder="Søk på navn, telefon eller e-post…" oninput="filterCustomers()" style="max-width:360px;">
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="data-table" id="customersTable">
+          <thead><tr><th>#</th><th>Navn</th><th>Telefon</th><th>E-post</th><th>Registrert</th><th>Bestillinger</th><th></th></tr></thead>
+          <tbody id="customersTableBody"><tr><td colspan="7" style="text-align:center;padding:32px;opacity:0.5;">Laster...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Bilder -->
     <div class="admin-panel" id="panel-bilder">
       <div class="section-header">
@@ -530,6 +563,34 @@
   </div>
 </div>
 
-<script src="/js/admin.js?v=1.5"></script>
+<!-- Legg til kunde modal -->
+<div class="modal-backdrop hidden" id="addCustomerModal" onclick="if(event.target===this)closeAddCustomerModal()">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3>👥 Legg til kunde</h3>
+      <button class="modal-close" onclick="closeAddCustomerModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Navn *</label>
+        <input id="newCustomerName" class="form-input" type="text" placeholder="Fullt navn">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Telefon *</label>
+        <input id="newCustomerPhone" class="form-input" type="tel" placeholder="+47 000 00 000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-post</label>
+        <input id="newCustomerEmail" class="form-input" type="email" placeholder="navn@epost.no">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="closeAddCustomerModal()">Avbryt</button>
+      <button class="btn btn-primary btn-sm" onclick="saveNewCustomer()">Lagre kunde</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/admin.js?v=1.6"></script>
 </body>
 </html>

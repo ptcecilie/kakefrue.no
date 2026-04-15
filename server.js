@@ -497,6 +497,37 @@ app.delete('/api/admin/abandoned/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// GET /api/admin/customers
+app.get('/api/admin/customers', requireAdmin, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT c.*, COUNT(b.id) as booking_count
+      FROM customers c
+      LEFT JOIN bookings b ON b.customer_id = c.id
+      GROUP BY c.id
+      ORDER BY c.created_at DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// POST /api/admin/customers — manually add a customer
+app.post('/api/admin/customers', requireAdmin, async (req, res) => {
+  const { full_name, phone, email } = req.body;
+  if (!full_name || !phone) return res.status(400).json({ error: 'Navn og telefon er påkrevd' });
+  try {
+    const [result] = await pool.query(
+      `INSERT INTO customers (full_name, phone, email) VALUES (?, ?, ?)`,
+      [full_name, phone, email || null]
+    );
+    res.json({ id: result.insertId });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
 // POST /api/admin/send-email
 app.post('/api/admin/send-email', requireAdmin, async (req, res) => {
   const { to, name, subject, message } = req.body;
@@ -509,7 +540,7 @@ app.post('/api/admin/send-email', requireAdmin, async (req, res) => {
       <div style="white-space: pre-wrap; line-height: 1.7; margin: 20px 0;">${message.replace(/\n/g, '<br>')}</div>
       <div style="text-align: center; margin-top: 32px; color: #7A9E82;">
         <p>Med kjærlig hilsen,<br><strong>Cecilie – Kakefrue</strong></p>
-        <p style="font-size: 12px;">Porsgrunn · post@kakefrue.no</p>
+        <p style="font-size: 12px;">Porsgrunn · cecilie@kakefrue.no</p>
       </div>
     </div>
   `;
