@@ -130,6 +130,14 @@
     .stat-card .stat-label { font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em; }
     .stat-card[data-goto] { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
     .stat-card[data-goto]:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+    .photo-card { background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; position:relative; }
+    .photo-card img { width:100%; aspect-ratio:1/1; object-fit:cover; display:block; }
+    .photo-card-body { padding:12px; }
+    .photo-card-actions { display:flex; gap:8px; margin-top:8px; }
+    .photo-featured-btn { flex:1; padding:6px; border-radius:100px; font-size:0.78rem; border:1.5px solid rgba(139,114,190,0.3); background:transparent; cursor:pointer; color:#3D2B5A; transition:all 0.15s; }
+    .photo-featured-btn.active { background:#8B72BE; color:white; border-color:#8B72BE; }
+    .photo-delete-btn { padding:6px 10px; border-radius:100px; font-size:0.78rem; border:1.5px solid rgba(200,0,0,0.2); background:transparent; cursor:pointer; color:#c00; transition:all 0.15s; }
+    .photo-delete-btn:hover { background:#c00; color:white; }
 
     /* Section header */
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
@@ -238,6 +246,7 @@
       <div class="admin-nav-item" data-panel="kurs"><span class="icon">👩‍🍳</span> Kurs</div>
       <div class="admin-nav-item" data-panel="anbefalinger"><span class="icon">⭐</span> Anbefalinger</div>
       <div class="admin-nav-item" data-panel="priser"><span class="icon">💰</span> Priser</div>
+      <div class="admin-nav-item" data-panel="bilder"><span class="icon">🖼️</span> Bilder</div>
       <div class="admin-nav-item" data-panel="statistikk"><span class="icon">📈</span> Statistikk</div>
       <div class="admin-nav-item" data-panel="innstillinger"><span class="icon">⚙️</span> Innstillinger</div>
     </nav>
@@ -372,6 +381,37 @@
     </div>
 
     <!-- Innstillinger -->
+    <!-- Bilder -->
+    <div class="admin-panel" id="panel-bilder">
+      <div class="section-header">
+        <h2>Bilder</h2>
+        <label class="btn btn-primary btn-sm" style="cursor:pointer;">
+          + Last opp bilder
+          <input type="file" id="photoUploadInput" accept="image/*" multiple style="display:none;" onchange="uploadPhotos(this)">
+        </label>
+      </div>
+
+      <!-- Upload progress -->
+      <div id="uploadProgress" style="display:none; background:var(--white); border-radius:var(--radius); padding:16px; margin-bottom:24px; box-shadow:var(--shadow);">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="flex:1; background:rgba(0,0,0,0.07); border-radius:100px; height:8px; overflow:hidden;">
+            <div id="uploadProgressBar" style="width:0%; background:linear-gradient(90deg,#8B72BE,#7A9E82); height:100%; border-radius:100px; transition:width 0.3s;"></div>
+          </div>
+          <span id="uploadProgressText" style="font-size:0.85rem; opacity:0.7; white-space:nowrap;">Laster opp...</span>
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div style="background:rgba(139,114,190,0.08); border-radius:var(--radius); padding:16px; margin-bottom:24px; font-size:0.88rem; opacity:0.8;">
+        ⭐ <strong>Marker som "Vis på forsiden"</strong> for å vise bildet i galleriet på forsiden. Maks 6 vises om gangen.
+      </div>
+
+      <!-- Photo grid -->
+      <div id="photoGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:16px;">
+        <div style="text-align:center; padding:48px; opacity:0.4; grid-column:1/-1;">Ingen bilder ennå – last opp ditt første bilde!</div>
+      </div>
+    </div>
+
     <!-- Statistikk -->
     <div class="admin-panel" id="panel-statistikk">
       <div class="section-header"><h2>Statistikk</h2><button class="btn btn-outline btn-sm" onclick="loadStatistikk()">↻ Oppdater</button></div>

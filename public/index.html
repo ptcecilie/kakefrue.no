@@ -75,25 +75,14 @@
     <div class="container">
       <h2 class="section-title">Litt av det jeg lager</h2>
       <p class="section-subtitle">Hver kake forteller en egen historie</p>
-      <div class="gallery-grid">
-        <div class="gallery-item">
-          <div class="gallery-placeholder" style="background: linear-gradient(135deg, #F5EDE0, #E8C8A8); width:100%; height:100%;">🎂</div>
-        </div>
-        <div class="gallery-item">
-          <div class="gallery-placeholder" style="background: linear-gradient(135deg, #FDE8E8, #F5B8B8); width:100%; height:100%;">💒</div>
-        </div>
-        <div class="gallery-item">
-          <div class="gallery-placeholder" style="background: linear-gradient(135deg, #E8F0E8, #C8DCC8); width:100%; height:100%;">🧁</div>
-        </div>
-        <div class="gallery-item">
-          <div class="gallery-placeholder" style="background: linear-gradient(135deg, #EDE8F5, #C8B8E8); width:100%; height:100%;">🎀</div>
-        </div>
-        <div class="gallery-item">
-          <div class="gallery-placeholder" style="background: linear-gradient(135deg, #F5F0E0, #E8D8A8); width:100%; height:100%;">✨</div>
-        </div>
-        <div class="gallery-item">
-          <div class="gallery-placeholder" style="background: linear-gradient(135deg, #E8F5F5, #A8D8D8); width:100%; height:100%;">🌸</div>
-        </div>
+      <div class="gallery-grid" id="photoGallery">
+        <!-- Placeholders shown until photos load -->
+        <div class="gallery-item"><div class="gallery-placeholder" style="background:linear-gradient(135deg,#F5EDE0,#E8C8A8);width:100%;height:100%;">🎂</div></div>
+        <div class="gallery-item"><div class="gallery-placeholder" style="background:linear-gradient(135deg,#FDE8E8,#F5B8B8);width:100%;height:100%;">💒</div></div>
+        <div class="gallery-item"><div class="gallery-placeholder" style="background:linear-gradient(135deg,#E8F0E8,#C8DCC8);width:100%;height:100%;">🧁</div></div>
+        <div class="gallery-item"><div class="gallery-placeholder" style="background:linear-gradient(135deg,#EDE8F5,#C8B8E8);width:100%;height:100%;">🎀</div></div>
+        <div class="gallery-item"><div class="gallery-placeholder" style="background:linear-gradient(135deg,#F5F0E0,#E8D8A8);width:100%;height:100%;">✨</div></div>
+        <div class="gallery-item"><div class="gallery-placeholder" style="background:linear-gradient(135deg,#E8F5F5,#A8D8D8);width:100%;height:100%;">🌸</div></div>
       </div>
 
       <!-- Social media follow nudge -->
@@ -243,6 +232,15 @@ const mobileMenu = document.getElementById('mobileMenu');
 hamburger.addEventListener('click', () => {
   mobileMenu.classList.toggle('open');
 });
+
+// Load gallery photos from API
+fetch('/api/photos').then(r => r.json()).then(photos => {
+  if (!photos.length) return;
+  const gallery = document.getElementById('photoGallery');
+  gallery.innerHTML = photos.slice(0, 6).map(p =>
+    `<div class="gallery-item"><img src="${p.url}" alt="${p.alt_text || 'Kakefrue'}" style="width:100%;height:100%;object-fit:cover;display:block;"></div>`
+  ).join('');
+}).catch(() => {});
 
 // Load reviews from API
 fetch('/api/reviews').then(r => r.json()).then(reviews => {

@@ -113,9 +113,100 @@ function loadPanel(panel) {
     case 'kurs': loadCourses(); break;
     case 'anbefalinger': loadReviews(); break;
     case 'priser': loadPricing(); break;
+    case 'bilder': loadPhotos(); break;
     case 'statistikk': loadStatistikk(); break;
     case 'innstillinger': loadSettings(); break;
   }
+}
+
+// ── Bilder ─────────────────────────────────────────────────
+async function loadPhotos() {
+  try {
+    const photos = await api('/api/admin/photos');
+    const grid = document.getElementById('photoGrid');
+    if (!photos.length) {
+      grid.innerHTML = '<div style="text-align:center; padding:48px; opacity:0.4; grid-column:1/-1;">Ingen bilder ennå – last opp ditt første bilde!</div>';
+      return;
+    }
+    grid.innerHTML = photos.map(p => `
+      <div class="photo-card" id="photo-${p.id}">
+        <img src="${p.url}" alt="${p.alt_text || ''}" loading="lazy">
+        <div class="photo-card-body">
+          <input class="form-input" style="font-size:0.8rem; padding:6px 10px; margin-bottom:8px;" value="${p.alt_text || ''}" placeholder="Bildetekst (valgfritt)" oninput="updatePhotoAlt(${p.id}, this.value)">
+          <div class="photo-card-actions">
+            <button class="photo-featured-btn ${p.featured ? 'active' : ''}" onclick="toggleFeatured(${p.id}, ${p.featured ? 'false' : 'true'})">
+              ${p.featured ? '⭐ Vises på forsiden' : '☆ Vis på forsiden'}
+            </button>
+            <button class="photo-delete-btn" onclick="deletePhoto(${p.id})">🗑</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+async function uploadPhotos(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+
+  const progress = document.getElementById('uploadProgress');
+  const bar = document.getElementById('uploadProgressBar');
+  const text = document.getElementById('uploadProgressText');
+  progress.style.display = 'block';
+
+  let done = 0;
+  for (const file of files) {
+    text.textContent = `Laster opp ${done + 1} av ${files.length}...`;
+    bar.style.width = Math.round((done / files.length) * 100) + '%';
+
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      await api('/api/admin/photos', {
+        method: 'POST',
+        body: JSON.stringify({ data: base64, mimeType: file.type, alt_text: '' })
+      });
+    } catch (e) { console.error('Upload failed:', e); }
+    done++;
+  }
+
+  bar.style.width = '100%';
+  text.textContent = `${done} bilde${done !== 1 ? 'r' : ''} lastet opp!`;
+  setTimeout(() => { progress.style.display = 'none'; }, 2000);
+  input.value = '';
+  loadPhotos();
+}
+
+async function toggleFeatured(id, featured) {
+  try {
+    await api('/api/admin/photos/' + id, { method: 'PUT', body: JSON.stringify({ featured }) });
+    loadPhotos();
+  } catch (e) { console.error(e); }
+}
+
+let altUpdateTimers = {};
+function updatePhotoAlt(id, value) {
+  clearTimeout(altUpdateTimers[id]);
+  altUpdateTimers[id] = setTimeout(() => {
+    api('/api/admin/photos/' + id, { method: 'PUT', body: JSON.stringify({ alt_text: value }) });
+  }, 800);
+}
+
+async function deletePhoto(id) {
+  if (!confirm('Slette dette bildet?')) return;
+  try {
+    await api('/api/admin/photos/' + id, { method: 'DELETE' });
+    const el = document.getElementById('photo-' + id);
+    if (el) el.remove();
+    const grid = document.getElementById('photoGrid');
+    if (!grid.children.length) {
+      grid.innerHTML = '<div style="text-align:center; padding:48px; opacity:0.4; grid-column:1/-1;">Ingen bilder ennå – last opp ditt første bilde!</div>';
+    }
+  } catch (e) { console.error(e); }
 }
 
 // ── Statistikk ─────────────────────────────────────────────

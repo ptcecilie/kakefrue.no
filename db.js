@@ -163,6 +163,17 @@ async function initDB() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
 
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS photos (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        filename VARCHAR(255) NOT NULL,
+        alt_text VARCHAR(255) DEFAULT '',
+        featured BOOLEAN DEFAULT FALSE,
+        sort_order INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
     // Seed default settings
     await conn.query(`
       INSERT IGNORE INTO settings (k, v) VALUES

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const { pool, initDB } = require('./db');
 const { createSumUpCheckout, getSumUpCheckoutStatus, handlePaymentSuccess } = require('./payments');
 const { sendTastingConfirmation, sendCourseConfirmation, createTransporter } = require('./email');
@@ -744,6 +745,89 @@ app.get('*', (req, res) => {
     return res.status(404).json({ error: 'Ikke funnet' });
   }
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ============================================================
+// ============================================================
+// Photos API
+// ============================================================
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+// GET /api/photos — public, returns featured photos
+app.get('/api/photos', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT id, filename, alt_text FROM photos WHERE featured = TRUE ORDER BY sort_order ASC, created_at DESC`
+    );
+    res.json(rows.map(r => ({ ...r, url: '/uploads/' + r.filename })));
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// GET /api/admin/photos — all photos
+app.get('/api/admin/photos', requireAdmin, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`SELECT id, filename, alt_text, featured, sort_order, created_at FROM photos ORDER BY sort_order ASC, created_at DESC`);
+    res.json(rows.map(r => ({ ...r, url: '/uploads/' + r.filename })));
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// POST /api/admin/photos — upload base64 image
+app.post('/api/admin/photos', requireAdmin, async (req, res) => {
+  const { data, mimeType, alt_text } = req.body;
+  if (!data || !mimeType) return res.status(400).json({ error: 'Mangler data' });
+
+  const ext = mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
+  const filename = `photo_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  const filepath = path.join(uploadsDir, filename);
+
+  try {
+    const buffer = Buffer.from(data, 'base64');
+    fs.writeFileSync(filepath, buffer);
+    const [result] = await pool.query(
+      `INSERT INTO photos (filename, alt_text, featured) VALUES (?, ?, FALSE)`,
+      [filename, alt_text || '']
+    );
+    res.json({ id: result.insertId, url: '/uploads/' + filename, filename });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Opplasting feilet' });
+  }
+});
+
+// PUT /api/admin/photos/:id — update alt text, featured, sort_order
+app.put('/api/admin/photos/:id', requireAdmin, async (req, res) => {
+  const { alt_text, featured, sort_order } = req.body;
+  try {
+    await pool.query(
+      `UPDATE photos SET alt_text=COALESCE(?,alt_text), featured=COALESCE(?,featured), sort_order=COALESCE(?,sort_order) WHERE id=?`,
+      [alt_text ?? null, featured ?? null, sort_order ?? null, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// DELETE /api/admin/photos/:id
+app.delete('/api/admin/photos/:id', requireAdmin, async (req, res) => {
+  try {
+    const [[photo]] = await pool.query(`SELECT filename FROM photos WHERE id=?`, [req.params.id]);
+    if (photo) {
+      const fp = path.join(uploadsDir, photo.filename);
+      if (fs.existsSync(fp)) fs.unlinkSync(fp);
+      await pool.query(`DELETE FROM photos WHERE id=?`, [req.params.id]);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
 });
 
 // ============================================================
