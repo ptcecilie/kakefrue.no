@@ -119,19 +119,6 @@
             </div>
           </div>
 
-          <!-- Star rating -->
-          <div class="form-group">
-            <label class="form-label">Din vurdering *</label>
-            <div id="starRating" style="display:flex; gap:8px; font-size:2rem; cursor:pointer; margin-top:4px;">
-              <span data-val="1">☆</span>
-              <span data-val="2">☆</span>
-              <span data-val="3">☆</span>
-              <span data-val="4">☆</span>
-              <span data-val="5">☆</span>
-            </div>
-            <input type="hidden" name="rating" value="5">
-          </div>
-
           <div class="form-group">
             <label class="form-label">Din tilbakemelding *</label>
             <textarea class="form-input" name="review_text" rows="5" placeholder="Fortell gjerne hva du bestilte, hvilken anledning det var, og hva du synes..." required style="resize:vertical;"></textarea>
@@ -180,22 +167,6 @@ const gradients = [
 ];
 const emojis = ['🎂','🧁','💒','🌸','✨','🎀','🍰','🥂'];
 
-// Star rating
-let selectedRating = 5;
-const stars = document.querySelectorAll('#starRating span');
-function setStars(val) {
-  selectedRating = val;
-  stars.forEach(s => s.textContent = parseInt(s.dataset.val) <= val ? '★' : '☆');
-  stars.forEach(s => s.style.color = parseInt(s.dataset.val) <= val ? '#8B72BE' : '#ccc');
-  document.querySelector('[name="rating"]').value = val;
-}
-setStars(5);
-stars.forEach(s => {
-  s.addEventListener('click', () => setStars(parseInt(s.dataset.val)));
-  s.addEventListener('mouseover', () => stars.forEach(x => x.style.color = parseInt(x.dataset.val) <= parseInt(s.dataset.val) ? '#8B72BE' : '#ccc'));
-  s.addEventListener('mouseout', () => setStars(selectedRating));
-});
-
 async function submitReview(e) {
   e.preventDefault();
   const form = e.target;
@@ -211,7 +182,7 @@ async function submitReview(e) {
       body: JSON.stringify({
         customer_name: form.customer_name.value,
         review_text: form.review_text.value,
-        rating: form.rating.value
+        rating: 5
       })
     });
     const json = await res.json();
