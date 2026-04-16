@@ -248,6 +248,22 @@ app.post('/api/tastings', async (req, res) => {
   }
 });
 
+// POST /api/reviews — public submission, awaits approval
+app.post('/api/reviews', async (req, res) => {
+  const { customer_name, review_text, rating, occasion } = req.body;
+  if (!customer_name || !review_text) return res.status(400).json({ error: 'Navn og tilbakemelding er påkrevd' });
+  if (review_text.length > 1000) return res.status(400).json({ error: 'Teksten er for lang (maks 1000 tegn)' });
+  try {
+    await pool.query(
+      `INSERT INTO reviews (customer_name, review_text, rating, approved) VALUES (?, ?, ?, FALSE)`,
+      [customer_name.trim(), review_text.trim(), Math.min(5, Math.max(1, parseInt(rating) || 5))]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
 // GET /api/reviews
 app.get('/api/reviews', async (req, res) => {
   try {

@@ -96,24 +96,59 @@
     </div>
   </section>
 
-  <!-- Leave a review nudge -->
+  <!-- Leave a review -->
   <section style="background: var(--white);">
-    <div class="container" style="max-width:600px; text-align:center;">
-      <div style="font-size:2.5rem; margin-bottom:16px;">⭐</div>
-      <h2>Har du bestilt fra Kakefrue?</h2>
-      <p style="margin-top:12px; opacity:0.7;">Jeg setter stor pris på tilbakemeldinger. Send gjerne en melding på Instagram eller e-post – jeg vil gjerne dele din opplevelse!</p>
-      <div style="display:flex; gap:16px; justify-content:center; margin-top:28px; flex-wrap:wrap;">
-        <a href="https://instagram.com/kakefrue" target="_blank" class="btn btn-secondary">Instagram</a>
-        <a href="mailto:cecilie@kakefrue.no" class="btn btn-outline">Send e-post</a>
+    <div class="container" style="max-width:620px;">
+      <div style="text-align:center; margin-bottom:36px;">
+        <span class="tag tag-gold" style="margin-bottom:12px;">Del din opplevelse</span>
+        <h2>Har du bestilt fra Kakefrue?</h2>
+        <p style="margin-top:12px; opacity:0.7;">Jeg setter utrolig stor pris på tilbakemeldinger – det betyr alt for meg å høre hvordan det gikk!</p>
+      </div>
+
+      <div id="reviewFormWrap" style="background:var(--cream); border-radius:var(--radius); padding:32px;">
+        <div id="reviewSuccess" style="display:none; text-align:center; padding:24px;">
+          <div style="font-size:3rem; margin-bottom:16px;">🎂</div>
+          <h3>Tusen takk!</h3>
+          <p style="opacity:0.7; margin-top:8px;">Tilbakemeldingen din er mottatt og blir synlig etter godkjenning.</p>
+        </div>
+        <form id="reviewForm" onsubmit="submitReview(event)">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label">Ditt navn *</label>
+              <input class="form-input" name="customer_name" type="text" placeholder="Fornavn eller fullt navn" required>
+            </div>
+          </div>
+
+          <!-- Star rating -->
+          <div class="form-group">
+            <label class="form-label">Din vurdering *</label>
+            <div id="starRating" style="display:flex; gap:8px; font-size:2rem; cursor:pointer; margin-top:4px;">
+              <span data-val="1">☆</span>
+              <span data-val="2">☆</span>
+              <span data-val="3">☆</span>
+              <span data-val="4">☆</span>
+              <span data-val="5">☆</span>
+            </div>
+            <input type="hidden" name="rating" value="5">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Din tilbakemelding *</label>
+            <textarea class="form-input" name="review_text" rows="5" placeholder="Fortell gjerne hva du bestilte, hvilken anledning det var, og hva du synes..." required style="resize:vertical;"></textarea>
+          </div>
+
+          <div id="reviewError" class="alert alert-error" style="display:none; margin-bottom:16px;"></div>
+          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;" id="reviewSubmitBtn">Send tilbakemelding ✓</button>
+        </form>
       </div>
     </div>
   </section>
 
   <!-- CTA -->
-  <section style="background: var(--brown); text-align:center; padding: 64px 24px;">
+  <section style="background: linear-gradient(135deg, #3D2B5A 0%, #5C4080 100%); text-align:center; padding: 64px 24px;">
     <h2 style="color:var(--white); margin-bottom:16px;">Bli neste fornøyde kunde</h2>
     <p style="color:rgba(255,255,255,0.7); margin-bottom:32px;">Book din kake i dag – laget spesielt for deg.</p>
-    <a href="/book.html" class="btn btn-primary btn-lg">Book din kake</a>
+    <a href="/book.html" class="btn btn-lg" style="background:#fff; color:#3D2B5A; font-weight:700; border:none;">Book din kake</a>
   </section>
 
 </div>
@@ -144,6 +179,52 @@ const gradients = [
   'linear-gradient(135deg, #E8F5F5, #A8D8D8)',
 ];
 const emojis = ['🎂','🧁','💒','🌸','✨','🎀','🍰','🥂'];
+
+// Star rating
+let selectedRating = 5;
+const stars = document.querySelectorAll('#starRating span');
+function setStars(val) {
+  selectedRating = val;
+  stars.forEach(s => s.textContent = parseInt(s.dataset.val) <= val ? '★' : '☆');
+  stars.forEach(s => s.style.color = parseInt(s.dataset.val) <= val ? '#8B72BE' : '#ccc');
+  document.querySelector('[name="rating"]').value = val;
+}
+setStars(5);
+stars.forEach(s => {
+  s.addEventListener('click', () => setStars(parseInt(s.dataset.val)));
+  s.addEventListener('mouseover', () => stars.forEach(x => x.style.color = parseInt(x.dataset.val) <= parseInt(s.dataset.val) ? '#8B72BE' : '#ccc'));
+  s.addEventListener('mouseout', () => setStars(selectedRating));
+});
+
+async function submitReview(e) {
+  e.preventDefault();
+  const form = e.target;
+  const btn = document.getElementById('reviewSubmitBtn');
+  const errEl = document.getElementById('reviewError');
+  errEl.style.display = 'none';
+  btn.textContent = 'Sender...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer_name: form.customer_name.value,
+        review_text: form.review_text.value,
+        rating: form.rating.value
+      })
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Noe gikk galt');
+    form.style.display = 'none';
+    document.getElementById('reviewSuccess').style.display = 'block';
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+    btn.textContent = 'Send tilbakemelding ✓';
+    btn.disabled = false;
+  }
+}
 
 fetch('/api/reviews')
   .then(r => r.json())
