@@ -1055,28 +1055,54 @@ async function viewRegistrations(courseId, title) {
 }
 
 // ── Reviews ────────────────────────────────────────────────
+let allReviews = [];
+
 async function loadReviews() {
   try {
-    const reviews = await api('/api/admin/reviews');
-    const tbody = $('reviewsTableBody');
-    if (!reviews.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;opacity:0.5;">Ingen anbefalinger ennå</td></tr>';
-      return;
-    }
-    tbody.innerHTML = reviews.map(r => `
-      <tr>
-        <td><strong>${r.customer_name || '—'}</strong></td>
-        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.review_text || '—'}</td>
-        <td>${'★'.repeat(r.rating || 5)}</td>
-        <td>${r.approved ? '<span style="color:var(--sage);">✓ Ja</span>' : '<span style="color:#C62828;">Nei</span>'}</td>
-        <td>${formatDate(r.created_at)}</td>
-        <td>
-          <button class="btn btn-outline btn-sm" onclick="toggleApproved(${r.id}, ${!r.approved})">${r.approved ? 'Skjul' : 'Godkjenn'}</button>
-          <button class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828;" onclick="deleteReview(${r.id})">Slett</button>
-        </td>
-      </tr>
-    `).join('');
+    allReviews = await api('/api/admin/reviews');
+    renderReviews();
   } catch {}
+}
+
+function renderReviews() {
+  const tbody = $('reviewsTableBody');
+  if (!allReviews.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;opacity:0.5;">Ingen anbefalinger ennå</td></tr>';
+    return;
+  }
+  tbody.innerHTML = allReviews.map((r, i) => `
+    <tr id="review-row-${r.id}">
+      <td>
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:1rem;line-height:1;" onclick="moveReview(${i}, -1)" ${i === 0 ? 'disabled style="opacity:0.3;"' : ''}>↑</button>
+          <button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:1rem;line-height:1;" onclick="moveReview(${i}, 1)" ${i === allReviews.length - 1 ? 'disabled style="opacity:0.3;"' : ''}>↓</button>
+        </div>
+      </td>
+      <td><strong>${r.customer_name || '—'}</strong></td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.review_text || '—'}</td>
+      <td>${r.approved ? '<span style="color:var(--sage);">✓ Synlig</span>' : '<span style="color:#C62828;">Skjult</span>'}</td>
+      <td>${formatDate(r.created_at)}</td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-outline btn-sm" onclick="toggleApproved(${r.id}, ${!r.approved})">${r.approved ? 'Skjul' : 'Godkjenn'}</button>
+        <button class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828;" onclick="deleteReview(${r.id})">Slett</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function moveReview(index, direction) {
+  const newIndex = index + direction;
+  if (newIndex < 0 || newIndex >= allReviews.length) return;
+  // Swap
+  [allReviews[index], allReviews[newIndex]] = [allReviews[newIndex], allReviews[index]];
+  renderReviews();
+  // Save new order
+  try {
+    await api('/api/admin/reviews/reorder', {
+      method: 'POST',
+      body: JSON.stringify({ order: allReviews.map((r, i) => ({ id: r.id, sort_order: i })) })
+    });
+  } catch (e) { console.error(e); }
 }
 
 function openReviewModal() {

@@ -140,9 +140,11 @@ async function initDB() {
         rating INT DEFAULT 5,
         image_url TEXT,
         approved BOOLEAN DEFAULT FALSE,
+        sort_order INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+    await conn.query(`ALTER TABLE reviews ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 0`);
 
     await conn.query(`
       CREATE TABLE IF NOT EXISTS pricing (

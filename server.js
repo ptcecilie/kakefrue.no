@@ -268,7 +268,7 @@ app.post('/api/reviews', async (req, res) => {
 app.get('/api/reviews', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT id, customer_name, review_text, rating, image_url, created_at FROM reviews WHERE approved = TRUE ORDER BY created_at DESC`
+      `SELECT id, customer_name, review_text, rating, image_url, created_at FROM reviews WHERE approved = TRUE ORDER BY sort_order ASC, created_at DESC`
     );
     res.json(rows);
   } catch (err) {
@@ -723,7 +723,7 @@ app.get('/api/admin/courses/:id/registrations', requireAdmin, async (req, res) =
 // Reviews Admin
 app.get('/api/admin/reviews', requireAdmin, async (req, res) => {
   try {
-    const [rows] = await pool.query(`SELECT * FROM reviews ORDER BY created_at DESC`);
+    const [rows] = await pool.query(`SELECT * FROM reviews ORDER BY sort_order ASC, created_at DESC`);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
@@ -756,6 +756,20 @@ app.put('/api/admin/reviews/:id', requireAdmin, async (req, res) => {
     values.push(req.params.id);
     await pool.query(`UPDATE reviews SET ${fields.join(', ')} WHERE id = ?`, values);
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// POST /api/admin/reviews/reorder — [{id, sort_order}, ...]
+app.post('/api/admin/reviews/reorder', requireAdmin, async (req, res) => {
+  const { order } = req.body; // array of { id, sort_order }
+  if (!Array.isArray(order)) return res.status(400).json({ error: 'Ugyldig data' });
+  try {
+    await Promise.all(order.map(({ id, sort_order }) =>
+      pool.query(`UPDATE reviews SET sort_order = ? WHERE id = ?`, [sort_order, id])
+    ));
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
   }
