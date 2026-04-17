@@ -213,6 +213,11 @@ async function loadPhotos() {
   try {
     const photos = await api('/api/admin/photos');
     const grid = document.getElementById('photoGrid');
+    const counter = document.getElementById('photoCounter');
+    if (counter) {
+      const visible = photos.filter(p => p.featured).length;
+      counter.textContent = `${photos.length} bilder totalt · ${visible} synlige på forsiden`;
+    }
     if (!photos.length) {
       grid.innerHTML = '<div style="text-align:center; padding:48px; opacity:0.4; grid-column:1/-1;">Ingen bilder ennå – last opp ditt første bilde!</div>';
       return;
@@ -224,7 +229,7 @@ async function loadPhotos() {
           <input class="form-input" style="font-size:0.8rem; padding:6px 10px; margin-bottom:8px;" value="${p.alt_text || ''}" placeholder="Bildetekst (valgfritt)" oninput="updatePhotoAlt(${p.id}, this.value)">
           <div class="photo-card-actions">
             <button class="photo-featured-btn ${p.featured ? 'active' : ''}" onclick="toggleFeatured(${p.id}, ${p.featured ? 'false' : 'true'})">
-              ${p.featured ? '⭐ Vises på forsiden' : '☆ Vis på forsiden'}
+              ${p.featured ? '✅ Synlig på forsiden' : '○ Skjult'}
             </button>
             <button class="photo-delete-btn" onclick="deletePhoto(${p.id})">🗑</button>
           </div>
@@ -242,30 +247,38 @@ async function uploadPhotos(input) {
   const bar = document.getElementById('uploadProgressBar');
   const text = document.getElementById('uploadProgressText');
   progress.style.display = 'block';
+  bar.style.width = '5%';
+  text.textContent = `Forbereder ${files.length} bilde${files.length !== 1 ? 'r' : ''}...`;
 
+  // Read all files as base64 first
+  const prepared = await Promise.all(files.map(file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve({ data: e.target.result.split(',')[1], mimeType: file.type, name: file.name });
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  })));
+
+  bar.style.width = '20%';
+
+  // Upload in parallel batches of 3
+  const batchSize = 3;
   let done = 0;
-  for (const file of files) {
-    text.textContent = `Laster opp ${done + 1} av ${files.length}...`;
-    bar.style.width = Math.round((done / files.length) * 100) + '%';
-
-    try {
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = e => resolve(e.target.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      await api('/api/admin/photos', {
+  for (let i = 0; i < prepared.length; i += batchSize) {
+    const batch = prepared.slice(i, i + batchSize);
+    await Promise.all(batch.map(f =>
+      api('/api/admin/photos', {
         method: 'POST',
-        body: JSON.stringify({ data: base64, mimeType: file.type, alt_text: '' })
-      });
-    } catch (e) { console.error('Upload failed:', e); }
-    done++;
+        body: JSON.stringify({ data: f.data, mimeType: f.mimeType, alt_text: '' })
+      }).catch(e => console.error('Upload failed:', f.name, e))
+    ));
+    done += batch.length;
+    bar.style.width = Math.round(20 + (done / prepared.length) * 80) + '%';
+    text.textContent = `Lastet opp ${done} av ${files.length}...`;
   }
 
   bar.style.width = '100%';
-  text.textContent = `${done} bilde${done !== 1 ? 'r' : ''} lastet opp!`;
-  setTimeout(() => { progress.style.display = 'none'; }, 2000);
+  text.textContent = `${done} bilde${done !== 1 ? 'r' : ''} lastet opp! ✓`;
+  setTimeout(() => { progress.style.display = 'none'; }, 2500);
   input.value = '';
   loadPhotos();
 }

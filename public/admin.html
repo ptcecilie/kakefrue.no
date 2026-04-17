@@ -439,12 +439,13 @@
       </div>
 
       <!-- Info -->
-      <div style="background:rgba(139,114,190,0.08); border-radius:var(--radius); padding:16px; margin-bottom:24px; font-size:0.88rem; opacity:0.8;">
-        ⭐ <strong>Marker som "Vis på forsiden"</strong> for å vise bildet i galleriet på forsiden. Maks 6 vises om gangen.
+      <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(139,114,190,0.08); border-radius:var(--radius); padding:14px 18px; margin-bottom:24px; font-size:0.88rem;">
+        <span>Trykk <strong>Skjult / Synlig på forsiden</strong> for å velge hvilke bilder som vises i galleriet.</span>
+        <span id="photoCounter" style="opacity:0.55; white-space:nowrap; margin-left:16px;"></span>
       </div>
 
       <!-- Photo grid -->
-      <div id="photoGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:16px;">
+      <div id="photoGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:16px;">
         <div style="text-align:center; padding:48px; opacity:0.4; grid-column:1/-1;">Ingen bilder ennå – last opp ditt første bilde!</div>
       </div>
     </div>
@@ -595,6 +596,6 @@
   </div>
 </div>
 
-<script src="/js/admin.js?v=1.8"></script>
+<script src="/js/admin.js?v=1.9"></script>
 </body>
 </html>
