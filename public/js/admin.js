@@ -1079,7 +1079,10 @@ function renderReviews() {
         </div>
       </td>
       <td><strong>${r.customer_name || '—'}</strong></td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.review_text || '—'}</td>
+      <td style="max-width:220px;">
+        <span style="opacity:0.7;font-size:0.88rem;">${(r.review_text || '').slice(0, 60)}${r.review_text && r.review_text.length > 60 ? '…' : ''}</span>
+        <button class="btn btn-outline btn-sm" style="margin-left:6px;padding:2px 8px;font-size:0.75rem;" onclick="openReviewDetail(${i})">Les</button>
+      </td>
       <td>${r.approved ? '<span style="color:var(--sage);">✓ Synlig</span>' : '<span style="color:#C62828;">Skjult</span>'}</td>
       <td>${formatDate(r.created_at)}</td>
       <td style="display:flex;gap:6px;">
@@ -1088,6 +1091,27 @@ function renderReviews() {
       </td>
     </tr>
   `).join('');
+}
+
+function openReviewDetail(index) {
+  const r = allReviews[index];
+  if (!r) return;
+  openModal(`
+    <div class="modal-header">
+      <h3>Anbefaling fra ${r.customer_name || 'Ukjent'}</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.85rem;opacity:0.5;margin-bottom:16px;">${formatDate(r.created_at)} · ${r.approved ? '<span style="color:var(--sage);">Synlig på siden</span>' : '<span style="color:#C62828;">Ikke godkjent ennå</span>'}</p>
+      <div style="background:var(--cream);border-radius:var(--radius-sm);padding:20px;font-style:italic;line-height:1.8;font-size:1rem;">
+        "${r.review_text || ''}"
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Lukk</button>
+      <button class="btn btn-primary" onclick="toggleApproved(${r.id}, ${!r.approved}); closeModal();">${r.approved ? 'Skjul' : 'Godkjenn'}</button>
+    </div>
+  `);
 }
 
 async function moveReview(index, direction) {
