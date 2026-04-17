@@ -258,6 +258,30 @@ app.post('/api/reviews', async (req, res) => {
       `INSERT INTO reviews (customer_name, review_text, rating, approved) VALUES (?, ?, ?, FALSE)`,
       [customer_name.trim(), review_text.trim(), Math.min(5, Math.max(1, parseInt(rating) || 5))]
     );
+
+    // Notify Cecilie by email
+    try {
+      const transporter = createTransporter();
+      await transporter.sendMail({
+        from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
+        to: 'cecilie@kakefrue.no',
+        subject: `⭐ Ny anbefaling fra ${customer_name.trim()}`,
+        html: `
+          <div style="font-family:sans-serif; max-width:560px; margin:0 auto; background:#FAF6F0; padding:32px; border-radius:12px;">
+            <h2 style="color:#3D2B5A; margin-bottom:4px;">Ny anbefaling mottatt!</h2>
+            <p style="opacity:0.6; margin-top:0;">Fra: <strong>${customer_name.trim()}</strong></p>
+            <div style="background:#fff; border-radius:8px; padding:20px; margin:20px 0; border-left:4px solid #8B72BE;">
+              <p style="font-style:italic; line-height:1.7; margin:0;">"${review_text.trim()}"</p>
+            </div>
+            <p>Gå inn i <a href="https://www.kakefrue.no/admin.html" style="color:#8B72BE;">adminpanelet</a> for å godkjenne eller avvise anbefalingen.</p>
+            <p style="font-size:0.85rem; opacity:0.5; margin-top:24px;">– Kakefrue varslingssystem</p>
+          </div>
+        `
+      });
+    } catch (mailErr) {
+      console.log('[Review notify] Email not sent:', mailErr.message);
+    }
+
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
