@@ -81,7 +81,8 @@
           <a href="/om-kakefrue.html" class="btn btn-outline" style="margin-top:8px;">Les min historie</a>
         </div>
         <div>
-          <div class="gallery-placeholder" style="aspect-ratio:4/5; background: linear-gradient(135deg, #F5EDE0, #EDD9C0); border-radius: var(--radius); display:flex; align-items:center; justify-content:center; font-size: 5rem;">🎂</div>
+          <div id="aboutImgPlaceholder" style="aspect-ratio:4/5; background: linear-gradient(135deg, #F5EDE0, #EDD9C0); border-radius: var(--radius); display:flex; align-items:center; justify-content:center; font-size: 5rem;">🎂</div>
+          <img id="aboutImgPhoto" src="" alt="Cecilie – Kakefrue" style="display:none; width:100%; aspect-ratio:4/5; object-fit:cover; border-radius:var(--radius);">
         </div>
       </div>
     </div>
@@ -234,7 +235,7 @@
   </div>
   <div class="footer-bottom">
     <span>© 2026 Kakefrue. Alle rettigheter forbeholdt.</span>
-    <span style="opacity:0.6; font-size:0.8rem;">v1.14 · 2026-04-17</span>
+    <span style="opacity:0.6; font-size:0.8rem;">v1.15 · 2026-04-17</span>
     <span>Registrert hos Mattilsynet</span>
   </div>
 </footer>
@@ -245,6 +246,17 @@ const mobileMenu = document.getElementById('mobileMenu');
 hamburger.addEventListener('click', () => {
   mobileMenu.classList.toggle('open');
 });
+
+// Load about image
+fetch('/api/about-image').then(r => r.json()).then(data => {
+  if (data.url) {
+    const img = document.getElementById('aboutImgPhoto');
+    const placeholder = document.getElementById('aboutImgPlaceholder');
+    img.src = data.url;
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+  }
+}).catch(() => {});
 
 // Load gallery photos from API
 fetch('/api/photos').then(r => r.json()).then(photos => {

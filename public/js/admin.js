@@ -124,7 +124,7 @@ function loadPanel(panel) {
     case 'anbefalinger': loadReviews(); break;
     case 'priser': loadPricing(); break;
     case 'kunder': loadCustomers(); break;
-    case 'bilder': loadPhotos(); break;
+    case 'bilder': loadPhotos(); loadAboutImage(); break;
     case 'statistikk': loadStatistikk(); break;
     case 'innstillinger': loadSettings(); break;
   }
@@ -206,6 +206,46 @@ async function saveNewCustomer() {
   } catch (e) {
     showAlert(e.message || 'Noe gikk galt', 'error');
   }
+}
+
+// ── About image ────────────────────────────────────────────
+async function uploadAboutImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const btn = document.getElementById('aboutImageBtn');
+  btn.textContent = 'Laster opp...';
+  try {
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    const result = await api('/api/admin/about-image', {
+      method: 'POST',
+      body: JSON.stringify({ data: base64, mimeType: file.type })
+    });
+    document.getElementById('aboutImagePreview').src = result.url + '?t=' + Date.now();
+    document.getElementById('aboutImagePreview').style.display = 'block';
+    document.getElementById('aboutImagePlaceholder').style.display = 'none';
+    showAlert('Bilde lastet opp! ✓', 'success');
+  } catch (e) {
+    showAlert('Opplasting feilet', 'error');
+  } finally {
+    btn.textContent = '📷 Bytt bilde';
+    input.value = '';
+  }
+}
+
+async function loadAboutImage() {
+  try {
+    const data = await fetch('/api/about-image').then(r => r.json());
+    if (data.url) {
+      document.getElementById('aboutImagePreview').src = data.url;
+      document.getElementById('aboutImagePreview').style.display = 'block';
+      document.getElementById('aboutImagePlaceholder').style.display = 'none';
+    }
+  } catch (e) {}
 }
 
 // ── Bilder ─────────────────────────────────────────────────
@@ -684,7 +724,7 @@ async function loadAbandoned() {
         <td>${r.contacted ? '<span style="color:var(--sage);">✓ Ja</span>' : '<span style="opacity:0.4;">Nei</span>'}</td>
         <td style="display:flex;gap:6px;flex-wrap:wrap;">
           ${!r.contacted ? `<button class="btn btn-outline btn-sm" onclick="markContacted(${r.id})">Marker kontaktet</button>` : ''}
-          ${r.phone ? `<button class="btn btn-primary btn-sm" onclick="openSmsModal(${r.id}, '${r.phone}', '${encodeURIComponent(r.full_name)}')">📱 SMS</button>` : ''}
+          ${r.phone ? `<button class="btn btn-primary btn-sm" data-id="${r.id}" data-phone="${r.phone}" data-name="${r.full_name.replace(/"/g,'&quot;')}" onclick="openSmsModal(this.dataset.id, this.dataset.phone, this.dataset.name)">📱 SMS</button>` : ''}
           ${r.email ? `<button class="btn btn-outline btn-sm" data-email="${r.email}" data-name="${r.full_name.replace(/"/g,'&quot;')}" onclick="openEmailModal(this.dataset.email, this.dataset.name)">✉️ E-post</button>` : ''}
           <button class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828;" onclick="deleteAbandoned(${r.id})">Slett</button>
         </td>
@@ -742,7 +782,12 @@ async function sendSms() {
     await markContacted(activeSmsId);
     closeSmsModal();
   } catch (e) {
-    showAlert(e.message || 'Nettverksfeil – kunne ikke sende SMS', 'error');
+    // SMS not configured – fall back to sms: link (opens phone app / Messages)
+    const smsUrl = `sms:${activeSmsPhone}${/iPhone|iPad|iPod/i.test(navigator.userAgent) ? '&' : '?'}body=${encodeURIComponent(message)}`;
+    window.open(smsUrl);
+    showAlert('Åpner SMS-app ✓', 'success');
+    await markContacted(activeSmsId).catch(() => {});
+    closeSmsModal();
   } finally {
     btn.textContent = 'Send SMS';
     btn.disabled = false;
@@ -776,15 +821,26 @@ async function sendEmail() {
   btn.textContent = 'Sender...';
   btn.disabled = true;
   try {
-    await api('/api/admin/send-email', {
+    const result = await api('/api/admin/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ to: activeEmailTo, name: activeEmailName, subject, message })
     });
-    showAlert('E-post sendt! ✓', 'success');
+    if (result.mailto_fallback) {
+      // SMTP not configured – open mail client instead
+      const mailtoUrl = `mailto:${activeEmailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+      window.open(mailtoUrl);
+      showAlert('Åpner e-postklient ✓', 'success');
+    } else {
+      showAlert('E-post sendt! ✓', 'success');
+    }
     closeEmailModal();
   } catch (e) {
-    showAlert(e.message || 'Kunne ikke sende e-post', 'error');
+    // Last resort fallback
+    const mailtoUrl = `mailto:${activeEmailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+    window.open(mailtoUrl);
+    showAlert('Åpner e-postklient ✓', 'success');
+    closeEmailModal();
   } finally {
     btn.textContent = 'Send e-post';
     btn.disabled = false;

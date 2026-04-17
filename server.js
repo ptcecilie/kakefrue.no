@@ -603,6 +603,12 @@ app.delete('/api/admin/customers/:id', requireAdmin, async (req, res) => {
 app.post('/api/admin/send-email', requireAdmin, async (req, res) => {
   const { to, name, subject, message } = req.body;
   if (!to || !subject || !message) return res.status(400).json({ error: 'Mangler felt' });
+
+  // If SMTP not configured, tell client to use mailto fallback
+  if (!process.env.SMTP_HOST) {
+    return res.json({ ok: true, mailto_fallback: true });
+  }
+
   const transporter = createTransporter();
   const html = `
     <div style="font-family: 'Lato', sans-serif; max-width: 600px; margin: 0 auto; background: #F5F2EC; padding: 32px; border-radius: 12px;">
@@ -617,13 +623,14 @@ app.post('/api/admin/send-email', requireAdmin, async (req, res) => {
   `;
   try {
     await transporter.sendMail({
-      from: `"Kakefrue" <${process.env.SMTP_FROM || 'post@kakefrue.no'}>`,
+      from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
       to,
       subject,
       html
     });
     res.json({ ok: true });
   } catch (err) {
+    console.error('Email error:', err);
     res.status(500).json({ error: 'Serverfeil ved e-postsending' });
   }
 });
@@ -857,6 +864,35 @@ app.get('*', (req, res) => {
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+// GET /api/about-image — public, returns the about section image
+app.get('/api/about-image', async (req, res) => {
+  try {
+    const [rows] = await pool.query(`SELECT v FROM settings WHERE k = 'about_image_url'`);
+    res.json({ url: rows[0]?.v || null });
+  } catch (err) {
+    res.json({ url: null });
+  }
+});
+
+// POST /api/admin/about-image — upload about section image
+app.post('/api/admin/about-image', requireAdmin, async (req, res) => {
+  const { data, mimeType } = req.body;
+  if (!data || !mimeType) return res.status(400).json({ error: 'Mangler data' });
+  const ext = mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
+  const filename = `about_${Date.now()}.${ext}`;
+  const filepath = path.join(uploadsDir, filename);
+  try {
+    const buffer = Buffer.from(data, 'base64');
+    fs.writeFileSync(filepath, buffer);
+    const url = '/uploads/' + filename;
+    await pool.query(`INSERT INTO settings (k, v) VALUES ('about_image_url', ?) ON DUPLICATE KEY UPDATE v = ?`, [url, url]);
+    res.json({ ok: true, url });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Opplasting feilet' });
+  }
+});
 
 // GET /api/photos — public, returns featured photos
 app.get('/api/photos', async (req, res) => {
