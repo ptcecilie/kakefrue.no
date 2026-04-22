@@ -353,6 +353,8 @@ async function deletePhoto(id) {
 
 // ── Statistikk ─────────────────────────────────────────────
 async function loadStatistikk() {
+  loadPageViews();
+
   try {
     const [stats, bookings] = await Promise.all([
       api('/api/admin/stats'),
@@ -402,6 +404,50 @@ async function loadStatistikk() {
     bookings.forEach(b => { const d = b.design_level || 'ukjent'; designs[d] = (designs[d] || 0) + 1; });
     renderPillList('chartDesign', designs, stats.total_bookings);
 
+  } catch (e) { console.error(e); }
+}
+
+async function loadPageViews() {
+  try {
+    const pv = await api('/api/admin/pageviews');
+    const el = document.getElementById('pageViewsSection');
+    if (!el) return;
+
+    // Fill last 30 days (including days with 0)
+    const dailyMap = {};
+    pv.daily.forEach(d => { dailyMap[d.view_date.slice(0,10)] = parseInt(d.count); });
+    const days = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0,10);
+      days[key] = dailyMap[key] || 0;
+    }
+
+    const trend = pv.last_month > 0
+      ? (pv.this_month >= pv.last_month ? '↑' : '↓')
+      : '';
+    const trendColor = pv.this_month >= pv.last_month ? 'var(--sage)' : '#C62828';
+
+    el.innerHTML = `
+      <div class="stats-grid" style="margin-bottom:24px;">
+        <div class="stat-card"><div class="stat-value">${parseInt(pv.total).toLocaleString('nb-NO')}</div><div class="stat-label">Totale sidevisninger</div></div>
+        <div class="stat-card"><div class="stat-value">${parseInt(pv.this_month).toLocaleString('nb-NO')}</div><div class="stat-label">Denne måneden ${trend ? `<span style="color:${trendColor}">${trend}</span>` : ''}</div></div>
+        <div class="stat-card"><div class="stat-value">${parseInt(pv.last_month).toLocaleString('nb-NO')}</div><div class="stat-label">Forrige måned</div></div>
+        <div class="stat-card"><div class="stat-value">${Math.round(Object.values(days).reduce((a,b)=>a+b,0)/30)}</div><div class="stat-label">Snitt per dag (30 dager)</div></div>
+      </div>
+      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;margin-bottom:24px;">
+        <h3 style="margin-bottom:20px;">Sidevisninger siste 30 dager</h3>
+        <div id="chartPageViews" style="display:flex;align-items:flex-end;gap:4px;height:160px;padding-bottom:28px;position:relative;border-bottom:2px solid rgba(0,0,0,0.07);"></div>
+      </div>
+      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;">
+        <h3 style="margin-bottom:20px;">Populære sider</h3>
+        <div id="chartByPage"></div>
+      </div>
+    `;
+
+    renderBarChart('chartPageViews', days, v => v, '#8B72BE');
+    const pageTotal = pv.byPage.reduce((s, p) => s + parseInt(p.count), 0) || 1;
+    renderPillList('chartByPage', Object.fromEntries(pv.byPage.map(p => [p.page, parseInt(p.count)])), pageTotal);
   } catch (e) { console.error(e); }
 }
 
@@ -1102,7 +1148,7 @@ function openReviewDetail(index) {
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
     <div class="modal-body">
-      <p style="font-size:0.85rem;opacity:0.5;margin-bottom:16px;">${formatDate(r.created_at)} · ${r.approved ? '<span style="color:var(--sage);">Synlig på siden</span>' : '<span style="color:#C62828;">Ikke godkjent ennå</span>'}</p>
+      <p style="font-size:0.85rem;opacity:0.5;margin-bottom:16px;">${r.approved ? '<span style="color:var(--sage);">Synlig på siden</span>' : '<span style="color:#C62828;">Ikke godkjent ennå</span>'}</p>
       <div style="background:var(--cream);border-radius:var(--radius-sm);padding:20px;font-style:italic;line-height:1.8;font-size:1rem;">
         "${r.review_text || ''}"
       </div>

@@ -147,6 +147,16 @@ async function initDB() {
     try { await conn.query(`ALTER TABLE reviews ADD COLUMN sort_order INT DEFAULT 0`); } catch (e) { /* column already exists */ }
 
     await conn.query(`
+      CREATE TABLE IF NOT EXISTS page_views (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        page VARCHAR(100) NOT NULL,
+        view_date DATE NOT NULL,
+        count INT DEFAULT 1,
+        UNIQUE KEY unique_page_date (page, view_date)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    await conn.query(`
       CREATE TABLE IF NOT EXISTS pricing (
         id INT PRIMARY KEY AUTO_INCREMENT,
         category VARCHAR(100) NOT NULL,

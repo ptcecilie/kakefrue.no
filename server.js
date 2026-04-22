@@ -8,6 +8,31 @@ const { sendTastingConfirmation, sendCourseConfirmation, createTransporter } = r
 
 const app = express();
 app.use(express.json({ limit: '25mb' }));
+
+// ── Page view tracking ─────────────────────────────────────
+const TRACKED_PAGES = {
+  '/': 'Forside',
+  '/index.html': 'Forside',
+  '/bestill.html': 'Bestilling',
+  '/meny.html': 'Meny',
+  '/om-kakefrue.html': 'Om Kakefrue',
+  '/kurs.html': 'Kurs',
+  '/anbefalinger.html': 'Anbefalinger',
+  '/provesmaking.html': 'Prøvesmaking'
+};
+app.use((req, res, next) => {
+  const page = TRACKED_PAGES[req.path];
+  if (page && req.method === 'GET') {
+    const today = new Date().toISOString().slice(0, 10);
+    pool.query(
+      `INSERT INTO page_views (page, view_date, count) VALUES (?, ?, 1)
+       ON DUPLICATE KEY UPDATE count = count + 1`,
+      [page, today]
+    ).catch(() => {});
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ============================================================
@@ -401,6 +426,45 @@ app.post('/api/payment/confirm', async (req, res) => {
 // ============================================================
 // Admin API
 // ============================================================
+
+// GET /api/admin/pageviews
+app.get('/api/admin/pageviews', requireAdmin, async (req, res) => {
+  try {
+    // Total all time
+    const [[{ total }]] = await pool.query(`SELECT COALESCE(SUM(count),0) as total FROM page_views`);
+
+    // Last 30 days per day
+    const [daily] = await pool.query(`
+      SELECT view_date, SUM(count) as count
+      FROM page_views
+      WHERE view_date >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
+      GROUP BY view_date ORDER BY view_date ASC
+    `);
+
+    // Per page all time
+    const [byPage] = await pool.query(`
+      SELECT page, SUM(count) as count
+      FROM page_views
+      GROUP BY page ORDER BY count DESC
+    `);
+
+    // This month vs last month
+    const [[{ this_month }]] = await pool.query(`
+      SELECT COALESCE(SUM(count),0) as this_month FROM page_views
+      WHERE view_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+    `);
+    const [[{ last_month }]] = await pool.query(`
+      SELECT COALESCE(SUM(count),0) as last_month FROM page_views
+      WHERE view_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
+        AND view_date < DATE_FORMAT(CURDATE(), '%Y-%m-01')
+    `);
+
+    res.json({ total, daily, byPage, this_month, last_month });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
 
 // GET /api/admin/stats
 app.get('/api/admin/stats', requireAdmin, async (req, res) => {
