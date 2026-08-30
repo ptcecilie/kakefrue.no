@@ -147,6 +147,20 @@ async function initDB() {
     try { await conn.query(`ALTER TABLE reviews ADD COLUMN sort_order INT DEFAULT 0`); } catch (e) { /* column already exists */ }
 
     await conn.query(`
+      CREATE TABLE IF NOT EXISTS christmas_orders (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        full_name VARCHAR(255) NOT NULL,
+        phone VARCHAR(50) NOT NULL,
+        email VARCHAR(255),
+        delivery VARCHAR(20) DEFAULT 'henting',
+        address TEXT,
+        products JSON,
+        note TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    await conn.query(`
       CREATE TABLE IF NOT EXISTS page_views (
         id INT PRIMARY KEY AUTO_INCREMENT,
         page VARCHAR(100) NOT NULL,

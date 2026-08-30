@@ -247,6 +247,7 @@
       <div class="admin-nav-item" data-panel="anbefalinger"><span class="icon">⭐</span> Anbefalinger</div>
       <div class="admin-nav-item" data-panel="priser"><span class="icon">💰</span> Priser</div>
       <div class="admin-nav-item" data-panel="kunder"><span class="icon">👥</span> Kunder</div>
+      <div class="admin-nav-item" data-panel="jul"><span class="icon">🎄</span> Julebakst</div>
       <div class="admin-nav-item" data-panel="bilder"><span class="icon">🖼️</span> Bilder</div>
       <div class="admin-nav-item" data-panel="statistikk"><span class="icon">📈</span> Statistikk</div>
       <div class="admin-nav-item" data-panel="innstillinger"><span class="icon">⚙️</span> Innstillinger</div>
@@ -416,6 +417,12 @@
           <tbody id="customersTableBody"><tr><td colspan="7" style="text-align:center;padding:32px;opacity:0.5;">Laster...</td></tr></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- Julebakst -->
+    <div class="admin-panel" id="panel-jul">
+      <div class="section-header"><h2>🎄 Julebestillinger</h2><button class="btn btn-outline btn-sm" onclick="loadChristmasOrders()">↻ Oppdater</button></div>
+      <div id="christmasOrdersList"><div style="opacity:0.4;padding:32px;">Laster...</div></div>
     </div>
 
     <!-- Bilder -->
@@ -621,6 +628,6 @@
   </div>
 </div>
 
-<script src="/js/admin.js?v=2.4"></script>
+<script src="/js/admin.js?v=2.5"></script>
 </body>
 </html>

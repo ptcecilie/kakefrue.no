@@ -86,6 +86,29 @@ app.post('/api/customers', async (req, res) => {
       [customerId]
     );
 
+    // Notify Cecilie about new incomplete booking
+    try {
+      const transporter = createTransporter();
+      await transporter.sendMail({
+        from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
+        to: 'cecilie@kakefrue.no',
+        subject: `⏳ Ny ufullstendig bestilling – ${full_name.trim()}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
+            <h2 style="color:#3D2B5A;">Ny ufullstendig bestilling</h2>
+            <p><strong>${full_name.trim()}</strong> har startet en bestilling men ikke fullført den ennå.</p>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+              <tr><td style="padding:6px 0;opacity:0.6;width:120px;">Navn</td><td><strong>${full_name.trim()}</strong></td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Telefon</td><td>${phone.trim()}</td></tr>
+              ${email ? `<tr><td style="padding:6px 0;opacity:0.6;">E-post</td><td>${email.trim()}</td></tr>` : ''}
+            </table>
+            <p><a href="https://www.kakefrue.no/admin.html" style="color:#8B72BE;">Gå til adminpanelet →</a></p>
+            <p style="font-size:0.8rem;opacity:0.4;margin-top:24px;">– Kakefrue varslingssystem</p>
+          </div>
+        `
+      });
+    } catch (mailErr) { console.log('[Abandoned notify] Email not sent:', mailErr.message); }
+
     res.json({ customer_id: customerId });
   } catch (err) {
     console.error(err);
@@ -148,6 +171,35 @@ app.post('/api/bookings', async (req, res) => {
     );
 
     await conn.commit();
+
+    // Notify Cecilie about new booking
+    try {
+      const [custRows] = await pool.query(`SELECT * FROM customers WHERE id = ?`, [customer_id]);
+      const cust = custRows[0] || {};
+      const transporter = createTransporter();
+      await transporter.sendMail({
+        from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
+        to: 'cecilie@kakefrue.no',
+        subject: `🎂 Ny bestilling #${bookingId} – ${cust.full_name || ''}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
+            <h2 style="color:#3D2B5A;">Ny bestilling mottatt!</h2>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+              <tr><td style="padding:6px 0;opacity:0.6;width:140px;">Bestillingsnr</td><td><strong>#${bookingId}</strong></td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Kunde</td><td><strong>${cust.full_name || ''}</strong></td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Telefon</td><td>${cust.phone || ''}</td></tr>
+              ${cust.email ? `<tr><td style="padding:6px 0;opacity:0.6;">E-post</td><td>${cust.email}</td></tr>` : ''}
+              <tr><td style="padding:6px 0;opacity:0.6;">Dato</td><td>${booking_date}</td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Anledning</td><td>${occasion || '—'}</td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Design</td><td>${design_level || '—'}</td></tr>
+            </table>
+            <p><a href="https://www.kakefrue.no/admin.html" style="color:#8B72BE;">Se bestillingen i adminpanelet →</a></p>
+            <p style="font-size:0.8rem;opacity:0.4;margin-top:24px;">– Kakefrue varslingssystem</p>
+          </div>
+        `
+      });
+    } catch (mailErr) { console.log('[Booking notify] Email not sent:', mailErr.message); }
+
     res.json({ booking_id: bookingId });
   } catch (err) {
     await conn.rollback();
@@ -269,6 +321,63 @@ app.post('/api/tastings', async (req, res) => {
     res.json({ tasting_id: result.insertId });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// POST /api/christmas-orders
+app.post('/api/christmas-orders', async (req, res) => {
+  const { full_name, phone, email, delivery, address, products, note } = req.body;
+  if (!full_name || !phone) return res.status(400).json({ error: 'Navn og telefon er påkrevd' });
+  if (!products || !products.length) return res.status(400).json({ error: 'Velg minst ett produkt' });
+  try {
+    const [result] = await pool.query(
+      `INSERT INTO christmas_orders (full_name, phone, email, delivery, address, products, note) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [full_name.trim(), phone.trim(), email?.trim() || null, delivery || 'henting', address?.trim() || null, JSON.stringify(products), note?.trim() || null]
+    );
+
+    // Notify Cecilie
+    try {
+      const transporter = createTransporter();
+      const productList = products.map(p => `<li>${p.name} – ${p.qty}</li>`).join('');
+      await transporter.sendMail({
+        from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
+        to: 'cecilie@kakefrue.no',
+        subject: `🎄 Ny julebestilling fra ${full_name.trim()}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
+            <h2 style="color:#2D5A27;">🎄 Ny julebestilling!</h2>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+              <tr><td style="padding:6px 0;opacity:0.6;width:140px;">Navn</td><td><strong>${full_name.trim()}</strong></td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Telefon</td><td>${phone.trim()}</td></tr>
+              ${email ? `<tr><td style="padding:6px 0;opacity:0.6;">E-post</td><td>${email.trim()}</td></tr>` : ''}
+              <tr><td style="padding:6px 0;opacity:0.6;">Levering</td><td>${delivery === 'levering' ? 'Levering: ' + (address || '—') : 'Henting'}</td></tr>
+            </table>
+            <div style="background:white;border-radius:8px;padding:16px;margin:16px 0;">
+              <strong>Bestilte produkter:</strong>
+              <ul style="margin:10px 0 0;padding-left:20px;">${productList}</ul>
+            </div>
+            ${note ? `<p><strong>Kommentar:</strong> ${note}</p>` : ''}
+            <p><a href="https://www.kakefrue.no/admin.html" style="color:#8B72BE;">Se i adminpanelet →</a></p>
+            <p style="font-size:0.8rem;opacity:0.4;margin-top:24px;">– Kakefrue varslingssystem</p>
+          </div>
+        `
+      });
+    } catch (mailErr) { console.log('[Christmas notify] Email not sent:', mailErr.message); }
+
+    res.json({ ok: true, id: result.insertId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// GET /api/admin/christmas-orders
+app.get('/api/admin/christmas-orders', requireAdmin, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`SELECT * FROM christmas_orders ORDER BY created_at DESC`);
+    res.json(rows.map(r => ({ ...r, products: typeof r.products === 'string' ? JSON.parse(r.products) : r.products })));
+  } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
   }
 });

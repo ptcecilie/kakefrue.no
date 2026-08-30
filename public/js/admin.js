@@ -124,6 +124,7 @@ function loadPanel(panel) {
     case 'anbefalinger': loadReviews(); break;
     case 'priser': loadPricing(); break;
     case 'kunder': loadCustomers(); break;
+    case 'jul': loadChristmasOrders(); break;
     case 'bilder': loadPhotos(); loadAboutImage(); break;
     case 'statistikk': loadStatistikk(); break;
     case 'innstillinger': loadSettings(); break;
@@ -206,6 +207,42 @@ async function saveNewCustomer() {
   } catch (e) {
     showAlert(e.message || 'Noe gikk galt', 'error');
   }
+}
+
+// ── Julebestillinger ───────────────────────────────────────
+async function loadChristmasOrders() {
+  const container = $('christmasOrdersList');
+  try {
+    const orders = await api('/api/admin/christmas-orders');
+    if (!orders.length) {
+      container.innerHTML = '<div style="text-align:center;padding:48px;opacity:0.4;">Ingen julebestillinger ennå</div>';
+      return;
+    }
+    container.innerHTML = `
+      <div style="margin-bottom:16px;font-size:0.9rem;opacity:0.6;">${orders.length} bestilling${orders.length !== 1 ? 'er' : ''} totalt</div>
+      ${orders.map(o => `
+        <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+            <div>
+              <strong style="font-size:1.05rem;">${o.full_name}</strong>
+              <span style="margin-left:12px;font-size:0.85rem;opacity:0.55;">${formatDate(o.created_at)}</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <a href="tel:${o.phone}" class="btn btn-outline btn-sm">📞 ${o.phone}</a>
+              ${o.email ? `<button class="btn btn-outline btn-sm" data-email="${o.email}" data-name="${o.full_name.replace(/"/g,'&quot;')}" onclick="openEmailModal(this.dataset.email,this.dataset.name)">✉️</button>` : ''}
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+            ${(o.products || []).map(p => `<span class="tag tag-sage">${p.name} – ${p.qty}</span>`).join('')}
+          </div>
+          <div style="font-size:0.85rem;opacity:0.6;">
+            ${o.delivery === 'levering' ? `🚗 Levering: ${o.address || '—'}` : '🏠 Henting'}
+            ${o.note ? ` · <em>${o.note}</em>` : ''}
+          </div>
+        </div>
+      `).join('')}
+    `;
+  } catch (e) { container.innerHTML = '<div style="padding:32px;opacity:0.5;">Kunne ikke laste bestillinger</div>'; }
 }
 
 // ── About image ────────────────────────────────────────────
