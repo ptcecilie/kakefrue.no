@@ -207,9 +207,11 @@ async function initDB() {
         alt_text VARCHAR(255) DEFAULT '',
         featured BOOLEAN DEFAULT FALSE,
         sort_order INT DEFAULT 0,
+        image_data LONGTEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+    try { await conn.query(`ALTER TABLE photos ADD COLUMN image_data LONGTEXT`); } catch (e) { /* already exists */ }
 
     // Seed default settings
     await conn.query(`

@@ -120,7 +120,7 @@ section { padding: var(--section-padding); }
 .nav-links a:hover { opacity: 1; color: var(--gold); }
 .nav-cta {
   background: rgba(196, 120, 138, 0.13);
-  color: #3D6B4A !important;
+  color: #9B3A52 !important;
   border: 1.5px solid rgba(196, 120, 138, 0.25) !important;
   padding: 10px 20px;
   border-radius: 100px;
@@ -133,7 +133,7 @@ section { padding: var(--section-padding); }
 }
 .nav-cta:hover {
   background: rgba(196, 120, 138, 0.22) !important;
-  color: #2E5538 !important;
+  color: #7A2A3E !important;
   border-color: rgba(196, 120, 138, 0.4) !important;
 }
 .hamburger {

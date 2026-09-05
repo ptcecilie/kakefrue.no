@@ -1086,19 +1086,14 @@ app.get('/api/about-image', async (req, res) => {
   }
 });
 
-// POST /api/admin/about-image — upload about section image
+// POST /api/admin/about-image — upload about section image (stored as data URL in DB)
 app.post('/api/admin/about-image', requireAdmin, async (req, res) => {
   const { data, mimeType } = req.body;
   if (!data || !mimeType) return res.status(400).json({ error: 'Mangler data' });
-  const ext = mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
-  const filename = `about_${Date.now()}.${ext}`;
-  const filepath = path.join(uploadsDir, filename);
   try {
-    const buffer = Buffer.from(data, 'base64');
-    fs.writeFileSync(filepath, buffer);
-    const url = '/uploads/' + filename;
-    await pool.query(`INSERT INTO settings (k, v) VALUES ('about_image_url', ?) ON DUPLICATE KEY UPDATE v = ?`, [url, url]);
-    res.json({ ok: true, url });
+    const dataUrl = `data:${mimeType};base64,${data}`;
+    await pool.query(`INSERT INTO settings (k, v) VALUES ('about_image_url', ?) ON DUPLICATE KEY UPDATE v = ?`, [dataUrl, dataUrl]);
+    res.json({ ok: true, url: dataUrl });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Opplasting feilet' });
@@ -1109,9 +1104,9 @@ app.post('/api/admin/about-image', requireAdmin, async (req, res) => {
 app.get('/api/photos', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT id, filename, alt_text FROM photos WHERE featured = TRUE ORDER BY sort_order ASC, created_at DESC`
+      `SELECT id, filename, alt_text, image_data FROM photos WHERE featured = TRUE ORDER BY sort_order ASC, created_at DESC`
     );
-    res.json(rows.map(r => ({ ...r, url: '/uploads/' + r.filename })));
+    res.json(rows.map(r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, url: r.image_data || ('/uploads/' + r.filename) })));
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
   }
@@ -1120,30 +1115,28 @@ app.get('/api/photos', async (req, res) => {
 // GET /api/admin/photos — all photos
 app.get('/api/admin/photos', requireAdmin, async (req, res) => {
   try {
-    const [rows] = await pool.query(`SELECT id, filename, alt_text, featured, sort_order, created_at FROM photos ORDER BY sort_order ASC, created_at DESC`);
-    res.json(rows.map(r => ({ ...r, url: '/uploads/' + r.filename })));
+    const [rows] = await pool.query(`SELECT id, filename, alt_text, featured, sort_order, created_at, image_data FROM photos ORDER BY sort_order ASC, created_at DESC`);
+    res.json(rows.map(r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, featured: r.featured, sort_order: r.sort_order, created_at: r.created_at, url: r.image_data || ('/uploads/' + r.filename) })));
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
   }
 });
 
-// POST /api/admin/photos — upload base64 image
+// POST /api/admin/photos — upload base64 image (stored in DB)
 app.post('/api/admin/photos', requireAdmin, async (req, res) => {
   const { data, mimeType, alt_text } = req.body;
   if (!data || !mimeType) return res.status(400).json({ error: 'Mangler data' });
 
   const ext = mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
-  const filename = `photo_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-  const filepath = path.join(uploadsDir, filename);
+  const filename = `photo_${Date.now()}.${ext}`;
+  const dataUrl = `data:${mimeType};base64,${data}`;
 
   try {
-    const buffer = Buffer.from(data, 'base64');
-    fs.writeFileSync(filepath, buffer);
     const [result] = await pool.query(
-      `INSERT INTO photos (filename, alt_text, featured) VALUES (?, ?, FALSE)`,
-      [filename, alt_text || '']
+      `INSERT INTO photos (filename, alt_text, featured, image_data) VALUES (?, ?, FALSE, ?)`,
+      [filename, alt_text || '', dataUrl]
     );
-    res.json({ id: result.insertId, url: '/uploads/' + filename, filename });
+    res.json({ id: result.insertId, url: dataUrl, filename });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Opplasting feilet' });
@@ -1167,12 +1160,7 @@ app.put('/api/admin/photos/:id', requireAdmin, async (req, res) => {
 // DELETE /api/admin/photos/:id
 app.delete('/api/admin/photos/:id', requireAdmin, async (req, res) => {
   try {
-    const [[photo]] = await pool.query(`SELECT filename FROM photos WHERE id=?`, [req.params.id]);
-    if (photo) {
-      const fp = path.join(uploadsDir, photo.filename);
-      if (fs.existsSync(fp)) fs.unlinkSync(fp);
-      await pool.query(`DELETE FROM photos WHERE id=?`, [req.params.id]);
-    }
+    await pool.query(`DELETE FROM photos WHERE id=?`, [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
