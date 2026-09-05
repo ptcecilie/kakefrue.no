@@ -312,6 +312,31 @@ async function loadPhotos() {
   } catch (e) { console.error(e); }
 }
 
+function compressImage(file, maxPx = 1600, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxPx || height > maxPx) {
+          if (width > height) { height = Math.round(height * maxPx / width); width = maxPx; }
+          else { width = Math.round(width * maxPx / height); height = maxPx; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve({ data: dataUrl.split(',')[1], mimeType: 'image/jpeg', name: file.name });
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function uploadPhotos(input) {
   const files = Array.from(input.files);
   if (!files.length) return;
@@ -321,37 +346,44 @@ async function uploadPhotos(input) {
   const text = document.getElementById('uploadProgressText');
   progress.style.display = 'block';
   bar.style.width = '5%';
-  text.textContent = `Forbereder ${files.length} bilde${files.length !== 1 ? 'r' : ''}...`;
+  text.textContent = `Komprimerer ${files.length} bilde${files.length !== 1 ? 'r' : ''}...`;
 
-  // Read all files as base64 first
-  const prepared = await Promise.all(files.map(file => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = e => resolve({ data: e.target.result.split(',')[1], mimeType: file.type, name: file.name });
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  })));
+  let prepared;
+  try {
+    prepared = await Promise.all(files.map(f => compressImage(f)));
+  } catch (e) {
+    text.textContent = 'Feil ved lesing av filer: ' + e.message;
+    return;
+  }
 
   bar.style.width = '20%';
 
-  // Upload in parallel batches of 3
-  const batchSize = 3;
-  let done = 0;
-  for (let i = 0; i < prepared.length; i += batchSize) {
-    const batch = prepared.slice(i, i + batchSize);
-    await Promise.all(batch.map(f =>
-      api('/api/admin/photos', {
-        method: 'POST',
-        body: JSON.stringify({ data: f.data, mimeType: f.mimeType, alt_text: '' })
-      }).catch(e => console.error('Upload failed:', f.name, e))
-    ));
-    done += batch.length;
-    bar.style.width = Math.round(20 + (done / prepared.length) * 80) + '%';
-    text.textContent = `Lastet opp ${done} av ${files.length}...`;
+  let done = 0, failed = 0;
+  for (let i = 0; i < prepared.length; i += 2) {
+    const batch = prepared.slice(i, i + 2);
+    await Promise.all(batch.map(async f => {
+      try {
+        await api('/api/admin/photos', {
+          method: 'POST',
+          body: JSON.stringify({ data: f.data, mimeType: f.mimeType, alt_text: '' })
+        });
+        done++;
+      } catch (e) {
+        failed++;
+        console.error('Upload failed:', f.name, e);
+      }
+    }));
+    bar.style.width = Math.round(20 + ((done + failed) / prepared.length) * 80) + '%';
+    text.textContent = `Lastet opp ${done} av ${prepared.length}...`;
   }
 
   bar.style.width = '100%';
-  text.textContent = `${done} bilde${done !== 1 ? 'r' : ''} lastet opp! ✓`;
-  setTimeout(() => { progress.style.display = 'none'; }, 2500);
+  if (failed > 0) {
+    text.textContent = `${done} lastet opp, ${failed} feilet. Prøv igjen med færre bilder.`;
+  } else {
+    text.textContent = `${done} bilde${done !== 1 ? 'r' : ''} lastet opp! ✓`;
+  }
+  setTimeout(() => { progress.style.display = 'none'; }, 3000);
   input.value = '';
   loadPhotos();
 }

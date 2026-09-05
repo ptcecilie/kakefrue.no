@@ -15,6 +15,9 @@ const pool = mysql.createPool({
 async function initDB() {
   const conn = await pool.getConnection();
   try {
+    await conn.query(`SET GLOBAL max_allowed_packet = 67108864`).catch(() =>
+      conn.query(`SET SESSION max_allowed_packet = 67108864`).catch(() => {})
+    );
     // Create tables using INFORMATION_SCHEMA checks (no IF NOT EXISTS on columns)
     await conn.query(`
       CREATE TABLE IF NOT EXISTS customers (
