@@ -81,19 +81,7 @@ $('adminPassword').addEventListener('keydown', e => { if (e.key === 'Enter') $('
 })();
 
 // ── Navigation ─────────────────────────────────────────────
-document.querySelectorAll('.admin-nav-item').forEach(item => {
-  item.addEventListener('click', () => {
-    document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
-    document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
-    item.classList.add('active');
-    const panel = item.dataset.panel;
-    $('panel-' + panel).classList.add('active');
-    loadPanel(panel);
-  });
-});
-
-// ── Stat card navigation ────────────────────────────────────
-function gotoPanel(panel) {
+function activatePanel(panel) {
   document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
   document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
   const navItem = document.querySelector(`.admin-nav-item[data-panel="${panel}"]`);
@@ -101,7 +89,15 @@ function gotoPanel(panel) {
   const panelEl = document.getElementById('panel-' + panel);
   if (panelEl) panelEl.classList.add('active');
   loadPanel(panel);
+  location.hash = panel;
 }
+
+document.querySelectorAll('.admin-nav-item').forEach(item => {
+  item.addEventListener('click', () => activatePanel(item.dataset.panel));
+});
+
+// ── Stat card navigation ────────────────────────────────────
+function gotoPanel(panel) { activatePanel(panel); }
 
 function clearBadge(panel) {
   const badge = document.getElementById('badge-' + panel);
@@ -519,8 +515,10 @@ function renderPillList(containerId, data, total) {
 }
 
 function initAdmin() {
-  loadStats();
-  loadRecentBookings();
+  const hash = location.hash.replace('#', '');
+  const validPanels = ['oversikt','kalender','bestillinger','ufullstendige','provesmaking','kurs','anbefalinger','bilder','statistikk','innstillinger','jul'];
+  const startPanel = validPanels.includes(hash) ? hash : 'oversikt';
+  activatePanel(startPanel);
 }
 
 // ── Stats ──────────────────────────────────────────────────
