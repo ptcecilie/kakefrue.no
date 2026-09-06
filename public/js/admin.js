@@ -295,9 +295,10 @@ async function loadPhotos() {
       grid.innerHTML = '<div style="text-align:center; padding:48px; opacity:0.4; grid-column:1/-1;">Ingen bilder ennå – last opp ditt første bilde!</div>';
       return;
     }
-    grid.innerHTML = photos.map(p => `
+    const featured = photos.filter(p => p.featured);
+    const hidden = photos.filter(p => !p.featured);
+    const cardHtml = p => `
       <div class="photo-card ${p.featured ? 'featured' : ''}" id="photo-${p.id}">
-        ${p.featured ? '<div class="photo-card-badge">✓ Forsiden</div>' : ''}
         <img src="${p.url}" alt="${p.alt_text || ''}" loading="lazy">
         <div class="photo-card-body">
           <input class="form-input" style="font-size:0.8rem; padding:6px 10px; margin-bottom:8px;" value="${p.alt_text || ''}" placeholder="Bildetekst (valgfritt)" oninput="updatePhotoAlt(${p.id}, this.value)">
@@ -308,8 +309,20 @@ async function loadPhotos() {
             <button class="photo-delete-btn" onclick="deletePhoto(${p.id})">🗑</button>
           </div>
         </div>
+      </div>`;
+    const sectionHtml = (title, color, items, emptyMsg) => `
+      <div style="grid-column:1/-1; margin-top:8px; margin-bottom:4px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${color};"></span>
+          <strong style="font-size:0.9rem;">${title}</strong>
+          <span style="font-size:0.8rem; opacity:0.5;">${items.length} bilder</span>
+        </div>
+        <hr style="border:none; border-top:1.5px solid ${color}33; margin:8px 0 0;">
       </div>
-    `).join('');
+      ${items.length ? items.map(cardHtml).join('') : `<div style="grid-column:1/-1; padding:16px 0; opacity:0.4; font-size:0.85rem;">${emptyMsg}</div>`}`;
+    grid.innerHTML =
+      sectionHtml('Synlig på forsiden', '#7A9E82', featured, 'Ingen bilder er synlige på forsiden ennå') +
+      sectionHtml('Ikke synlig', '#aaa', hidden, 'Ingen skjulte bilder');
   } catch (e) {
     const grid = document.getElementById('photoGrid');
     if (grid) grid.innerHTML = `<div style="grid-column:1/-1;padding:24px;color:red;font-size:0.9rem;">Feil ved lasting av bilder: ${e.message}</div>`;
