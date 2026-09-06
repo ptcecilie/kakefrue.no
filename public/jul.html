@@ -11,13 +11,14 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@600&family=Lato:wght@300;400;700&display=swap">
   <style>
     :root {
-      --pine-black: #070E08;
+      --night:      #0D1528;
       --forest:     #1A3D21;
-      --red:        #9B1F1F;
-      --red-lt:     #C42929;
-      --red-glow:   rgba(155,31,31,0.22);
+      --red:        #8B1A1A;
+      --red-lt:     #B02222;
+      --amber:      #C4893A;
+      --amber-lt:   #E8B96A;
       --snow:       #F4EEE6;
-      --frost:      #C0D8BC;
+      --frost:      #C8D8E8;
       --cream-mid:  #EAE0D4;
       --body-text:  #231A14;
     }
@@ -27,25 +28,25 @@
     h1,h2,h3 { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; }
 
     /* ── Nav override ── */
-    .nav { background: rgba(7,14,8,0.97); border-color: rgba(155,31,31,0.18); }
+    .nav { background: rgba(10,16,36,0.97); border-color: rgba(196,137,58,0.15); }
     .nav-logo { color: var(--snow); }
-    .nav-logo span { color: #D4A0A0; }
-    .nav-links a { color: rgba(244,238,230,0.65); }
+    .nav-logo span { color: var(--amber-lt); }
+    .nav-links a { color: rgba(244,238,230,0.6); }
     .nav-links a:hover { color: var(--snow); opacity: 1; }
-    .nav-cta { background: rgba(155,31,31,0.18) !important; color: #E8B0B0 !important; border-color: rgba(155,31,31,0.4) !important; }
+    .nav-cta { background: rgba(139,26,26,0.2) !important; color: #EABABA !important; border-color: rgba(139,26,26,0.4) !important; }
     .hamburger span { background: var(--snow); }
 
     /* ── Hero ── */
     .jul-hero {
       position: relative;
-      min-height: 88vh;
+      min-height: 90vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
       overflow: hidden;
-      background: var(--pine-black);
+      background: var(--night);
       padding: 120px 24px 80px;
     }
     #snowCanvas {
@@ -54,56 +55,74 @@
       width: 100%; height: 100%;
       pointer-events: none;
     }
+    /* Warm amber glow – the julestjerne light source */
     .hero-glow {
       position: absolute;
-      width: 700px; height: 700px;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -58%);
+      width: 560px; height: 560px;
+      top: 32%; left: 50%;
+      transform: translate(-50%, -50%);
       background: radial-gradient(ellipse at center,
-        rgba(155,31,31,0.20) 0%,
-        rgba(80,14,14,0.10) 45%,
-        transparent 72%);
+        rgba(196,137,58,0.22) 0%,
+        rgba(196,100,20,0.10) 40%,
+        transparent 70%);
       pointer-events: none;
+      z-index: 1;
     }
-    .jul-hero-inner { position: relative; z-index: 2; max-width: 640px; }
+    /* Julestjerne */
+    .julestjerne-wrap {
+      position: relative;
+      z-index: 2;
+      margin-bottom: 24px;
+    }
+    .julestjerne-svg {
+      width: 90px;
+      height: 90px;
+      filter: drop-shadow(0 0 14px rgba(196,137,58,0.7));
+      animation: starPulse 3s ease-in-out infinite;
+    }
+    @keyframes starPulse {
+      0%,100% { filter: drop-shadow(0 0 10px rgba(196,137,58,0.65)); }
+      50%      { filter: drop-shadow(0 0 26px rgba(232,185,106,0.9)); }
+    }
+
+    .jul-hero-inner { position: relative; z-index: 2; max-width: 600px; }
     .jul-eyebrow {
       display: inline-block;
       font-family: 'Lato', sans-serif;
       font-weight: 700;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: #E8B0B0;
-      border: 1px solid rgba(155,31,31,0.45);
-      padding: 7px 20px;
+      color: var(--amber-lt);
+      border: 1px solid rgba(196,137,58,0.35);
+      padding: 6px 18px;
       border-radius: 100px;
-      margin-bottom: 28px;
+      margin-bottom: 22px;
     }
     .jul-hero h1 {
-      font-size: clamp(3rem, 7vw, 5.2rem);
+      font-size: clamp(2.6rem, 6.5vw, 4.8rem);
       color: var(--snow);
-      line-height: 1.05;
-      margin: 0 0 10px;
-      text-shadow: 0 2px 40px rgba(0,0,0,0.6);
+      line-height: 1.08;
+      margin: 0 0 8px;
+      text-shadow: 0 2px 30px rgba(0,0,0,0.5);
     }
     .jul-hero h1 em {
       font-style: italic;
-      color: #E8B0B0;
+      color: var(--amber-lt);
     }
     .jul-script {
       font-family: 'Dancing Script', cursive;
-      font-size: clamp(1.3rem, 3vw, 1.9rem);
-      color: var(--frost);
-      opacity: 0.8;
+      font-size: clamp(1.2rem, 2.8vw, 1.75rem);
+      color: rgba(200,216,232,0.75);
       display: block;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
     .jul-hero-sub {
-      font-size: 1rem;
-      color: rgba(247,240,230,0.65);
-      max-width: 460px;
-      margin: 0 auto 40px;
-      line-height: 1.8;
+      font-size: 0.97rem;
+      color: rgba(244,238,230,0.58);
+      max-width: 420px;
+      margin: 0 auto 36px;
+      line-height: 1.85;
       font-weight: 300;
     }
     .jul-cta {
@@ -111,34 +130,34 @@
       align-items: center;
       gap: 10px;
       background: var(--red);
-      color: #F4EEE6;
-      padding: 16px 36px;
+      color: #F7F0E8;
+      padding: 15px 34px;
       border-radius: 100px;
       font-family: 'Lato', sans-serif;
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       text-decoration: none;
       transition: background 0.2s, transform 0.15s;
-      box-shadow: 0 4px 28px rgba(155,31,31,0.5), 0 0 0 1px rgba(155,31,31,0.3);
+      box-shadow: 0 4px 24px rgba(139,26,26,0.45);
     }
     .jul-cta:hover { background: var(--red-lt); transform: translateY(-2px); }
 
-    /* Pine branches */
+    /* Pine trees – dark silhouettes against the night */
     .pine-left, .pine-right {
       position: absolute;
       bottom: 0;
-      width: 340px;
-      height: 340px;
+      width: 320px;
+      height: 360px;
       pointer-events: none;
-      opacity: 0.65;
+      opacity: 0.8;
     }
-    .pine-left { left: -40px; transform: scaleX(-1); }
-    .pine-right { right: -40px; }
+    .pine-left { left: -30px; }
+    .pine-right { right: -30px; }
 
-    /* Twinkling lights on tree */
-    @keyframes twinkle { 0%,100% { opacity:1; } 50% { opacity:0.15; } }
+    /* Twinkling lights */
+    @keyframes twinkle { 0%,100% { opacity:1; } 50% { opacity:0.1; } }
     .light-1 { animation: twinkle 1.8s ease-in-out infinite; }
     .light-2 { animation: twinkle 2.3s ease-in-out 0.4s infinite; }
     .light-3 { animation: twinkle 1.5s ease-in-out 0.9s infinite; }
@@ -164,7 +183,7 @@
 
     /* ── Info band ── */
     .jul-info {
-      background: var(--forest);
+      background: #5C1818;
       color: rgba(247,240,230,0.85);
       display: flex;
       justify-content: center;
@@ -271,7 +290,7 @@
 
     /* ── Order section ── */
     .order-section {
-      background: linear-gradient(160deg, #0D2315 0%, #1C4225 60%, #0D1F10 100%);
+      background: linear-gradient(160deg, #1A0A0A 0%, #3A1010 50%, #1A0808 100%);
       padding: 72px 24px 80px;
     }
     .order-section h2.form-title {
@@ -293,7 +312,7 @@
       padding: 40px;
       max-width: 640px;
       margin: 0 auto;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.35), 0 0 0 1px rgba(212,145,58,0.15);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35), 0 0 0 1px rgba(196,137,58,0.18);
     }
 
     .pills-wrap { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 24px; }
@@ -419,40 +438,56 @@
   <canvas id="snowCanvas"></canvas>
   <div class="hero-glow"></div>
 
-  <!-- Pine tree SVG – left & right with twinkling lights -->
-  <svg class="pine-left" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M170 325 L170 65" stroke="#3A6640" stroke-width="7" stroke-linecap="round"/>
-    <path d="M170 290 L70 218 L105 213 L52 162 L90 159 L44 108 L82 107 L50 66 L108 78 L170 118" fill="#1B4A28" opacity="0.95"/>
-    <path d="M170 290 L270 218 L235 213 L288 162 L250 159 L296 108 L258 107 L290 66 L232 78 L170 118" fill="#265535" opacity="0.8"/>
-    <!-- Star -->
-    <polygon points="170,52 174,63 186,63 177,70 180,81 170,74 160,81 163,70 154,63 166,63" fill="#FFF8F0" opacity="0.9"/>
-    <!-- Twinkling lights: red, warm-white -->
-    <circle class="light-1" cx="80" cy="220" r="5" fill="#C42929"/>
-    <circle class="light-2" cx="105" cy="163" r="4" fill="#F4EEE6"/>
-    <circle class="light-3" cx="55" cy="108" r="4" fill="#C42929"/>
-    <circle class="light-4" cx="235" cy="215" r="4" fill="#F4EEE6"/>
-    <circle class="light-5" cx="258" cy="162" r="4" fill="#C42929"/>
-    <circle class="light-2" cx="88" cy="107" r="3" fill="#F4EEE6"/>
-    <circle class="light-3" cx="270" cy="220" r="5" fill="#9B1F1F"/>
-    <circle class="light-1" cx="292" cy="108" r="3" fill="#F4EEE6"/>
+  <!-- Grantre venstre (silhuett mot nattehimmelen) -->
+  <svg class="pine-left" viewBox="0 0 320 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M160 355 L160 70" stroke="#223A28" stroke-width="8" stroke-linecap="round"/>
+    <path d="M160 310 L55 230 L95 224 L38 168 L80 164 L28 108 L72 106 L42 62 L100 76 L160 120 L218 76 L278 62 L248 106 L292 108 L240 164 L282 168 L222 224 L262 230 L160 310Z" fill="#152B1C" opacity="0.92"/>
+    <polygon points="160,55 164,67 177,67 167,75 171,88 160,80 149,88 153,75 143,67 156,67" fill="#E8C87A" opacity="0.85"/>
+    <circle class="light-1" cx="62" cy="232" r="5.5" fill="#C42929"/>
+    <circle class="light-3" cx="43" cy="168" r="4"   fill="#E8C87A"/>
+    <circle class="light-2" cx="32" cy="110" r="4.5" fill="#C42929"/>
+    <circle class="light-4" cx="78" cy="165" r="3.5" fill="#F4EEE6"/>
+    <circle class="light-5" cx="258" cy="232" r="5"  fill="#E8C87A"/>
+    <circle class="light-1" cx="244" cy="166" r="4"  fill="#C42929"/>
+    <circle class="light-3" cx="288" cy="110" r="4"  fill="#F4EEE6"/>
+    <circle class="light-2" cx="100" cy="106" r="3.5" fill="#E8C87A"/>
+    <circle class="light-4" cx="276" cy="60"  r="3"  fill="#C42929"/>
   </svg>
-  <svg class="pine-right" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform:none;">
-    <path d="M170 325 L170 65" stroke="#3A6640" stroke-width="7" stroke-linecap="round"/>
-    <path d="M170 290 L70 218 L105 213 L52 162 L90 159 L44 108 L82 107 L50 66 L108 78 L170 118" fill="#265535" opacity="0.8"/>
-    <path d="M170 290 L270 218 L235 213 L288 162 L250 159 L296 108 L258 107 L290 66 L232 78 L170 118" fill="#1B4A28" opacity="0.95"/>
-    <polygon points="170,52 174,63 186,63 177,70 180,81 170,74 160,81 163,70 154,63 166,63" fill="#FFF8F0" opacity="0.9"/>
-    <!-- Mirror lights -->
-    <circle class="light-3" cx="260" cy="220" r="5" fill="#C42929"/>
-    <circle class="light-4" cx="235" cy="163" r="4" fill="#F4EEE6"/>
-    <circle class="light-1" cx="285" cy="108" r="4" fill="#C42929"/>
-    <circle class="light-2" cx="105" cy="215" r="4" fill="#F4EEE6"/>
-    <circle class="light-5" cx="82" cy="162" r="4" fill="#C42929"/>
-    <circle class="light-3" cx="252" cy="107" r="3" fill="#F4EEE6"/>
-    <circle class="light-4" cx="70" cy="220" r="5" fill="#9B1F1F"/>
-    <circle class="light-2" cx="48" cy="108" r="3" fill="#F4EEE6"/>
+
+  <!-- Grantre høyre (speilbilde) -->
+  <svg class="pine-right" viewBox="0 0 320 360" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform:scaleX(-1);">
+    <path d="M160 355 L160 70" stroke="#223A28" stroke-width="8" stroke-linecap="round"/>
+    <path d="M160 310 L55 230 L95 224 L38 168 L80 164 L28 108 L72 106 L42 62 L100 76 L160 120 L218 76 L278 62 L248 106 L292 108 L240 164 L282 168 L222 224 L262 230 L160 310Z" fill="#152B1C" opacity="0.92"/>
+    <polygon points="160,55 164,67 177,67 167,75 171,88 160,80 149,88 153,75 143,67 156,67" fill="#E8C87A" opacity="0.85"/>
+    <circle class="light-3" cx="62"  cy="232" r="5"   fill="#E8C87A"/>
+    <circle class="light-1" cx="43"  cy="168" r="4.5" fill="#C42929"/>
+    <circle class="light-4" cx="32"  cy="110" r="4"   fill="#E8C87A"/>
+    <circle class="light-2" cx="78"  cy="165" r="3.5" fill="#F4EEE6"/>
+    <circle class="light-1" cx="258" cy="232" r="5.5" fill="#C42929"/>
+    <circle class="light-5" cx="244" cy="166" r="4"   fill="#E8C87A"/>
+    <circle class="light-3" cx="288" cy="110" r="4"   fill="#C42929"/>
+    <circle class="light-4" cx="100" cy="106" r="3.5" fill="#F4EEE6"/>
+    <circle class="light-2" cx="276" cy="60"  r="3"   fill="#E8C87A"/>
   </svg>
 
   <div class="jul-hero-inner">
+    <!-- Julestjerne -->
+    <div class="julestjerne-wrap">
+      <svg class="julestjerne-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Ytre glow-ringer -->
+        <circle cx="50" cy="50" r="46" fill="rgba(196,137,58,0.06)"/>
+        <circle cx="50" cy="50" r="32" fill="rgba(196,137,58,0.10)"/>
+        <!-- 8-takket adventsstjerne -->
+        <path d="M50 8 L54 42 L82 18 L58 46 L92 50 L58 54 L82 82 L54 58 L50 92 L46 58 L18 82 L42 54 L8 50 L42 46 L18 18 L46 42 Z"
+              fill="#C4893A"/>
+        <!-- Indre glød -->
+        <path d="M50 22 L53 44 L68 28 L54 46 L72 50 L54 54 L68 72 L53 56 L50 78 L47 56 L32 72 L46 54 L28 50 L46 46 L32 28 L47 44 Z"
+              fill="#F0C868" opacity="0.75"/>
+        <!-- Senterkjerne -->
+        <circle cx="50" cy="50" r="7" fill="#FDE9A0" opacity="0.9"/>
+      </svg>
+    </div>
+
     <div class="jul-eyebrow">✦ Julebakst · Sesong 2024 ✦</div>
     <h1>Hjemmelaget jul<br>fra <em>Kakefrue</em></h1>
     <span class="jul-script">– akkurat som bestemor lagde det –</span>
@@ -551,9 +586,9 @@
 
 </div><!-- page-content -->
 
-<footer style="background:#060F07;color:rgba(247,240,230,0.4);padding:36px 24px;text-align:center;font-size:0.8rem;">
-  <p style="margin:0 0 6px;font-size:1.2rem;letter-spacing:0.3em;">🌲 ✦ 🌲</p>
-  <p style="margin:0;">© 2024 Kakefrue – Cecilie Linder · <a href="mailto:cecilie@kakefrue.no" style="color:var(--candle,#D4913A);text-decoration:none;">cecilie@kakefrue.no</a></p>
+<footer style="background:#0D0A06;color:rgba(247,240,230,0.35);padding:36px 24px;text-align:center;font-size:0.8rem;">
+  <p style="margin:0 0 6px;font-size:1.1rem;letter-spacing:0.35em;">✦ ❄ ✦</p>
+  <p style="margin:0;">© 2024 Kakefrue – Cecilie Linder · <a href="mailto:cecilie@kakefrue.no" style="color:#C4893A;text-decoration:none;">cecilie@kakefrue.no</a></p>
 </footer>
 
 <script>
