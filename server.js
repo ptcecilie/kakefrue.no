@@ -1100,15 +1100,19 @@ app.post('/api/admin/about-image', requireAdmin, async (req, res) => {
   }
 });
 
+async function getPhotoUrl(photoId) {
+  const [[row]] = await pool.query(`SELECT image_data FROM photo_images WHERE photo_id = ?`, [photoId]);
+  return row ? row.image_data : null;
+}
+
 // GET /api/photos — public, returns featured photos
 app.get('/api/photos', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT p.id, p.filename, p.alt_text, pi.image_data
-       FROM photos p LEFT JOIN photo_images pi ON pi.photo_id = p.id
-       WHERE p.featured = TRUE ORDER BY p.sort_order ASC, p.created_at DESC`
+      `SELECT id, filename, alt_text FROM photos WHERE featured = TRUE ORDER BY sort_order ASC, created_at DESC`
     );
-    res.json(rows.map(r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, url: r.image_data || null })));
+    const result = await Promise.all(rows.map(async r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, url: await getPhotoUrl(r.id) })));
+    res.json(result.filter(r => r.url));
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
   }
@@ -1118,13 +1122,12 @@ app.get('/api/photos', async (req, res) => {
 app.get('/api/admin/photos', requireAdmin, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT p.id, p.filename, p.alt_text, p.featured, p.sort_order, p.created_at, pi.image_data
-       FROM photos p LEFT JOIN photo_images pi ON pi.photo_id = p.id
-       ORDER BY p.sort_order ASC, p.created_at DESC`
+      `SELECT id, filename, alt_text, featured, sort_order, created_at FROM photos ORDER BY sort_order ASC, created_at DESC`
     );
-    res.json(rows.map(r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, featured: r.featured, sort_order: r.sort_order, created_at: r.created_at, url: r.image_data || null })));
+    const result = await Promise.all(rows.map(async r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, featured: r.featured, sort_order: r.sort_order, created_at: r.created_at, url: await getPhotoUrl(r.id) })));
+    res.json(result);
   } catch (err) {
-    res.status(500).json({ error: 'Serverfeil' });
+    res.status(500).json({ error: 'Serverfeil: ' + err.message });
   }
 });
 
@@ -1165,6 +1168,7 @@ app.put('/api/admin/photos/:id', requireAdmin, async (req, res) => {
 // DELETE /api/admin/photos/:id
 app.delete('/api/admin/photos/:id', requireAdmin, async (req, res) => {
   try {
+    await pool.query(`DELETE FROM photo_images WHERE photo_id=?`, [req.params.id]);
     await pool.query(`DELETE FROM photos WHERE id=?`, [req.params.id]);
     res.json({ success: true });
   } catch (err) {
