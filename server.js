@@ -1138,8 +1138,8 @@ app.post('/api/admin/photos', requireAdmin, async (req, res) => {
     );
     res.json({ id: result.insertId, url: dataUrl, filename });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Opplasting feilet' });
+    console.error('Photo upload error:', err);
+    res.status(500).json({ error: 'Opplasting feilet: ' + err.message });
   }
 });
 
