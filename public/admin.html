@@ -130,12 +130,14 @@
     .stat-card .stat-label { font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em; }
     .stat-card[data-goto] { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
     .stat-card[data-goto]:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
-    .photo-card { background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; position:relative; }
+    .photo-card { background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; position:relative; border:2.5px solid transparent; transition:border-color 0.2s; }
+    .photo-card.featured { border-color:#7A9E82; }
     .photo-card img { width:100%; aspect-ratio:1/1; object-fit:cover; display:block; }
+    .photo-card-badge { position:absolute; top:8px; left:8px; background:#7A9E82; color:white; font-size:0.7rem; font-weight:700; letter-spacing:0.04em; padding:3px 9px; border-radius:100px; box-shadow:0 2px 6px rgba(0,0,0,0.18); }
     .photo-card-body { padding:12px; }
     .photo-card-actions { display:flex; gap:8px; margin-top:8px; }
     .photo-featured-btn { flex:1; padding:6px; border-radius:100px; font-size:0.78rem; border:1.5px solid rgba(196,120,138,0.3); background:transparent; cursor:pointer; color:#9B3A52; transition:all 0.15s; }
-    .photo-featured-btn.active { background:#C4788A; color:white; border-color:#C4788A; }
+    .photo-featured-btn.active { background:#7A9E82; color:white; border-color:#7A9E82; }
     .photo-delete-btn { padding:6px 10px; border-radius:100px; font-size:0.78rem; border:1.5px solid rgba(200,0,0,0.2); background:transparent; cursor:pointer; color:#c00; transition:all 0.15s; }
     .photo-delete-btn:hover { background:#c00; color:white; }
 
@@ -628,6 +630,6 @@
   </div>
 </div>
 
-<script src="/js/admin.js?v=2.8"></script>
+<script src="/js/admin.js?v=2.9"></script>
 </body>
 </html>

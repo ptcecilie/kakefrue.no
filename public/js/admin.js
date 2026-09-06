@@ -296,13 +296,14 @@ async function loadPhotos() {
       return;
     }
     grid.innerHTML = photos.map(p => `
-      <div class="photo-card" id="photo-${p.id}">
+      <div class="photo-card ${p.featured ? 'featured' : ''}" id="photo-${p.id}">
+        ${p.featured ? '<div class="photo-card-badge">✓ Forsiden</div>' : ''}
         <img src="${p.url}" alt="${p.alt_text || ''}" loading="lazy">
         <div class="photo-card-body">
           <input class="form-input" style="font-size:0.8rem; padding:6px 10px; margin-bottom:8px;" value="${p.alt_text || ''}" placeholder="Bildetekst (valgfritt)" oninput="updatePhotoAlt(${p.id}, this.value)">
           <div class="photo-card-actions">
             <button class="photo-featured-btn ${p.featured ? 'active' : ''}" onclick="toggleFeatured(${p.id}, ${p.featured ? 'false' : 'true'})">
-              ${p.featured ? '✅ Synlig på forsiden' : '○ Skjult'}
+              ${p.featured ? '✓ Synlig på forsiden' : '○ Skjult'}
             </button>
             <button class="photo-delete-btn" onclick="deletePhoto(${p.id})">🗑</button>
           </div>
