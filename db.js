@@ -221,6 +221,8 @@ async function initDB() {
         PRIMARY KEY (photo_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+    // Ensure photos.image_data column exists (safe migration)
+    try { await conn.query(`ALTER TABLE photos ADD COLUMN image_data MEDIUMTEXT`); } catch (e) {}
 
     // Seed default settings
     await conn.query(`

@@ -1100,21 +1100,15 @@ app.post('/api/admin/about-image', requireAdmin, async (req, res) => {
   }
 });
 
-async function getPhotoUrl(photoId) {
-  const [[row]] = await pool.query(`SELECT image_data FROM photo_images WHERE photo_id = ?`, [photoId]);
-  return row ? row.image_data : null;
-}
-
-// GET /api/photos — public, returns featured photos
+// GET /api/photos — public, returns featured photos with images
 app.get('/api/photos', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT id, filename, alt_text FROM photos WHERE featured = TRUE ORDER BY sort_order ASC, created_at DESC`
+      `SELECT id, filename, alt_text, image_data FROM photos WHERE featured = TRUE AND image_data IS NOT NULL ORDER BY sort_order ASC, created_at DESC`
     );
-    const result = await Promise.all(rows.map(async r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, url: await getPhotoUrl(r.id) })));
-    res.json(result.filter(r => r.url));
+    res.json(rows.map(r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, url: r.image_data })));
   } catch (err) {
-    res.status(500).json({ error: 'Serverfeil' });
+    res.status(500).json({ error: 'Serverfeil: ' + err.message });
   }
 });
 
@@ -1122,16 +1116,15 @@ app.get('/api/photos', async (req, res) => {
 app.get('/api/admin/photos', requireAdmin, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT id, filename, alt_text, featured, sort_order, created_at FROM photos ORDER BY sort_order ASC, created_at DESC`
+      `SELECT id, filename, alt_text, featured, sort_order, created_at, image_data FROM photos ORDER BY sort_order ASC, created_at DESC`
     );
-    const result = await Promise.all(rows.map(async r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, featured: r.featured, sort_order: r.sort_order, created_at: r.created_at, url: await getPhotoUrl(r.id) })));
-    res.json(result);
+    res.json(rows.map(r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, featured: r.featured, sort_order: r.sort_order, created_at: r.created_at, url: r.image_data || null })));
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil: ' + err.message });
   }
 });
 
-// POST /api/admin/photos — upload base64 image, stored in photo_images table
+// POST /api/admin/photos — upload base64 image, stored directly in photos table
 app.post('/api/admin/photos', requireAdmin, async (req, res) => {
   const { data, mimeType, alt_text } = req.body;
   if (!data || !mimeType) return res.status(400).json({ error: 'Mangler data' });
@@ -1139,12 +1132,10 @@ app.post('/api/admin/photos', requireAdmin, async (req, res) => {
   const dataUrl = `data:${mimeType};base64,${data}`;
   try {
     const [result] = await pool.query(
-      `INSERT INTO photos (filename, alt_text, featured) VALUES (?, ?, FALSE)`,
-      [filename, alt_text || '']
+      `INSERT INTO photos (filename, alt_text, featured, image_data) VALUES (?, ?, FALSE, ?)`,
+      [filename, alt_text || '', dataUrl]
     );
-    const photoId = result.insertId;
-    await pool.query(`INSERT INTO photo_images (photo_id, image_data) VALUES (?, ?)`, [photoId, dataUrl]);
-    res.json({ id: photoId, url: dataUrl, filename });
+    res.json({ id: result.insertId, url: dataUrl, filename });
   } catch (err) {
     console.error('Photo upload error:', err);
     res.status(500).json({ error: 'Opplasting feilet: ' + err.message });
