@@ -105,13 +105,15 @@ section { padding: var(--section-padding); }
 }
 .nav-links {
   display: flex;
-  gap: 28px;
+  gap: 20px;
   list-style: none;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 .nav-links a {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 400;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--brown);
   opacity: 0.8;
