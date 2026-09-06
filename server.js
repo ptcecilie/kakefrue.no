@@ -1089,11 +1089,13 @@ app.post('/api/admin/about-image', requireAdmin, async (req, res) => {
   }
 });
 
-// GET /api/photos — public, returns featured photos with images
+// GET /api/photos — public, returns featured gallery photos
 app.get('/api/photos', async (req, res) => {
   try {
+    const cat = req.query.category || 'galleri';
     const [rows] = await pool.query(
-      `SELECT id, filename, alt_text, image_data FROM photos WHERE featured = TRUE AND image_data IS NOT NULL ORDER BY sort_order ASC, created_at DESC`
+      `SELECT id, filename, alt_text, image_data FROM photos WHERE featured = TRUE AND image_data IS NOT NULL AND COALESCE(category,'galleri')=? ORDER BY sort_order ASC, created_at DESC`,
+      [cat]
     );
     res.json(rows.map(r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, url: r.image_data })));
   } catch (err) {
@@ -1105,9 +1107,9 @@ app.get('/api/photos', async (req, res) => {
 app.get('/api/admin/photos', requireAdmin, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT id, filename, alt_text, featured, sort_order, created_at, image_data FROM photos ORDER BY sort_order ASC, created_at DESC`
+      `SELECT id, filename, alt_text, featured, sort_order, created_at, image_data, COALESCE(category,'galleri') AS category FROM photos ORDER BY sort_order ASC, created_at DESC`
     );
-    res.json(rows.map(r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, featured: r.featured, sort_order: r.sort_order, created_at: r.created_at, url: r.image_data || null })));
+    res.json(rows.map(r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, featured: r.featured, sort_order: r.sort_order, created_at: r.created_at, url: r.image_data || null, category: r.category })));
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil: ' + err.message });
   }
@@ -1115,29 +1117,29 @@ app.get('/api/admin/photos', requireAdmin, async (req, res) => {
 
 // POST /api/admin/photos — upload base64 image, stored directly in photos table
 app.post('/api/admin/photos', requireAdmin, async (req, res) => {
-  const { data, mimeType, alt_text } = req.body;
+  const { data, mimeType, alt_text, category } = req.body;
   if (!data || !mimeType) return res.status(400).json({ error: 'Mangler data' });
   const filename = `photo_${Date.now()}.jpg`;
   const dataUrl = `data:${mimeType};base64,${data}`;
   try {
     const [result] = await pool.query(
-      `INSERT INTO photos (filename, alt_text, featured, image_data) VALUES (?, ?, FALSE, ?)`,
-      [filename, alt_text || '', dataUrl]
+      `INSERT INTO photos (filename, alt_text, featured, image_data, category) VALUES (?, ?, FALSE, ?, ?)`,
+      [filename, alt_text || '', dataUrl, category || 'galleri']
     );
-    res.json({ id: result.insertId, url: dataUrl, filename });
+    res.json({ id: result.insertId, url: dataUrl, filename, category: category || 'galleri' });
   } catch (err) {
     console.error('Photo upload error:', err);
     res.status(500).json({ error: 'Opplasting feilet: ' + err.message });
   }
 });
 
-// PUT /api/admin/photos/:id — update alt text, featured, sort_order
+// PUT /api/admin/photos/:id — update alt text, featured, sort_order, category
 app.put('/api/admin/photos/:id', requireAdmin, async (req, res) => {
-  const { alt_text, featured, sort_order } = req.body;
+  const { alt_text, featured, sort_order, category } = req.body;
   try {
     await pool.query(
-      `UPDATE photos SET alt_text=COALESCE(?,alt_text), featured=COALESCE(?,featured), sort_order=COALESCE(?,sort_order) WHERE id=?`,
-      [alt_text ?? null, featured ?? null, sort_order ?? null, req.params.id]
+      `UPDATE photos SET alt_text=COALESCE(?,alt_text), featured=COALESCE(?,featured), sort_order=COALESCE(?,sort_order), category=COALESCE(?,category) WHERE id=?`,
+      [alt_text ?? null, featured ?? null, sort_order ?? null, category ?? null, req.params.id]
     );
     res.json({ success: true });
   } catch (err) {

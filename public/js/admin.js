@@ -295,34 +295,39 @@ async function loadPhotos() {
       grid.innerHTML = '<div style="text-align:center; padding:48px; opacity:0.4; grid-column:1/-1;">Ingen bilder ennå – last opp ditt første bilde!</div>';
       return;
     }
-    const featured = photos.filter(p => p.featured);
-    const hidden = photos.filter(p => !p.featured);
+    const CATS = [
+      { key: 'galleri', label: 'Galleri / Portefølje', color: '#C4956A' },
+      { key: 'jul', label: 'Julebestillinger', color: '#7A9E82' },
+    ];
     const cardHtml = p => `
       <div class="photo-card ${p.featured ? 'featured' : ''}" id="photo-${p.id}">
-        <img src="${p.url}" alt="${p.alt_text || ''}" loading="lazy">
+        <img src="${p.url || ''}" alt="${p.alt_text || ''}" loading="lazy">
         <div class="photo-card-body">
+          <select class="form-input" style="font-size:0.78rem;padding:5px 8px;margin-bottom:6px;cursor:pointer;" onchange="updatePhotoCategory(${p.id}, this.value)">
+            ${CATS.map(c => `<option value="${c.key}" ${p.category===c.key?'selected':''}>${c.label}</option>`).join('')}
+          </select>
           <input class="form-input" style="font-size:0.8rem; padding:6px 10px; margin-bottom:8px;" value="${p.alt_text || ''}" placeholder="Bildetekst (valgfritt)" oninput="updatePhotoAlt(${p.id}, this.value)">
           <div class="photo-card-actions">
             <button class="photo-featured-btn ${p.featured ? 'active' : ''}" onclick="toggleFeatured(${p.id}, ${p.featured ? 'false' : 'true'})">
-              ${p.featured ? '✓ Synlig på forsiden' : '○ Skjult'}
+              ${p.featured ? '✓ Synlig' : '○ Skjult'}
             </button>
             <button class="photo-delete-btn" onclick="deletePhoto(${p.id})">🗑</button>
           </div>
         </div>
       </div>`;
-    const sectionHtml = (title, color, items, emptyMsg) => `
-      <div style="grid-column:1/-1; margin-top:8px; margin-bottom:4px;">
+    const sectionHtml = (cat, items) => `
+      <div style="grid-column:1/-1; margin-top:20px; margin-bottom:4px;">
         <div style="display:flex; align-items:center; gap:10px;">
-          <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${color};"></span>
-          <strong style="font-size:0.9rem;">${title}</strong>
-          <span style="font-size:0.8rem; opacity:0.5;">${items.length} bilder</span>
+          <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${cat.color};"></span>
+          <strong style="font-size:0.95rem;">${cat.label}</strong>
+          <span style="font-size:0.8rem; opacity:0.5;">${items.filter(p=>p.featured).length} synlige · ${items.length} totalt</span>
         </div>
-        <hr style="border:none; border-top:1.5px solid ${color}33; margin:8px 0 0;">
+        <hr style="border:none; border-top:1.5px solid ${cat.color}44; margin:8px 0 0;">
       </div>
-      ${items.length ? items.map(cardHtml).join('') : `<div style="grid-column:1/-1; padding:16px 0; opacity:0.4; font-size:0.85rem;">${emptyMsg}</div>`}`;
-    grid.innerHTML =
-      sectionHtml('Synlig på forsiden', '#7A9E82', featured, 'Ingen bilder er synlige på forsiden ennå') +
-      sectionHtml('Ikke synlig', '#aaa', hidden, 'Ingen skjulte bilder');
+      ${items.length ? items.map(cardHtml).join('') : `<div style="grid-column:1/-1; padding:12px 0; opacity:0.4; font-size:0.85rem;">Ingen bilder i denne seksjonen</div>`}`;
+    grid.innerHTML = CATS.map(cat =>
+      sectionHtml(cat, photos.filter(p => (p.category || 'galleri') === cat.key))
+    ).join('');
   } catch (e) {
     const grid = document.getElementById('photoGrid');
     if (grid) grid.innerHTML = `<div style="grid-column:1/-1;padding:24px;color:red;font-size:0.9rem;">Feil ved lasting av bilder: ${e.message}</div>`;
@@ -420,6 +425,13 @@ function updatePhotoAlt(id, value) {
   altUpdateTimers[id] = setTimeout(() => {
     api('/api/admin/photos/' + id, { method: 'PUT', body: JSON.stringify({ alt_text: value }) });
   }, 800);
+}
+
+async function updatePhotoCategory(id, category) {
+  try {
+    await api('/api/admin/photos/' + id, { method: 'PUT', body: JSON.stringify({ category }) });
+    loadPhotos();
+  } catch (e) { console.error(e); }
 }
 
 async function deletePhoto(id) {

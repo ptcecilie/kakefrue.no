@@ -223,6 +223,8 @@ async function initDB() {
     `);
     // Ensure photos.image_data column exists (safe migration)
     try { await conn.query(`ALTER TABLE photos ADD COLUMN image_data MEDIUMTEXT`); } catch (e) {}
+    // Ensure photos.category column exists
+    try { await conn.query(`ALTER TABLE photos ADD COLUMN category VARCHAR(50) DEFAULT 'galleri'`); } catch (e) {}
 
     // Seed default settings
     await conn.query(`

@@ -326,17 +326,32 @@ section { padding: var(--section-padding); }
 /* ============================================================
    Gallery / Grid
    ============================================================ */
-.gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+.gallery-carousel-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 32px;
+}
+.gallery-track-clip {
+  overflow: hidden;
+  flex: 1;
+}
+.gallery-track {
+  display: flex;
+  gap: 16px;
+  transition: transform 0.3s ease;
+  will-change: transform;
 }
 .gallery-item {
+  flex: 0 0 280px;
+  width: 280px;
+  height: 360px;
   border-radius: var(--radius);
   overflow: hidden;
-  aspect-ratio: 3/4;
   position: relative;
 }
+.gallery-item img { width:100%; height:100%; object-fit:cover; display:block; }
 .gallery-placeholder {
   width: 100%;
   height: 100%;
@@ -345,6 +360,25 @@ section { padding: var(--section-padding); }
   justify-content: center;
   font-size: 3rem;
 }
+.gallery-nav {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: var(--white);
+  box-shadow: 0 2px 12px rgba(61,36,32,0.15);
+  font-size: 1.8rem;
+  color: var(--brown);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.1s;
+  z-index: 2;
+  margin: 0 8px;
+}
+.gallery-nav:hover { background: var(--rose); transform: scale(1.08); }
 
 /* ============================================================
    Reviews Carousel
