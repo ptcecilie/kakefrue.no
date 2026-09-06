@@ -11,16 +11,16 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@500;700&family=Lato:wght@300;400;700&display=swap">
   <style>
     :root {
-      --warm-dark:  #160B05;
-      --warm-mid:   #3A1A10;
+      --warm-dark:  #1C0D07;
+      --warm-mid:   #3D2420;
       --red:        #8B1A1A;
       --red-lt:     #A82020;
-      --amber:      #C4893A;
-      --amber-lt:   #E8B96A;
-      --cream:      #F5EDD6;
-      --cream-dk:   #E8D9BE;
-      --body:       #2D1A0E;
-      --muted:      #8A6A50;
+      --amber:      #C4956A;
+      --amber-lt:   #DDAD88;
+      --cream:      #FAF7F4;
+      --cream-dk:   #F0E8DA;
+      --body:       #3D2420;
+      --muted:      #8A6858;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -56,9 +56,9 @@
     .hero-ambiance {
       position: absolute; inset: 0; z-index: 1; pointer-events: none;
       background:
-        radial-gradient(ellipse 60% 50% at 50% 38%, rgba(196,137,58,0.18) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 30% at 20% 80%, rgba(139,26,26,0.12) 0%, transparent 60%),
-        radial-gradient(ellipse 40% 30% at 80% 80%, rgba(139,26,26,0.10) 0%, transparent 60%);
+        radial-gradient(ellipse 60% 50% at 50% 38%, rgba(196,149,106,0.20) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 20% 80%, rgba(139,26,26,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 80% 80%, rgba(139,26,26,0.08) 0%, transparent 60%);
     }
     .jul-hero-inner { position: relative; z-index: 3; max-width: 580px; }
 
@@ -67,11 +67,11 @@
     .star-svg {
       width: 80px; height: 80px;
       animation: starPulse 3.5s ease-in-out infinite;
-      filter: drop-shadow(0 0 12px rgba(196,137,58,0.6));
+      filter: drop-shadow(0 0 12px rgba(196,149,106,0.6));
     }
     @keyframes starPulse {
-      0%,100% { filter: drop-shadow(0 0 8px rgba(196,137,58,0.55)); }
-      50%      { filter: drop-shadow(0 0 28px rgba(232,185,106,0.85)); }
+      0%,100% { filter: drop-shadow(0 0 8px rgba(196,149,106,0.55)); }
+      50%      { filter: drop-shadow(0 0 26px rgba(221,173,136,0.82)); }
     }
 
     .hero-kursiv {
@@ -400,28 +400,28 @@
   <svg class="pine-l" viewBox="0 0 310 380" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M155 370 L155 72" stroke="#2A3D20" stroke-width="9" stroke-linecap="round"/>
     <path d="M155 330 L45 245 L88 238 L28 178 L74 173 L18 110 L65 108 L35 62 L98 78 L155 122 L212 78 L275 62 L245 108 L292 110 L236 173 L282 178 L222 238 L265 245 L155 330Z" fill="#162412" opacity="0.94"/>
-    <polygon points="155,57 159,70 173,70 163,78 167,92 155,84 143,92 147,78 137,70 151,70" fill="#E8C870" opacity="0.88"/>
+    <polygon points="155,57 159,70 173,70 163,78 167,92 155,84 143,92 147,78 137,70 151,70" fill="#D4A878" opacity="0.88"/>
     <circle class="l1" cx="50"  cy="247" r="5"   fill="#C42929"/>
-    <circle class="l3" cx="35"  cy="178" r="4"   fill="#E8C870"/>
+    <circle class="l3" cx="35"  cy="178" r="4"   fill="#D4A878"/>
     <circle class="l2" cx="22"  cy="112" r="4.5" fill="#C42929"/>
     <circle class="l4" cx="73"  cy="173" r="3.5" fill="#F4EEE6"/>
-    <circle class="l5" cx="260" cy="245" r="5"   fill="#E8C870"/>
+    <circle class="l5" cx="260" cy="245" r="5"   fill="#D4A878"/>
     <circle class="l1" cx="238" cy="175" r="4"   fill="#C42929"/>
     <circle class="l3" cx="288" cy="112" r="4"   fill="#F4EEE6"/>
-    <circle class="l2" cx="95"  cy="108" r="3.5" fill="#E8C870"/>
+    <circle class="l2" cx="95"  cy="108" r="3.5" fill="#D4A878"/>
   </svg>
 
   <!-- Gran høyre (speil) -->
   <svg class="pine-r" viewBox="0 0 310 380" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M155 370 L155 72" stroke="#2A3D20" stroke-width="9" stroke-linecap="round"/>
     <path d="M155 330 L45 245 L88 238 L28 178 L74 173 L18 110 L65 108 L35 62 L98 78 L155 122 L212 78 L275 62 L245 108 L292 110 L236 173 L282 178 L222 238 L265 245 L155 330Z" fill="#162412" opacity="0.94"/>
-    <polygon points="155,57 159,70 173,70 163,78 167,92 155,84 143,92 147,78 137,70 151,70" fill="#E8C870" opacity="0.88"/>
-    <circle class="l3" cx="50"  cy="247" r="5"   fill="#E8C870"/>
+    <polygon points="155,57 159,70 173,70 163,78 167,92 155,84 143,92 147,78 137,70 151,70" fill="#D4A878" opacity="0.88"/>
+    <circle class="l3" cx="50"  cy="247" r="5"   fill="#D4A878"/>
     <circle class="l1" cx="35"  cy="178" r="4"   fill="#C42929"/>
     <circle class="l4" cx="22"  cy="112" r="4.5" fill="#F4EEE6"/>
-    <circle class="l2" cx="73"  cy="173" r="3.5" fill="#E8C870"/>
+    <circle class="l2" cx="73"  cy="173" r="3.5" fill="#D4A878"/>
     <circle class="l1" cx="260" cy="245" r="5"   fill="#C42929"/>
-    <circle class="l5" cx="238" cy="175" r="4"   fill="#E8C870"/>
+    <circle class="l5" cx="238" cy="175" r="4"   fill="#D4A878"/>
     <circle class="l3" cx="288" cy="112" r="4"   fill="#C42929"/>
     <circle class="l4" cx="95"  cy="108" r="3.5" fill="#F4EEE6"/>
   </svg>
@@ -431,9 +431,9 @@
       <svg class="star-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="50" cy="50" r="46" fill="rgba(196,137,58,0.05)"/>
         <circle cx="50" cy="50" r="30" fill="rgba(196,137,58,0.09)"/>
-        <path d="M50 8 L54 42 L82 18 L58 46 L92 50 L58 54 L82 82 L54 58 L50 92 L46 58 L18 82 L42 54 L8 50 L42 46 L18 18 L46 42 Z" fill="#C4893A"/>
-        <path d="M50 22 L53 44 L68 30 L54 46 L72 50 L54 54 L68 70 L53 56 L50 78 L47 56 L32 70 L46 54 L28 50 L46 46 L32 30 L47 44 Z" fill="#F0C868" opacity="0.7"/>
-        <circle cx="50" cy="50" r="7" fill="#FDE9A0" opacity="0.88"/>
+        <path d="M50 8 L54 42 L82 18 L58 46 L92 50 L58 54 L82 82 L54 58 L50 92 L46 58 L18 82 L42 54 L8 50 L42 46 L18 18 L46 42 Z" fill="#C4956A"/>
+        <path d="M50 22 L53 44 L68 30 L54 46 L72 50 L54 54 L68 70 L53 56 L50 78 L47 56 L32 70 L46 54 L28 50 L46 46 L32 30 L47 44 Z" fill="#DDB07A" opacity="0.7"/>
+        <circle cx="50" cy="50" r="7" fill="#EDD4AC" opacity="0.88"/>
       </svg>
     </div>
 
@@ -581,7 +581,7 @@
     ctx.clearRect(0,0,W,H);
     fl.forEach(f=>{
       ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
-      ctx.fillStyle=`rgba(245,237,214,${f.op})`; ctx.fill();
+      ctx.fillStyle=`rgba(250,247,244,${f.op})`; ctx.fill();
       f.y+=f.sp; f.x+=f.dr;
       if(f.y>H+4){f.y=-4;f.x=Math.random()*W;}
       if(f.x>W+4)f.x=-4; if(f.x<-4)f.x=W+4;
