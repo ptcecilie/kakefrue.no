@@ -419,6 +419,21 @@
       font-size: 0.85rem; font-weight: 700; color: var(--body);
     }
     .qty-mini-tall.har-antall { color: var(--red); }
+    .gf-rad {
+      display: flex; align-items: center; gap: 7px;
+      margin-top: 6px; padding-top: 6px;
+      border-top: 1px solid #F0E8DA;
+      font-size: 0.74rem; color: var(--muted);
+      cursor: pointer; user-select: none;
+    }
+    .gf-boks {
+      width: 15px; height: 15px; border-radius: 4px;
+      border: 1.5px solid #D0BEA8; background: white;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      transition: 0.12s;
+    }
+    .gf-boks.aktiv { background: var(--red); border-color: var(--red); }
+    .gf-boks.aktiv::after { content: '✓'; color: white; font-size: 0.65rem; font-weight: 700; }
     .total-rad {
       display: flex; justify-content: space-between; align-items: center;
       margin-top: 14px; padding-top: 12px;
@@ -773,17 +788,15 @@
 
 /* Produkter */
 const PRODUKTER=[
-  {k:'mandelkaker',    n:'Mandelkaker',           unit:'4 stk',     pris:89},
-  {k:'krumkaker',      n:'Krumkaker',             unit:'6 stk',     pris:100},
-  {k:'sandkaker',      n:'Sandkaker',             unit:'12 stk',    pris:150},
-  {k:'nordlandslefse', n:'Nordlandslefse',        unit:'3 stk',     pris:230},
-  {k:'kling',          n:'Kling',                 unit:'3 stk',     pris:180},
-  {k:'cookies',        n:'Cookies',               unit:'5 stk',     pris:79},
-  {k:'cookies_gf',     n:'Cookies (glutenfri)',   unit:'5 stk',     pris:89},
-  {k:'kransestenger',  n:'Kransekakestenger',     unit:'10 stk',    pris:150},
-  {k:'kransekake',     n:'Kransekake',            unit:'18 ringer', pris:500},
+  {k:'kling',          n:'Kling',            unit:'2 stk',     pris:189, desc:'Luftig og myk – den ekte julefavoritten'},
+  {k:'nordlandslefse', n:'Nordlandslefse',   unit:'3 stk',     pris:250, desc:'Tykklefse med smør, kanel og sukker'},
+  {k:'pepperkakdrom',  n:'Pepperkakedrøm',  unit:'6 stk',     pris:159, desc:'Kakefrues spesial – silkemyk pepperkakekrem i mandelskall', hit:true},
+  {k:'gulebomber',     n:'Gule bomber',      unit:'6 stk',     pris:129, desc:'Luftige choux-boller fylt med deilig krem'},
+  {k:'krumkaker',      n:'Krumkaker',        unit:'6 stk',     pris:129, desc:'Sprø og delikate – perfekt til julebordet'},
+  {k:'cookies',        n:'Cookies',          unit:'5 stk',     pris:99,  desc:'Store og seige hjemmelagde cookies', gfEkstra:20},
+  {k:'kransekake',     n:'Kransekake',       unit:'18 ringer', pris:700, desc:'En imponerende juleklassiker – bestilles på forhånd'},
 ];
-let valgt={}, levering='henting';
+let valgt={}, valgtGF={}, levering='henting';
 
 fetch('/api/photos?category=jul').then(r=>r.json()).then(p=>{
   if(!p.length)return;
@@ -797,28 +810,37 @@ function visProdukter(){
   if(!liste)return;
   liste.innerHTML=PRODUKTER.map(p=>{
     const qty=valgt[p.k]||0;
-    return`<li class="produkt-rad">
+    const gf=valgtGF[p.k]||false;
+    const visPris=p.gfEkstra&&gf?p.pris+p.gfEkstra:p.pris;
+    return`<li class="produkt-rad" style="flex-wrap:wrap;">
       <div class="produkt-info">
-        <div class="produkt-navn-liten">${p.n}</div>
-        <div class="produkt-detalj">${p.unit}</div>
+        <div class="produkt-navn-liten">${p.n}${p.hit?' <span style="background:#8B1A1A;color:white;font-size:0.6rem;padding:2px 7px;border-radius:100px;letter-spacing:0.04em;font-weight:700;vertical-align:middle;">HIT</span>':''}</div>
+        <div class="produkt-detalj">${p.unit}${p.desc?' · '+p.desc:''}</div>
       </div>
-      <div class="produkt-pris-liten">${p.pris},-</div>
+      <div class="produkt-pris-liten">${visPris},-</div>
       <div class="qty-mini">
         <button class="qty-mini-knapp${qty>0?' aktiv':''}" onclick="endreAntall('${p.k}',-1)">−</button>
         <span class="qty-mini-tall${qty>0?' har-antall':''}" id="qv-${p.k}">${qty}</span>
         <button class="qty-mini-knapp aktiv" onclick="endreAntall('${p.k}',1)">+</button>
       </div>
+      ${p.gfEkstra&&qty>0?`<div class="gf-rad" style="width:100%;" onclick="toggleGF('${p.k}')"><div class="gf-boks${gf?' aktiv':''}"></div><span>Ønsker glutenfrie? <strong>+${p.gfEkstra} kr</strong> per pakke</span></div>`:''}
     </li>`;
   }).join('');
   oppdaterTotal();
 }
 function endreAntall(k,d){
   const v=(valgt[k]||0)+d;
-  if(v<=0) delete valgt[k]; else valgt[k]=v;
+  if(v<=0){delete valgt[k];delete valgtGF[k];} else valgt[k]=v;
   visProdukter();
 }
+function toggleGF(k){ valgtGF[k]=!valgtGF[k]; visProdukter(); }
 function oppdaterTotal(){
-  const total=Object.keys(valgt).reduce((s,k)=>{const p=PRODUKTER.find(x=>x.k===k);return s+(p?p.pris*valgt[k]:0);},0);
+  const total=Object.keys(valgt).reduce((s,k)=>{
+    const p=PRODUKTER.find(x=>x.k===k);
+    if(!p)return s;
+    const pris=p.gfEkstra&&valgtGF[k]?p.pris+p.gfEkstra:p.pris;
+    return s+pris*valgt[k];
+  },0);
   const rad=document.getElementById('totalRad');
   if(total>0){ rad.style.display='flex'; document.getElementById('totalSum').textContent=total+' kr'; }
   else rad.style.display='none';
@@ -840,7 +862,12 @@ async function sendBestilling(){
   if(!navn){feil.textContent='Skriv inn navn.';feil.style.display='block';return;}
   if(!tlf){feil.textContent='Skriv inn telefonnummer.';feil.style.display='block';return;}
   if(levering==='levering'&&!adresse){feil.textContent='Skriv inn leveringsadresse.';feil.style.display='block';return;}
-  const products=Object.keys(valgt).map(k=>{const p=PRODUKTER.find(x=>x.k===k);return{key:k,name:p.n,unit:p.unit,price:p.pris,qty:valgt[k]};});
+  const products=Object.keys(valgt).map(k=>{
+    const p=PRODUKTER.find(x=>x.k===k);
+    const gf=!!(p.gfEkstra&&valgtGF[k]);
+    const pris=gf?p.pris+p.gfEkstra:p.pris;
+    return{key:k,name:p.n+(gf?' (glutenfri)':''),unit:p.unit,price:pris,qty:valgt[k]};
+  });
   const total=products.reduce((s,p)=>s+p.price*p.qty,0);
   const knapp=document.getElementById('sendKnapp');
   knapp.disabled=true; knapp.textContent='Sender...';
