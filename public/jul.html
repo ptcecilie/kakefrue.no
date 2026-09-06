@@ -3,415 +3,363 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Julebakst 2026 – Kakefrue</title>
-  <meta name="description" content="Bestill julebakst fra Kakefrue. Kling, gule bomber, nordlandslefse, cookies, sandkaker, krumkaker og kransekake. Bestillingsfrist 1. desember.">
-  <link rel="stylesheet" href="/css/main.css">
+  <title>Julebestillinger – Kakefrue</title>
+  <meta name="description" content="Bestill hjemmelagde julekaker og julebakst fra Kakefrue i Porsgrunn. Kling, lefse, krumkaker, pepperkaker og mer.">
+  <link rel="stylesheet" href="/css/main.css?v=2.8">
   <style>
-    :root {
-      --jul-red: #8B1A1A;
-      --jul-green: #2D5A27;
-      --jul-gold: #C9A040;
-    }
-
-    body { background: #FAF6F0; }
-
     .jul-hero {
-      background: linear-gradient(160deg, #2A1E3E 0%, #3D2B5A 60%, #1a3a18 100%);
+      background: linear-gradient(135deg, #2D4A2A 0%, #3D6B38 50%, #2D4A2A 100%);
       color: white;
-      padding: 64px 24px 80px;
+      padding: 80px 24px 64px;
       text-align: center;
       position: relative;
       overflow: hidden;
     }
     .jul-hero::before {
-      content: '❄ ✦ ❄ ✦ ❄ ✦ ❄ ✦ ❄ ✦ ❄ ✦ ❄ ✦ ❄ ✦ ❄';
+      content: '';
       position: absolute;
-      top: 16px; left: 0; right: 0;
-      text-align: center;
-      font-size: 0.85rem;
-      opacity: 0.25;
-      letter-spacing: 4px;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
     }
-    .jul-hero::after {
-      content: '❄ ✦ ❄ ✦ ❄ ✦ ❄ ✦ ❄ ✦ ❄ ✦ ❄ ✦ ❄ ✦ ❄';
-      position: absolute;
-      bottom: 16px; left: 0; right: 0;
-      text-align: center;
-      font-size: 0.85rem;
-      opacity: 0.25;
-      letter-spacing: 4px;
-    }
-    .jul-badge {
-      display: inline-block;
-      background: rgba(201,160,64,0.2);
-      border: 1px solid rgba(201,160,64,0.4);
-      color: #C9A040;
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 6px 16px;
-      border-radius: 100px;
-      margin-bottom: 20px;
-    }
-    .jul-hero h1 {
-      font-family: var(--font-heading);
-      font-size: clamp(2rem, 6vw, 3.5rem);
-      margin-bottom: 16px;
-      line-height: 1.15;
-    }
-    .jul-hero p {
-      font-size: 1.1rem;
-      opacity: 0.85;
-      max-width: 520px;
-      margin: 0 auto 28px;
-      line-height: 1.7;
-    }
-    .deadline-box {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(139,26,26,0.35);
-      border: 1px solid rgba(255,100,100,0.3);
-      border-radius: 100px;
-      padding: 10px 24px;
-      font-size: 0.95rem;
-      font-weight: 600;
-    }
+    .jul-hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 16px; color: white; }
+    .jul-hero p { font-size: 1.1rem; opacity: 0.85; max-width: 560px; margin: 0 auto 8px; }
+    .jul-hero .eyebrow { font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.7; margin-bottom: 16px; display: block; }
 
-    .products-section {
-      padding: 60px 24px;
-    }
-    .products-section h2 {
-      text-align: center;
-      font-family: var(--font-heading);
-      font-size: 1.8rem;
-      margin-bottom: 8px;
-      color: var(--brown);
-    }
-    .products-section .subtitle {
-      text-align: center;
-      opacity: 0.6;
-      margin-bottom: 40px;
-      font-size: 0.95rem;
-    }
     .products-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 16px;
-      max-width: 860px;
-      margin: 0 auto;
+      gap: 20px;
+      margin-bottom: 40px;
     }
     .product-card {
       background: white;
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 20px;
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
+      overflow: hidden;
       cursor: pointer;
-      border: 2px solid transparent;
-      transition: all 0.15s;
+      border: 2.5px solid transparent;
+      transition: border-color 0.2s, transform 0.15s;
+      position: relative;
     }
-    .product-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
-    .product-card.selected { border-color: #8B72BE; background: rgba(139,114,190,0.05); }
-    .product-card .icon { font-size: 2rem; flex-shrink: 0; }
-    .product-card h3 { font-size: 1rem; margin: 0 0 4px; color: var(--brown); }
-    .product-card p { font-size: 0.82rem; opacity: 0.6; margin: 0 0 10px; line-height: 1.5; }
-    .qty-row { display: flex; align-items: center; gap: 8px; }
-    .qty-label { font-size: 0.8rem; opacity: 0.55; }
-    .qty-select {
-      border: 1.5px solid rgba(139,114,190,0.3);
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 0.85rem;
-      background: white;
-      color: var(--brown);
+    .product-card:hover { transform: translateY(-2px); }
+    .product-card.selected { border-color: #3D6B38; }
+    .product-card-img {
+      aspect-ratio: 4/3;
+      background: linear-gradient(135deg, #F0F7EE, #D4E8D0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
     }
-
-    .order-form-section {
-      background: white;
-      padding: 60px 24px;
-    }
-    .order-form-section h2 {
-      text-align: center;
-      font-family: var(--font-heading);
-      font-size: 1.8rem;
-      margin-bottom: 40px;
-      color: var(--brown);
-    }
-    .order-form {
-      max-width: 560px;
-      margin: 0 auto;
-    }
-
-    .summary-box {
-      background: rgba(139,114,190,0.06);
-      border: 1.5px solid rgba(139,114,190,0.2);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 28px;
-    }
-    .summary-box h4 { margin: 0 0 12px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.5; }
-    .summary-item { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 4px 0; }
-    .summary-empty { font-size: 0.9rem; opacity: 0.45; font-style: italic; }
-
-    .success-screen {
+    .product-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .product-card-body { padding: 16px; }
+    .product-card-body h3 { font-size: 1rem; margin-bottom: 4px; }
+    .product-card-body .price { color: #3D6B38; font-weight: 700; font-size: 1.05rem; }
+    .product-card-body .desc { font-size: 0.82rem; opacity: 0.6; margin-top: 4px; }
+    .product-check {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #3D6B38;
+      color: white;
       display: none;
-      text-align: center;
-      padding: 60px 24px;
-      max-width: 560px;
-      margin: 0 auto;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
-    .success-icon { font-size: 4rem; margin-bottom: 20px; }
+    .product-card.selected .product-check { display: flex; }
+    .qty-row {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(0,0,0,0.07);
+    }
+    .product-card.selected .qty-row { display: flex; }
+    .qty-btn {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid #3D6B38;
+      background: transparent;
+      color: #3D6B38;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .qty-btn:hover { background: #3D6B38; color: white; }
+    .qty-val { font-weight: 700; min-width: 24px; text-align: center; }
 
-    @media (max-width: 600px) {
-      .products-grid { grid-template-columns: 1fr; }
+    .order-form { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 32px; }
+    .order-form h2 { margin-bottom: 24px; font-size: 1.3rem; }
+    .delivery-opts { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .delivery-opt {
+      flex: 1; min-width: 140px;
+      border: 2px solid rgba(0,0,0,0.1);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      font-size: 0.9rem;
+    }
+    .delivery-opt.active { border-color: #3D6B38; background: #F0F7EE; }
+    .delivery-opt strong { display: block; margin-bottom: 2px; }
+    .delivery-opt span { opacity: 0.6; font-size: 0.8rem; }
+
+    .summary-bar {
+      background: #F0F7EE;
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      font-size: 0.9rem;
+    }
+    .summary-bar strong { color: #2D4A2A; }
+
+    .success-msg {
+      text-align: center;
+      padding: 64px 24px;
+      display: none;
+    }
+    .success-msg .icon { font-size: 4rem; margin-bottom: 16px; }
+    .success-msg h2 { color: #2D4A2A; margin-bottom: 12px; }
+
+    @media (max-width: 640px) {
+      .products-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
     }
   </style>
 </head>
 <body>
 
-<!-- Hero -->
-<section class="jul-hero">
-  <div class="jul-badge">🎄 Julebakst 2026</div>
-  <h1>Bestill julebakst<br>fra Kakefrue</h1>
-  <p>Hjemmelaget bakst med kjærlighet – klar til jul. Velg hva du ønsker og send inn bestillingen din.</p>
-  <div class="deadline-box">
-    🔔 Bestillingsfrist: <strong>1. desember</strong>
+<nav class="nav">
+  <a href="/" class="nav-logo">Kake<span>frue</span></a>
+  <div class="nav-center">
+    <ul class="nav-links">
+      <li><a href="/meny.html">Meny</a></li>
+      <li><a href="/jul.html" style="color:var(--gold);">🎄 Julebestilling</a></li>
+      <li><a href="/anbefalinger.html">Anbefalinger</a></li>
+      <li><a href="/provesmaking.html">Prøvesmaking</a></li>
+      <li><a href="/kurs.html">Kurs</a></li>
+      <li><a href="/om-kakefrue.html">Om Kakefrue</a></li>
+      <li><a href="/book.html" class="nav-cta">Book din kake</a></li>
+    </ul>
   </div>
-</section>
+  <button class="hamburger" id="hamburger" aria-label="Meny">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
 
-<!-- Produkter -->
-<section class="products-section">
-  <div class="container">
-    <h2>Hva ønsker du?</h2>
-    <p class="subtitle">Velg produkter og antall. Du kan velge flere.</p>
-    <div class="products-grid" id="productsGrid">
+<div class="mobile-menu" id="mobileMenu">
+  <a href="/meny.html">Meny</a>
+  <a href="/jul.html">🎄 Julebestilling</a>
+  <a href="/anbefalinger.html">Anbefalinger</a>
+  <a href="/provesmaking.html">Prøvesmaking</a>
+  <a href="/kurs.html">Kurs</a>
+  <a href="/om-kakefrue.html">Om Kakefrue</a>
+  <a href="/vilkar.html">Vilkår</a>
+  <a href="/book.html" class="btn btn-primary" style="margin-top:12px;text-align:center;">Book din kake</a>
+</div>
 
-      <div class="product-card" data-product="Gule bomber" onclick="toggleProduct(this)">
-        <span class="icon">🍋</span>
-        <div style="flex:1;">
-          <h3>Gule bomber</h3>
-          <p>Klassisk og populær juleboller</p>
-          <div class="qty-row">
-            <span class="qty-label">Antall:</span>
-            <select class="qty-select" onclick="event.stopPropagation()" onchange="updateSummary()">
-              <option>1 stk</option><option>2 stk</option><option>4 stk</option><option>6 stk</option><option>12 stk</option><option>24 stk</option>
-            </select>
-          </div>
-        </div>
+<div class="page-content">
+
+  <div class="jul-hero">
+    <span class="eyebrow">Sesong 2024</span>
+    <h1>🎄 Julebakst fra Kakefrue</h1>
+    <p>Hjemmelagde juleklassikere laget med kjærlighet – akkurat som bestemors, bare enda litt bedre.</p>
+  </div>
+
+  <!-- Gallery strip -->
+  <div id="julGalleryWrap" style="display:none; overflow:hidden; background:#1E3A1A;">
+    <div id="julGallery" style="display:flex; gap:4px; padding:4px 0;"></div>
+  </div>
+
+  <section style="padding: 64px 24px;">
+    <div class="container" style="max-width:960px;">
+
+      <!-- Product selection -->
+      <h2 style="margin-bottom:8px;">Velg hva du vil ha</h2>
+      <p style="opacity:0.6; margin-bottom:28px; font-size:0.95rem;">Trykk på produktene du vil bestille og velg antall.</p>
+
+      <div class="products-grid" id="productsGrid">
+        <!-- Loaded dynamically -->
       </div>
 
-      <div class="product-card" data-product="Kling" onclick="toggleProduct(this)">
-        <span class="icon">🥞</span>
-        <div style="flex:1;">
-          <h3>Kling</h3>
-          <p>Selges i pakke à 2 stk</p>
-          <div class="qty-row">
-            <span class="qty-label">Antall pakker:</span>
-            <select class="qty-select" onclick="event.stopPropagation()" onchange="updateSummary()">
-              <option>1 pk (2 stk)</option><option>2 pk (4 stk)</option><option>3 pk</option><option>4 pk</option><option>5 pk</option>
-            </select>
+      <!-- Order form -->
+      <div class="order-form" id="orderForm">
+        <h2>Din bestilling</h2>
+
+        <div class="summary-bar" id="summaryBar" style="display:none;">
+          <strong>Valgte produkter: </strong><span id="summaryText"></span>
+        </div>
+
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label">Henting eller levering?</label>
+          <div class="delivery-opts">
+            <div class="delivery-opt active" data-val="henting" onclick="setDelivery('henting')">
+              <strong>🏠 Henting</strong>
+              <span>Du henter i Porsgrunn</span>
+            </div>
+            <div class="delivery-opt" data-val="levering" onclick="setDelivery('levering')">
+              <strong>🚗 Levering</strong>
+              <span>+200 kr i Porsgrunn/omegn</span>
+            </div>
+          </div>
+          <div id="addressRow" style="display:none; margin-top:12px;">
+            <input class="form-input" id="address" placeholder="Leveringsadresse" style="width:100%;">
           </div>
         </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group">
+            <label class="form-label">Navn *</label>
+            <input class="form-input" id="fullName" placeholder="Ditt fulle navn">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telefon *</label>
+            <input class="form-input" id="phone" type="tel" placeholder="Ditt telefonnummer">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label">E-post</label>
+          <input class="form-input" id="email" type="email" placeholder="Din e-postadresse (valgfritt)">
+        </div>
+        <div class="form-group" style="margin-bottom:24px;">
+          <label class="form-label">Kommentar / ønsker</label>
+          <textarea class="form-input" id="note" rows="3" placeholder="Spesielle ønsker, allergier eller andre beskjeder..."></textarea>
+        </div>
+
+        <div id="formError" style="color:#c00; margin-bottom:16px; display:none; font-size:0.9rem;"></div>
+
+        <button class="btn btn-primary btn-lg" onclick="submitOrder()" id="submitBtn" style="background:#3D6B38; border-color:#3D6B38; width:100%;">
+          Send julebestilling
+        </button>
+        <p style="text-align:center; font-size:0.8rem; opacity:0.5; margin-top:12px;">Jeg tar kontakt for å bekrefte bestillingen og avtale detaljer.</p>
       </div>
 
-      <div class="product-card" data-product="Nordlandslefse" onclick="toggleProduct(this)">
-        <span class="icon">🫓</span>
-        <div style="flex:1;">
-          <h3>Nordlandslefse</h3>
-          <p>Selges i pakke à 2 stk</p>
-          <div class="qty-row">
-            <span class="qty-label">Antall pakker:</span>
-            <select class="qty-select" onclick="event.stopPropagation()" onchange="updateSummary()">
-              <option>1 pk (2 stk)</option><option>2 pk (4 stk)</option><option>3 pk</option><option>4 pk</option><option>5 pk</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="product-card" data-product="Cookies" onclick="toggleProduct(this)">
-        <span class="icon">🍪</span>
-        <div style="flex:1;">
-          <h3>Cookies</h3>
-          <p>Hjemmelagde cookies</p>
-          <div class="qty-row">
-            <span class="qty-label">Antall:</span>
-            <select class="qty-select" onclick="event.stopPropagation()" onchange="updateSummary()">
-              <option>6 stk</option><option>12 stk</option><option>18 stk</option><option>24 stk</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="product-card" data-product="Sandkaker" onclick="toggleProduct(this)">
-        <span class="icon">⭐</span>
-        <div style="flex:1;">
-          <h3>Sandkaker</h3>
-          <p>Klassiske julekaker</p>
-          <div class="qty-row">
-            <span class="qty-label">Antall:</span>
-            <select class="qty-select" onclick="event.stopPropagation()" onchange="updateSummary()">
-              <option>12 stk</option><option>24 stk</option><option>36 stk</option><option>48 stk</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="product-card" data-product="Krumkaker" onclick="toggleProduct(this)">
-        <span class="icon">🌀</span>
-        <div style="flex:1;">
-          <h3>Krumkaker</h3>
-          <p>Sprø og delikate julekaker</p>
-          <div class="qty-row">
-            <span class="qty-label">Antall:</span>
-            <select class="qty-select" onclick="event.stopPropagation()" onchange="updateSummary()">
-              <option>12 stk</option><option>24 stk</option><option>36 stk</option><option>48 stk</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="product-card" data-product="Kransekake" onclick="toggleProduct(this)">
-        <span class="icon">🎂</span>
-        <div style="flex:1;">
-          <h3>Kransekake</h3>
-          <p>Tradisjonell norsk kransekake</p>
-          <div class="qty-row">
-            <span class="qty-label">Antall:</span>
-            <select class="qty-select" onclick="event.stopPropagation()" onchange="updateSummary()">
-              <option>1 stk</option><option>2 stk</option><option>3 stk</option>
-            </select>
-          </div>
-        </div>
+      <!-- Success -->
+      <div class="success-msg" id="successMsg">
+        <div class="icon">🎄</div>
+        <h2>Takk for bestillingen!</h2>
+        <p>Jeg tar kontakt så snart som mulig for å bekrefte og avtale detaljer.</p>
+        <a href="/" class="btn btn-outline" style="margin-top:24px;">Tilbake til forsiden</a>
       </div>
 
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- Skjema -->
-<section class="order-form-section">
-  <div id="formWrapper">
-    <h2>Fyll inn kontaktinfo</h2>
-    <form class="order-form" id="julForm" onsubmit="submitJulOrder(event)">
+</div>
 
-      <!-- Oppsummering -->
-      <div class="summary-box">
-        <h4>Din bestilling</h4>
-        <div id="summaryItems"><p class="summary-empty">Velg produkter ovenfor</p></div>
-      </div>
+<footer style="background:var(--brown);color:rgba(255,255,255,0.7);padding:40px 24px;text-align:center;font-size:0.85rem;">
+  <p style="margin:0;">© 2024 Kakefrue – Cecilie Linder · Porsgrunn · <a href="mailto:cecilie@kakefrue.no" style="color:var(--gold);text-decoration:none;">cecilie@kakefrue.no</a></p>
+</footer>
 
-      <div class="form-group">
-        <label class="form-label">Navn *</label>
-        <input class="form-input" type="text" id="julName" placeholder="Ditt fulle navn" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Telefon *</label>
-        <input class="form-input" type="tel" id="julPhone" placeholder="+47 000 00 000" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">E-post</label>
-        <input class="form-input" type="email" id="julEmail" placeholder="din@epost.no">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Henting eller levering?</label>
-        <select class="form-select" id="julDelivery">
-          <option value="henting">Henting i Porsgrunn</option>
-          <option value="levering">Levering (tillegg)</option>
-        </select>
-      </div>
-      <div class="form-group" id="julAddressGroup" style="display:none;">
-        <label class="form-label">Leveringsadresse</label>
-        <input class="form-input" type="text" id="julAddress" placeholder="Gateadresse, postnummer">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Kommentar / ønsker</label>
-        <textarea class="form-textarea" id="julNote" rows="3" placeholder="Allergier, spesielle ønsker, ønsket hentetidspunkt..."></textarea>
-      </div>
-
-      <div id="julError" class="alert alert-error" style="display:none; margin-bottom:16px;"></div>
-
-      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; font-size:1.05rem; padding:16px;" id="julSubmitBtn">
-        Send bestilling 🎄
-      </button>
-      <p style="text-align:center; font-size:0.82rem; opacity:0.5; margin-top:12px;">Bestillingsfrist 1. desember · Cecilie tar kontakt for bekreftelse og betaling</p>
-    </form>
-  </div>
-
-  <!-- Suksess -->
-  <div class="success-screen" id="successScreen">
-    <div class="success-icon">🎄</div>
-    <h2 style="font-family:var(--font-heading); color:var(--brown);">Tusen takk!</h2>
-    <p style="opacity:0.7; line-height:1.7;">Bestillingen din er mottatt. Cecilie tar kontakt for å bekrefte og avtale betaling og henting.</p>
-    <p style="margin-top:24px; opacity:0.5; font-size:0.85rem;">God jul! 🎁</p>
-  </div>
-</section>
-
-<!-- QR-kode seksjon (for utskrift) -->
-<section style="background:#F4EEE6; padding:48px 24px; text-align:center;">
-  <div class="container" style="max-width:480px;">
-    <p style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.1em; opacity:0.45; margin-bottom:12px;">Del med andre</p>
-    <p style="opacity:0.65; font-size:0.9rem; margin-bottom:20px;">Scan QR-koden eller send lenken: <strong>kakefrue.no/jul</strong></p>
-    <div id="qrcode" style="display:inline-block; background:white; padding:16px; border-radius:12px; box-shadow:var(--shadow);"></div>
-  </div>
-</section>
-
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
-// QR code
-new QRCode(document.getElementById('qrcode'), {
-  text: 'https://www.kakefrue.no/jul.html',
-  width: 180,
-  height: 180,
-  colorDark: '#2A1E3E',
-  colorLight: '#ffffff'
-});
+const PRODUCTS = [
+  { key: 'kling_6',           name: 'Kling',                   unit: '6 stk',   price: 180, emoji: '🥞' },
+  { key: 'lefse_6',           name: 'Nordlandslefse',          unit: '6 stk',   price: 150, emoji: '🫓' },
+  { key: 'krumkaker_12',      name: 'Krumkaker',               unit: '12 stk',  price: 200, emoji: '🍪' },
+  { key: 'pepperkake_12',     name: 'Pepperkaker',             unit: '12 stk',  price: 150, emoji: '🎄' },
+  { key: 'kransekake_stenger_12', name: 'Kransekakestenger',  unit: '12 stk',  price: 220, emoji: '🍡' },
+  { key: 'kransekake_18',     name: 'Hel kransekake',          unit: '18 ringer', price: 850, emoji: '💍' },
+  { key: 'mandelkake',        name: 'Mandelkake',              unit: 'per stk', price: 350, emoji: '🎂' },
+  { key: 'cookies_12',        name: 'Chocolate Chip Cookies',  unit: '12 stk',  price: 180, emoji: '🍪' },
+];
 
-// Delivery toggle
-document.getElementById('julDelivery').addEventListener('change', function() {
-  document.getElementById('julAddressGroup').style.display = this.value === 'levering' ? 'block' : 'none';
-});
+let selected = {}; // key → qty
+let delivery = 'henting';
+let julPhotos = {};
 
-function toggleProduct(card) {
-  card.classList.toggle('selected');
+// Load jul photos
+fetch('/api/photos?category=jul').then(r => r.json()).then(photos => {
+  if (!photos.length) return;
+  const wrap = document.getElementById('julGalleryWrap');
+  const gallery = document.getElementById('julGallery');
+  gallery.innerHTML = photos.map(p =>
+    `<img src="${p.url}" alt="${p.alt_text||'Julebakst'}" style="height:200px;width:auto;object-fit:cover;flex-shrink:0;">`
+  ).join('');
+  wrap.style.display = 'block';
+  photos.forEach(p => { julPhotos[p.alt_text?.toLowerCase()] = p.url; });
+  renderProducts();
+}).catch(() => { renderProducts(); });
+
+function renderProducts() {
+  const grid = document.getElementById('productsGrid');
+  grid.innerHTML = PRODUCTS.map(p => `
+    <div class="product-card ${selected[p.key] ? 'selected' : ''}" id="card-${p.key}" onclick="toggleProduct('${p.key}')">
+      <div class="product-check">✓</div>
+      <div class="product-card-img">${p.emoji}</div>
+      <div class="product-card-body">
+        <h3>${p.name}</h3>
+        <div class="price">${p.price} kr <span style="font-weight:400;font-size:0.85rem;opacity:0.7;">/ ${p.unit}</span></div>
+        <div class="qty-row" onclick="event.stopPropagation()">
+          <button class="qty-btn" onclick="changeQty('${p.key}', -1)">−</button>
+          <span class="qty-val" id="qty-${p.key}">${selected[p.key] || 1}</span>
+          <button class="qty-btn" onclick="changeQty('${p.key}', 1)">+</button>
+          <span style="font-size:0.8rem; opacity:0.5;">${p.unit}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
   updateSummary();
 }
 
-function updateSummary() {
-  const selected = document.querySelectorAll('.product-card.selected');
-  const container = document.getElementById('summaryItems');
-  if (!selected.length) {
-    container.innerHTML = '<p class="summary-empty">Velg produkter ovenfor</p>';
-    return;
+function toggleProduct(key) {
+  if (selected[key]) {
+    delete selected[key];
+  } else {
+    selected[key] = 1;
   }
-  container.innerHTML = Array.from(selected).map(card => {
-    const name = card.dataset.product;
-    const qty = card.querySelector('.qty-select').value;
-    return `<div class="summary-item"><span>${name}</span><span style="opacity:0.6;">${qty}</span></div>`;
-  }).join('');
+  renderProducts();
 }
 
-async function submitJulOrder(e) {
-  e.preventDefault();
-  const selected = document.querySelectorAll('.product-card.selected');
-  const errEl = document.getElementById('julError');
+function changeQty(key, delta) {
+  const newVal = (selected[key] || 1) + delta;
+  if (newVal < 1) { delete selected[key]; }
+  else { selected[key] = newVal; }
+  renderProducts();
+}
+
+function updateSummary() {
+  const bar = document.getElementById('summaryBar');
+  const txt = document.getElementById('summaryText');
+  const keys = Object.keys(selected);
+  if (!keys.length) { bar.style.display = 'none'; return; }
+  bar.style.display = 'block';
+  txt.textContent = keys.map(k => {
+    const p = PRODUCTS.find(x => x.key === k);
+    return `${p.name} × ${selected[k]}`;
+  }).join(', ');
+}
+
+function setDelivery(val) {
+  delivery = val;
+  document.querySelectorAll('.delivery-opt').forEach(el => el.classList.toggle('active', el.dataset.val === val));
+  document.getElementById('addressRow').style.display = val === 'levering' ? 'block' : 'none';
+}
+
+async function submitOrder() {
+  const fullName = document.getElementById('fullName').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const note = document.getElementById('note').value.trim();
+  const address = document.getElementById('address')?.value.trim() || '';
+  const errEl = document.getElementById('formError');
+
   errEl.style.display = 'none';
+  const keys = Object.keys(selected);
+  if (!keys.length) { errEl.textContent = 'Velg minst ett produkt.'; errEl.style.display = 'block'; return; }
+  if (!fullName) { errEl.textContent = 'Skriv inn ditt navn.'; errEl.style.display = 'block'; return; }
+  if (!phone) { errEl.textContent = 'Skriv inn ditt telefonnummer.'; errEl.style.display = 'block'; return; }
 
-  if (!selected.length) {
-    errEl.textContent = 'Velg minst ett produkt.';
-    errEl.style.display = 'block';
-    return;
-  }
+  const products = keys.map(k => {
+    const p = PRODUCTS.find(x => x.key === k);
+    return { key: k, name: p.name, unit: p.unit, price: p.price, qty: selected[k] };
+  });
 
-  const products = Array.from(selected).map(card => ({
-    name: card.dataset.product,
-    qty: card.querySelector('.qty-select').value
-  }));
-
-  const btn = document.getElementById('julSubmitBtn');
+  const btn = document.getElementById('submitBtn');
   btn.disabled = true;
   btn.textContent = 'Sender...';
 
@@ -419,28 +367,29 @@ async function submitJulOrder(e) {
     const res = await fetch('/api/christmas-orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        full_name: document.getElementById('julName').value.trim(),
-        phone: document.getElementById('julPhone').value.trim(),
-        email: document.getElementById('julEmail').value.trim(),
-        delivery: document.getElementById('julDelivery').value,
-        address: document.getElementById('julAddress').value.trim(),
-        note: document.getElementById('julNote').value.trim(),
-        products
-      })
+      body: JSON.stringify({ full_name: fullName, phone, email, delivery, address, products, note })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Noe gikk galt');
-    document.getElementById('formWrapper').style.display = 'none';
-    document.getElementById('successScreen').style.display = 'block';
-    window.scrollTo({ top: document.getElementById('successScreen').offsetTop - 40, behavior: 'smooth' });
-  } catch (err) {
-    errEl.textContent = err.message;
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Ukjent feil');
+    }
+    document.getElementById('orderForm').style.display = 'none';
+    document.getElementById('successMsg').style.display = 'block';
+    document.getElementById('successMsg').scrollIntoView({ behavior: 'smooth' });
+  } catch (e) {
+    errEl.textContent = 'Feil: ' + e.message;
     errEl.style.display = 'block';
     btn.disabled = false;
-    btn.textContent = 'Send bestilling 🎄';
+    btn.textContent = 'Send julebestilling';
   }
 }
+
+// Hamburger menu
+document.getElementById('hamburger').addEventListener('click', () => {
+  document.getElementById('mobileMenu').classList.toggle('open');
+});
+
+renderProducts();
 </script>
 </body>
 </html>

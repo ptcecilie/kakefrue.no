@@ -300,7 +300,10 @@ async function loadPhotos() {
       { key: 'jul', label: 'Julebestillinger', color: '#7A9E82' },
     ];
     const cardHtml = p => `
-      <div class="photo-card ${p.featured ? 'featured' : ''}" id="photo-${p.id}">
+      <div class="photo-card ${p.featured ? 'featured' : ''}" id="photo-${p.id}" draggable="true"
+           ondragstart="photoDragStart(event,${p.id})" ondragover="photoDragOver(event)" ondrop="photoDrop(event,${p.id})" ondragleave="photoDragLeave(event)"
+           style="cursor:grab;">
+        <div style="position:absolute;top:6px;left:6px;opacity:0.3;font-size:1rem;pointer-events:none;">⠿</div>
         <img src="${p.url || ''}" alt="${p.alt_text || ''}" loading="lazy">
         <div class="photo-card-body">
           <select class="form-input" style="font-size:0.78rem;padding:5px 8px;margin-bottom:6px;cursor:pointer;" onchange="updatePhotoCategory(${p.id}, this.value)">
@@ -432,6 +435,28 @@ async function updatePhotoCategory(id, category) {
     await api('/api/admin/photos/' + id, { method: 'PUT', body: JSON.stringify({ category }) });
     loadPhotos();
   } catch (e) { console.error(e); }
+}
+
+let photoDragId = null;
+function photoDragStart(e, id) { photoDragId = id; e.dataTransfer.effectAllowed = 'move'; }
+function photoDragOver(e) { e.preventDefault(); e.currentTarget.style.outline = '2.5px dashed var(--gold)'; }
+function photoDragLeave(e) { e.currentTarget.style.outline = ''; }
+async function photoDrop(e, targetId) {
+  e.preventDefault();
+  e.currentTarget.style.outline = '';
+  if (!photoDragId || photoDragId === targetId) return;
+  const grid = document.getElementById('photoGrid');
+  const cards = [...grid.querySelectorAll('.photo-card')];
+  const ids = cards.map(c => parseInt(c.id.replace('photo-', '')));
+  const fromIdx = ids.indexOf(photoDragId);
+  const toIdx = ids.indexOf(targetId);
+  if (fromIdx === -1 || toIdx === -1) return;
+  ids.splice(fromIdx, 1);
+  ids.splice(toIdx, 0, photoDragId);
+  await Promise.all(ids.map((id, i) =>
+    api('/api/admin/photos/' + id, { method: 'PUT', body: JSON.stringify({ sort_order: i }) }).catch(() => {})
+  ));
+  loadPhotos();
 }
 
 async function deletePhoto(id) {
