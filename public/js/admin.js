@@ -206,6 +206,35 @@ async function saveNewCustomer() {
 }
 
 // ── Julebestillinger ───────────────────────────────────────
+async function exportJulebestillingerExcel() {
+  try {
+    const orders = await api('/api/admin/christmas-orders');
+    if (!orders.length) { showAlert('Ingen bestillinger å eksportere', 'error'); return; }
+    const rows = [['Nr','Dato','Navn','Telefon','E-post','Henting/Levering','Adresse','Produkter','Totalt (kr)','Kommentar']];
+    orders.forEach((o, i) => {
+      const prods = (o.products || []).map(p => `${p.name} x${p.qty}`).join(', ');
+      const total = (o.products || []).reduce((s, p) => s + (p.price || 0) * (p.qty || 1), 0);
+      rows.push([
+        i + 1,
+        o.created_at ? new Date(o.created_at).toLocaleDateString('nb-NO') : '',
+        o.full_name || '',
+        o.phone || '',
+        o.email || '',
+        o.delivery === 'levering' ? 'Levering' : 'Henting',
+        o.address || '',
+        prods,
+        total || '',
+        o.note || ''
+      ]);
+    });
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [5,12,18,12,22,14,20,40,12,25].map(w => ({ wch: w }));
+    XLSX.utils.book_append_sheet(wb, ws, 'Julebestillinger');
+    XLSX.writeFile(wb, 'Julebestillinger 2025.xlsx');
+  } catch (e) { showAlert('Eksport feilet: ' + e.message, 'error'); }
+}
+
 async function loadChristmasOrders() {
   const container = $('christmasOrdersList');
   try {
@@ -229,11 +258,12 @@ async function loadChristmasOrders() {
             </div>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-            ${(o.products || []).map(p => `<span class="tag tag-sage">${p.name} – ${p.qty}</span>`).join('')}
+            ${(o.products || []).map(p => `<span class="tag tag-sage">${p.name} × ${p.qty}${p.price ? ' · ' + (p.price * p.qty) + ' kr' : ''}</span>`).join('')}
           </div>
-          <div style="font-size:0.85rem;opacity:0.6;">
-            ${o.delivery === 'levering' ? `🚗 Levering: ${o.address || '—'}` : '🏠 Henting'}
-            ${o.note ? ` · <em>${o.note}</em>` : ''}
+          <div style="font-size:0.85rem;opacity:0.6;display:flex;gap:16px;flex-wrap:wrap;">
+            <span>${o.delivery === 'levering' ? `🚗 Levering: ${o.address || '—'}` : '🏠 Henting'}</span>
+            ${(o.products||[]).reduce((s,p)=>s+(p.price||0)*(p.qty||1),0)>0?`<span>💰 Totalt: <strong>${(o.products||[]).reduce((s,p)=>s+(p.price||0)*(p.qty||1),0)} kr</strong></span>`:''}
+            ${o.note ? `<span>💬 <em>${o.note}</em></span>` : ''}
           </div>
         </div>
       `).join('')}

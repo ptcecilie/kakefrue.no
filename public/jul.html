@@ -354,9 +354,124 @@
     }
     .suksess a:hover { background: rgba(255,255,255,0.07); }
 
-    @media (max-width: 620px) {
-      .produkt-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-      .bestillingskort { padding: 22px 16px; }
+    /* ══ NY FORM-LAYOUT ══ */
+    .bestilling-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .bestilling-kolonne {
+      background: var(--cream);
+      border-radius: 22px;
+      padding: 32px 28px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.38), 0 0 0 1px rgba(196,137,58,0.15);
+    }
+    .kolonne-tittel {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--body);
+      margin: 0 0 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #E8D9BE;
+    }
+    .frist-banner {
+      background: linear-gradient(135deg, rgba(139,26,26,0.08), rgba(139,26,26,0.04));
+      border: 1.5px solid rgba(139,26,26,0.2);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--red);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .produkt-liste { list-style: none; margin: 0; padding: 0; }
+    .produkt-rad {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid #F0E8DA;
+    }
+    .produkt-rad:last-child { border-bottom: none; }
+    .produkt-info { flex: 1; min-width: 0; }
+    .produkt-navn-liten { font-size: 0.87rem; font-weight: 700; color: var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .produkt-detalj { font-size: 0.72rem; color: var(--muted); }
+    .produkt-pris-liten { font-size: 0.82rem; font-weight: 700; color: var(--red); white-space: nowrap; }
+    .qty-mini {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .qty-mini-knapp {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 1.5px solid #D0BEA8; background: transparent; color: var(--muted);
+      font-size: 1rem; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: 0.12s; line-height: 1;
+    }
+    .qty-mini-knapp.aktiv { border-color: var(--red); color: var(--red); }
+    .qty-mini-knapp:hover.aktiv { background: var(--red); color: white; }
+    .qty-mini-tall {
+      min-width: 18px; text-align: center;
+      font-size: 0.85rem; font-weight: 700; color: var(--body);
+    }
+    .qty-mini-tall.har-antall { color: var(--red); }
+    .total-rad {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 14px; padding-top: 12px;
+      border-top: 2px solid #E8D9BE;
+      font-weight: 700; font-size: 0.9rem; color: var(--body);
+    }
+    .total-sum { font-size: 1.1rem; color: var(--red); }
+
+    .send-knapp {
+      width: 100%; padding: 16px; border: none; border-radius: 12px;
+      background: var(--red); color: white;
+      font-family: 'Lato', sans-serif; font-size: 0.95rem; font-weight: 700;
+      letter-spacing: 0.04em; cursor: pointer; transition: 0.18s;
+      margin-top: 20px;
+    }
+    .send-knapp:hover:not(:disabled) { background: var(--red-lt); transform: translateY(-1px); }
+    .send-knapp:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .kontakt-linje {
+      text-align: center;
+      margin-top: 28px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .kontakt-linje a {
+      display: inline-flex; align-items: center; gap: 7px;
+      color: rgba(245,237,214,0.55);
+      font-size: 0.84rem; text-decoration: none;
+      padding: 9px 18px;
+      border: 1px solid rgba(245,237,214,0.15);
+      border-radius: 100px;
+      transition: 0.15s;
+    }
+    .kontakt-linje a:hover { color: var(--cream); border-color: rgba(245,237,214,0.3); background: rgba(255,255,255,0.04); }
+
+    .vipps-info {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(196,137,58,0.25);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-top: 24px;
+      text-align: center;
+      max-width: 900px;
+      margin-left: auto; margin-right: auto;
+    }
+    .vipps-info p { color: rgba(245,237,214,0.5); font-size: 0.82rem; margin: 0; line-height: 1.7; }
+    .vipps-info strong { color: var(--amber-lt); }
+
+    @media (max-width: 720px) {
+      .bestilling-layout { grid-template-columns: 1fr; gap: 16px; }
+      .bestilling-kolonne { padding: 22px 16px; }
       .pine-l, .pine-r { width: 180px; height: 240px; }
     }
   </style>
@@ -474,32 +589,15 @@
 <div class="brev">
   <div class="brev-inner">
     <p>Hvert år fra november til julaften fyller kjøkkenet seg med lukten av kardemomme, smør og kanel. Jeg baker det som alltid har smakt av jul – og nå kan du bestille det rett hjem til deg.</p>
-    <p>Ingen betaling nå – vi tar en prat, avtaler detaljer, og så baker jeg til deg.</p>
     <span class="brev-sign">– Cecilie</span>
     <div class="brev-detaljer">
       <span>Henting i Porsgrunn</span>
-      <span>Levering +200 kr</span>
+      <span>Levering fra 150 kr</span>
       <span>Gavepakning</span>
-      <span>Bestilling innen 15. des</span>
+      <span>Bestillingsfrist 1. desember</span>
     </div>
   </div>
 </div>
-
-<!-- Bølge ned til produkter -->
-<div class="wave-cream-dk">
-  <svg viewBox="0 0 1440 56" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M0,20 C360,56 1080,0 1440,28 L1440,56 L0,56 Z" fill="#E8D9BE"/>
-  </svg>
-</div>
-
-<!-- ══ PRODUKTER ══ -->
-<section class="produkter-seksjon" id="bestill">
-  <div class="seksjon-tittel">
-    <h2>Hva vil du ha i år?</h2>
-    <span class="skriv">Trykk på det du vil bestille</span>
-  </div>
-  <div class="produkt-grid" id="produktGrid"></div>
-</section>
 
 <!-- ══ BILDEGALLERI ══ -->
 <div class="jul-strip" id="julStripWrap">
@@ -514,65 +612,91 @@
 </div>
 
 <!-- ══ BESTILLINGSSKJEMA ══ -->
-<div class="bestilling-seksjon">
+<div class="bestilling-seksjon" id="bestill">
   <div id="skjemaWrap">
     <div class="bestilling-tittel">
-      <h2>Send meg en beskjed</h2>
-      <p>Jeg ringer deg for å bekrefte og avtale alt det praktiske.</p>
+      <h2>Legg inn din julebestilling</h2>
+      <p>Betal enkelt med Vipps etter at bestillingen er sendt.</p>
     </div>
-    <div class="bestillingskort">
-      <div id="valgteSeksjon" style="display:none;margin-bottom:20px;">
-        <div class="felt-label" style="margin-bottom:8px;">Du har valgt</div>
-        <div class="valgte-piller" id="pillerContainer"></div>
-        <hr style="border:none;border-top:1px solid #E8D9BE;margin:0 0 20px;">
-      </div>
 
-      <div class="felt-rad">
-        <label class="felt-label">Henting eller levering?</label>
-        <div class="levering-rad">
-          <div class="lev-valg aktiv" data-val="henting" onclick="settLevering('henting')">
-            <strong>Henting</strong><span>Hos meg i Porsgrunn</span>
-          </div>
-          <div class="lev-valg" data-val="levering" onclick="settLevering('levering')">
-            <strong>Levering</strong><span>+200 kr i omegn</span>
-          </div>
-        </div>
-        <div id="adresseRad" style="display:none;">
-          <input class="felt-input" id="adresse" placeholder="Leveringsadresse">
-        </div>
-      </div>
+    <div class="bestilling-layout">
+      <!-- VENSTRE: Kundeinformasjon -->
+      <div class="bestilling-kolonne">
+        <div class="kolonne-tittel">Din informasjon</div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="felt-rad">
-        <div>
+        <div class="felt-rad">
           <label class="felt-label">Navn *</label>
-          <input class="felt-input" id="navn" placeholder="Ditt navn">
+          <input class="felt-input" id="navn" placeholder="Ditt fulle navn">
         </div>
-        <div>
+
+        <div class="felt-rad">
           <label class="felt-label">Telefon *</label>
           <input class="felt-input" id="tlf" type="tel" placeholder="Tlf.nummer">
         </div>
+
+        <div class="felt-rad">
+          <label class="felt-label">E-post <span style="font-weight:300;opacity:0.6;">(valgfritt)</span></label>
+          <input class="felt-input" id="epost" type="email" placeholder="navn@epost.no">
+        </div>
+
+        <div class="felt-rad">
+          <label class="felt-label">Henting eller levering?</label>
+          <div class="levering-rad">
+            <div class="lev-valg aktiv" data-val="henting" onclick="settLevering('henting')">
+              <strong>Henting</strong><span>Hos meg i Porsgrunn</span>
+            </div>
+            <div class="lev-valg" data-val="levering" onclick="settLevering('levering')">
+              <strong>Levering</strong><span>Innen 10 km: 150 kr · 10–20 km: 250 kr</span>
+            </div>
+          </div>
+          <div id="adresseRad" style="display:none; margin-top:10px;">
+            <input class="felt-input" id="adresse" placeholder="Leveringsadresse">
+          </div>
+        </div>
+
+        <div class="felt-rad" style="margin-bottom:0;">
+          <label class="felt-label">Kommentar / ønsket hentetidspunkt</label>
+          <textarea class="felt-input" id="merknad" placeholder="Skriv gjerne her om det er noe jeg bør vite..." style="min-height:72px;"></textarea>
+        </div>
       </div>
 
-      <div class="felt-rad">
-        <label class="felt-label">E-post</label>
-        <input class="felt-input" id="epost" type="email" placeholder="Valgfritt">
+      <!-- HØYRE: Produktmeny -->
+      <div class="bestilling-kolonne">
+        <div class="kolonne-tittel">Velg hva du vil ha</div>
+        <div class="frist-banner">Bestillingsfrist: 1. desember 2025</div>
+        <ul class="produkt-liste" id="produktListe"></ul>
+        <div class="total-rad" id="totalRad" style="display:none;">
+          <span>Totalt</span>
+          <span class="total-sum" id="totalSum">0 kr</span>
+        </div>
       </div>
+    </div>
 
-      <div class="felt-rad">
-        <label class="felt-label">Allergier, ønsker, dato</label>
-        <textarea class="felt-input" id="merknad" placeholder="Skriv gjerne her om det er noe jeg bør vite..."></textarea>
-      </div>
-
+    <div style="max-width:900px;margin:0 auto;">
       <div class="skjema-feil" id="skjemaFeil"></div>
       <button class="send-knapp" onclick="sendBestilling()" id="sendKnapp">Send bestilling 🎄</button>
-      <p class="skjema-note">Ingen betaling nå – jeg tar kontakt for å bekrefte.</p>
+    </div>
+
+    <div class="vipps-info">
+      <p>Etter bestilling betaler du med <strong>Vipps til 90033039</strong> (Cecilie Linder) – oppgi ditt navn som melding.<br>Du mottar kvittering på SMS eller e-post.</p>
+    </div>
+
+    <div class="kontakt-linje">
+      <a href="https://m.me/kakefrue" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.908 1.418 5.504 3.641 7.22V22l3.317-1.82C10.093 20.385 11.03 20.5 12 20.5c5.523 0 10-4.145 10-9.257S17.523 2 12 2zm1.064 12.468l-2.542-2.713-4.965 2.713 5.461-5.795 2.607 2.713 4.9-2.713-5.461 5.795z"/></svg>
+        Skriv til meg på Messenger
+      </a>
+      <a href="tel:90033039">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.09A16 16 0 0015.91 17l.36-.36a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        Ring 900 33 039
+      </a>
     </div>
   </div>
 
   <div class="suksess" id="suksessMsg">
     <span class="suksess-ikon">🎄</span>
     <h2>Tusen takk!</h2>
-    <p>Bestillingen er mottatt. Jeg ringer deg så snart som mulig for å bekrefte og avtale henting eller levering.</p>
+    <p id="suksessTekst">Bestillingen er mottatt! Betal med Vipps til <strong style="color:var(--amber-lt);">90033039</strong> – skriv ditt navn som melding.<br><br>Jeg bekrefter bestillingen din så snart jeg mottar betaling.</p>
     <a href="/">Tilbake til forsiden</a>
   </div>
 </div>
@@ -649,14 +773,15 @@
 
 /* Produkter */
 const PRODUKTER=[
-  {k:'kling_6',      n:'Kling',                unit:'6 stk',     pris:180, em:'🥞', desc:'Luftig og myk – den ekte julefavoritten'},
-  {k:'lefse_6',      n:'Nordlandslefse',        unit:'6 stk',     pris:150, em:'🫓', desc:'Myk og smakfull nordlandstradisjon'},
-  {k:'krumkaker_12', n:'Krumkaker',             unit:'12 stk',    pris:200, em:'🍪', desc:'Sprø og delikate – perfekt til julebordet'},
-  {k:'pepperkake_12',n:'Pepperkaker',           unit:'12 stk',    pris:150, em:'🎄', desc:'Hjemmelagde med deilig julekrydder'},
-  {k:'kransekake_s', n:'Kransekakestenger',     unit:'12 stk',    pris:220, em:'🍡', desc:'Seige og mandelrike med glasur'},
-  {k:'kransekake_h', n:'Hel kransekake',        unit:'18 ringer', pris:850, em:'💍', desc:'En imponerende juleklassiker'},
-  {k:'mandelkake',   n:'Mandelkake',            unit:'per stk',   pris:350, em:'🎂', desc:'Saftig og smakfull julegave'},
-  {k:'cookies_12',   n:'Cookies',               unit:'12 stk',    pris:180, em:'🍫', desc:'Store, seige og fulle av sjokolade'},
+  {k:'mandelkaker',    n:'Mandelkaker',           unit:'4 stk',     pris:89},
+  {k:'krumkaker',      n:'Krumkaker',             unit:'6 stk',     pris:100},
+  {k:'sandkaker',      n:'Sandkaker',             unit:'12 stk',    pris:150},
+  {k:'nordlandslefse', n:'Nordlandslefse',        unit:'3 stk',     pris:230},
+  {k:'kling',          n:'Kling',                 unit:'3 stk',     pris:180},
+  {k:'cookies',        n:'Cookies',               unit:'5 stk',     pris:79},
+  {k:'cookies_gf',     n:'Cookies (glutenfri)',   unit:'5 stk',     pris:89},
+  {k:'kransestenger',  n:'Kransekakestenger',     unit:'10 stk',    pris:150},
+  {k:'kransekake',     n:'Kransekake',            unit:'18 ringer', pris:500},
 ];
 let valgt={}, levering='henting';
 
@@ -668,27 +793,35 @@ fetch('/api/photos?category=jul').then(r=>r.json()).then(p=>{
 }).catch(()=>{});
 
 function visProdukter(){
-  document.getElementById('produktGrid').innerHTML=PRODUKTER.map(p=>`
-    <div class="produkt-kort${valgt[p.k]?' valgt':''}" id="pk-${p.k}" onclick="toggleProdukt('${p.k}')">
-      <span class="kort-emoji">${p.em}</span>
-      <div class="kort-navn">${p.n}</div>
-      <div class="kort-pris">${p.pris} kr <span class="kort-enhet">/ ${p.unit}</span></div>
-      <div class="kort-desc">${p.desc}</div>
-      <div class="qty-rad" onclick="event.stopPropagation()">
-        <button class="qty-knapp" onclick="endreAntall('${p.k}',-1)">−</button>
-        <span class="qty-tall" id="qv-${p.k}">${valgt[p.k]||1}</span>
-        <button class="qty-knapp" onclick="endreAntall('${p.k}',1)">+</button>
+  const liste=document.getElementById('produktListe');
+  if(!liste)return;
+  liste.innerHTML=PRODUKTER.map(p=>{
+    const qty=valgt[p.k]||0;
+    return`<li class="produkt-rad">
+      <div class="produkt-info">
+        <div class="produkt-navn-liten">${p.n}</div>
+        <div class="produkt-detalj">${p.unit}</div>
       </div>
-    </div>`).join('');
-  oppdaterSammendrag();
+      <div class="produkt-pris-liten">${p.pris},-</div>
+      <div class="qty-mini">
+        <button class="qty-mini-knapp${qty>0?' aktiv':''}" onclick="endreAntall('${p.k}',-1)">−</button>
+        <span class="qty-mini-tall${qty>0?' har-antall':''}" id="qv-${p.k}">${qty}</span>
+        <button class="qty-mini-knapp aktiv" onclick="endreAntall('${p.k}',1)">+</button>
+      </div>
+    </li>`;
+  }).join('');
+  oppdaterTotal();
 }
-function toggleProdukt(k){ valgt[k]?delete valgt[k]:valgt[k]=1; visProdukter(); }
-function endreAntall(k,d){ const v=(valgt[k]||1)+d; v<1?delete valgt[k]:valgt[k]=v; visProdukter(); }
-function oppdaterSammendrag(){
-  const ks=Object.keys(valgt), s=document.getElementById('valgteSeksjon'), p=document.getElementById('pillerContainer');
-  if(!ks.length){s.style.display='none';return;}
-  s.style.display='block';
-  p.innerHTML=ks.map(k=>{const pr=PRODUKTER.find(x=>x.k===k);return`<span class="pille">${pr.n} × ${valgt[k]}</span>`;}).join('');
+function endreAntall(k,d){
+  const v=(valgt[k]||0)+d;
+  if(v<=0) delete valgt[k]; else valgt[k]=v;
+  visProdukter();
+}
+function oppdaterTotal(){
+  const total=Object.keys(valgt).reduce((s,k)=>{const p=PRODUKTER.find(x=>x.k===k);return s+(p?p.pris*valgt[k]:0);},0);
+  const rad=document.getElementById('totalRad');
+  if(total>0){ rad.style.display='flex'; document.getElementById('totalSum').textContent=total+' kr'; }
+  else rad.style.display='none';
 }
 function settLevering(v){
   levering=v;
@@ -703,15 +836,18 @@ async function sendBestilling(){
   const adresse=document.getElementById('adresse')?.value.trim()||'';
   const feil=document.getElementById('skjemaFeil');
   feil.style.display='none';
-  if(!Object.keys(valgt).length){feil.textContent='Velg minst ett produkt.';feil.style.display='block';return;}
+  if(!Object.keys(valgt).length){feil.textContent='Velg minst ett produkt.';feil.style.display='block';feil.scrollIntoView({behavior:'smooth'});return;}
   if(!navn){feil.textContent='Skriv inn navn.';feil.style.display='block';return;}
   if(!tlf){feil.textContent='Skriv inn telefonnummer.';feil.style.display='block';return;}
+  if(levering==='levering'&&!adresse){feil.textContent='Skriv inn leveringsadresse.';feil.style.display='block';return;}
   const products=Object.keys(valgt).map(k=>{const p=PRODUKTER.find(x=>x.k===k);return{key:k,name:p.n,unit:p.unit,price:p.pris,qty:valgt[k]};});
+  const total=products.reduce((s,p)=>s+p.price*p.qty,0);
   const knapp=document.getElementById('sendKnapp');
   knapp.disabled=true; knapp.textContent='Sender...';
   try{
     const res=await fetch('/api/christmas-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({full_name:navn,phone:tlf,email:epost,delivery:levering,address:adresse,products,note:merknad})});
     if(!res.ok){const e=await res.json();throw new Error(e.error||'Ukjent feil');}
+    document.getElementById('suksessTekst').innerHTML=`Bestillingen er mottatt! Betal <strong style="color:var(--amber-lt);">${total} kr</strong> med Vipps til <strong style="color:var(--amber-lt);">90033039</strong> – skriv <strong style="color:var(--amber-lt);">${navn}</strong> som melding.<br><br>Jeg bekrefter bestillingen din så snart jeg mottar betaling.`;
     document.getElementById('skjemaWrap').style.display='none';
     document.getElementById('suksessMsg').style.display='block';
     document.getElementById('suksessMsg').scrollIntoView({behavior:'smooth'});
