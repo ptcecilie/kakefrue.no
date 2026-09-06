@@ -309,7 +309,10 @@ async function loadPhotos() {
         </div>
       </div>
     `).join('');
-  } catch (e) { console.error(e); }
+  } catch (e) {
+    const grid = document.getElementById('photoGrid');
+    if (grid) grid.innerHTML = `<div style="grid-column:1/-1;padding:24px;color:red;font-size:0.9rem;">Feil ved lasting av bilder: ${e.message}</div>`;
+  }
 }
 
 function compressImage(file, maxPx = 1600, quality = 0.82) {
