@@ -358,7 +358,7 @@ async function uploadPhotos(input) {
 
   bar.style.width = '20%';
 
-  let done = 0, failed = 0;
+  let done = 0, failed = 0, lastError = '';
   for (let i = 0; i < prepared.length; i += 2) {
     const batch = prepared.slice(i, i + 2);
     await Promise.all(batch.map(async f => {
@@ -370,6 +370,7 @@ async function uploadPhotos(input) {
         done++;
       } catch (e) {
         failed++;
+        lastError = e.message;
         console.error('Upload failed:', f.name, e);
       }
     }));
@@ -379,7 +380,7 @@ async function uploadPhotos(input) {
 
   bar.style.width = '100%';
   if (failed > 0) {
-    text.textContent = `${done} lastet opp, ${failed} feilet. Prøv igjen med færre bilder.`;
+    text.textContent = `${done} lastet opp, ${failed} feilet. Feil: ${lastError}`;
   } else {
     text.textContent = `${done} bilde${done !== 1 ? 'r' : ''} lastet opp! ✓`;
   }
