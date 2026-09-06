@@ -11,15 +11,15 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@600&family=Lato:wght@300;400;700&display=swap">
   <style>
     :root {
-      --pine-black: #0B1E0E;
-      --forest:     #1C4225;
-      --candle:     #D4913A;
-      --candle-lt:  #F0C97A;
-      --berry:      #8B1919;
-      --snow:       #F7F0E6;
-      --frost:      #A8C8A0;
-      --cream-mid:  #EDE4D6;
-      --body-text:  #2A1F14;
+      --pine-black: #070E08;
+      --forest:     #1A3D21;
+      --red:        #9B1F1F;
+      --red-lt:     #C42929;
+      --red-glow:   rgba(155,31,31,0.22);
+      --snow:       #F4EEE6;
+      --frost:      #C0D8BC;
+      --cream-mid:  #EAE0D4;
+      --body-text:  #231A14;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -27,12 +27,12 @@
     h1,h2,h3 { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; }
 
     /* ── Nav override ── */
-    .nav { background: rgba(11,30,14,0.96); border-color: rgba(212,145,58,0.2); }
+    .nav { background: rgba(7,14,8,0.97); border-color: rgba(155,31,31,0.18); }
     .nav-logo { color: var(--snow); }
-    .nav-logo span { color: var(--candle); }
-    .nav-links a { color: rgba(247,240,230,0.7); }
-    .nav-links a:hover { color: var(--candle); opacity: 1; }
-    .nav-cta { background: rgba(212,145,58,0.15) !important; color: var(--candle) !important; border-color: rgba(212,145,58,0.35) !important; }
+    .nav-logo span { color: #D4A0A0; }
+    .nav-links a { color: rgba(244,238,230,0.65); }
+    .nav-links a:hover { color: var(--snow); opacity: 1; }
+    .nav-cta { background: rgba(155,31,31,0.18) !important; color: #E8B0B0 !important; border-color: rgba(155,31,31,0.4) !important; }
     .hamburger span { background: var(--snow); }
 
     /* ── Hero ── */
@@ -56,13 +56,13 @@
     }
     .hero-glow {
       position: absolute;
-      width: 600px; height: 600px;
+      width: 700px; height: 700px;
       top: 50%; left: 50%;
-      transform: translate(-50%, -60%);
+      transform: translate(-50%, -58%);
       background: radial-gradient(ellipse at center,
-        rgba(212,145,58,0.18) 0%,
-        rgba(139,25,25,0.06) 40%,
-        transparent 70%);
+        rgba(155,31,31,0.20) 0%,
+        rgba(80,14,14,0.10) 45%,
+        transparent 72%);
       pointer-events: none;
     }
     .jul-hero-inner { position: relative; z-index: 2; max-width: 640px; }
@@ -73,8 +73,8 @@
       font-size: 0.7rem;
       letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: var(--candle);
-      border: 1px solid rgba(212,145,58,0.35);
+      color: #E8B0B0;
+      border: 1px solid rgba(155,31,31,0.45);
       padding: 7px 20px;
       border-radius: 100px;
       margin-bottom: 28px;
@@ -88,13 +88,13 @@
     }
     .jul-hero h1 em {
       font-style: italic;
-      color: var(--candle-lt);
+      color: #E8B0B0;
     }
     .jul-script {
       font-family: 'Dancing Script', cursive;
       font-size: clamp(1.3rem, 3vw, 1.9rem);
       color: var(--frost);
-      opacity: 0.85;
+      opacity: 0.8;
       display: block;
       margin-bottom: 28px;
     }
@@ -110,8 +110,8 @@
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      background: var(--candle);
-      color: var(--pine-black);
+      background: var(--red);
+      color: #F4EEE6;
       padding: 16px 36px;
       border-radius: 100px;
       font-family: 'Lato', sans-serif;
@@ -121,9 +121,9 @@
       text-transform: uppercase;
       text-decoration: none;
       transition: background 0.2s, transform 0.15s;
-      box-shadow: 0 4px 24px rgba(212,145,58,0.4);
+      box-shadow: 0 4px 28px rgba(155,31,31,0.5), 0 0 0 1px rgba(155,31,31,0.3);
     }
-    .jul-cta:hover { background: var(--candle-lt); transform: translateY(-2px); }
+    .jul-cta:hover { background: var(--red-lt); transform: translateY(-2px); }
 
     /* Pine branches */
     .pine-left, .pine-right {
@@ -132,10 +132,18 @@
       width: 340px;
       height: 340px;
       pointer-events: none;
-      opacity: 0.55;
+      opacity: 0.65;
     }
     .pine-left { left: -40px; transform: scaleX(-1); }
     .pine-right { right: -40px; }
+
+    /* Twinkling lights on tree */
+    @keyframes twinkle { 0%,100% { opacity:1; } 50% { opacity:0.15; } }
+    .light-1 { animation: twinkle 1.8s ease-in-out infinite; }
+    .light-2 { animation: twinkle 2.3s ease-in-out 0.4s infinite; }
+    .light-3 { animation: twinkle 1.5s ease-in-out 0.9s infinite; }
+    .light-4 { animation: twinkle 2.7s ease-in-out 1.2s infinite; }
+    .light-5 { animation: twinkle 1.9s ease-in-out 0.2s infinite; }
 
     /* ── Gallery strip ── */
     .jul-strip {
@@ -173,7 +181,7 @@
     }
     .jul-info-item:last-child { border-right: none; }
     .jul-info-item .icon { font-size: 1.4rem; }
-    .jul-info-item strong { display: block; color: var(--candle-lt); font-size: 0.85rem; font-weight: 700; }
+    .jul-info-item strong { display: block; color: #E8B0B0; font-size: 0.85rem; font-weight: 700; }
     .jul-info-item span { opacity: 0.6; font-size: 0.78rem; }
 
     /* ── Section ── */
@@ -211,14 +219,14 @@
       box-shadow: 0 2px 12px rgba(28,66,37,0.07);
     }
     .product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(28,66,37,0.13); }
-    .product-card.selected { border-color: var(--forest); }
+    .product-card.selected { border-color: var(--red); }
     .product-card.selected::after {
       content: '✓';
       position: absolute;
       top: 10px; right: 10px;
       width: 28px; height: 28px;
       border-radius: 50%;
-      background: var(--forest);
+      background: var(--red);
       color: white;
       display: flex; align-items: center; justify-content: center;
       font-size: 0.85rem;
@@ -235,7 +243,7 @@
     }
     .product-body { padding: 16px 16px 18px; }
     .product-body h3 { font-family: 'Playfair Display', serif; font-size: 0.95rem; color: var(--forest); margin: 0 0 4px; }
-    .product-price { font-weight: 700; color: var(--candle); font-size: 1rem; }
+    .product-price { font-weight: 700; color: var(--red); font-size: 1rem; }
     .product-unit { font-weight: 300; font-size: 0.78rem; color: #AAA; }
     .product-desc { font-size: 0.78rem; color: #888; margin-top: 5px; line-height: 1.55; }
     .qty-row {
@@ -250,16 +258,16 @@
     .qty-btn {
       width: 30px; height: 30px;
       border-radius: 50%;
-      border: 1.5px solid var(--forest);
+      border: 1.5px solid var(--red);
       background: transparent;
-      color: var(--forest);
+      color: var(--red);
       font-size: 1.1rem;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: 0.15s;
     }
-    .qty-btn:hover { background: var(--forest); color: white; }
-    .qty-val { font-weight: 700; min-width: 26px; text-align: center; color: var(--forest); }
+    .qty-btn:hover { background: var(--red); color: white; }
+    .qty-val { font-weight: 700; min-width: 26px; text-align: center; color: var(--red); }
 
     /* ── Order section ── */
     .order-section {
@@ -290,13 +298,13 @@
 
     .pills-wrap { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 24px; }
     .pill {
-      background: #EDF5EA;
-      color: var(--forest);
+      background: #F5EBEB;
+      color: var(--red);
       border-radius: 100px;
       font-size: 0.78rem;
       font-weight: 700;
       padding: 5px 13px;
-      border: 1px solid rgba(28,66,37,0.15);
+      border: 1px solid rgba(155,31,31,0.15);
     }
 
     .field-label {
@@ -305,7 +313,7 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--forest);
+      color: #3D1A1A;
       margin-bottom: 7px;
     }
     .field-input {
@@ -321,7 +329,7 @@
       box-sizing: border-box;
       color: var(--body-text);
     }
-    .field-input:focus { outline: none; border-color: var(--forest); }
+    .field-input:focus { outline: none; border-color: var(--red); }
     textarea.field-input { resize: vertical; min-height: 90px; }
     .field-row { margin-bottom: 18px; }
 
@@ -334,8 +342,8 @@
       cursor: pointer;
       transition: 0.15s;
     }
-    .del-opt.active { border-color: var(--forest); background: #EDF5EA; }
-    .del-opt strong { display: block; font-size: 0.88rem; color: var(--forest); margin-bottom: 3px; }
+    .del-opt.active { border-color: var(--red); background: #F9EFEF; }
+    .del-opt strong { display: block; font-size: 0.88rem; color: #3D1A1A; margin-bottom: 3px; }
     .del-opt span { font-size: 0.75rem; color: #999; }
 
     .submit-btn {
@@ -343,7 +351,7 @@
       padding: 17px;
       border: none;
       border-radius: 12px;
-      background: var(--forest);
+      background: var(--red);
       color: white;
       font-family: 'Lato', sans-serif;
       font-size: 0.95rem;
@@ -353,7 +361,7 @@
       transition: 0.2s;
       margin-top: 4px;
     }
-    .submit-btn:hover:not(:disabled) { background: #265A30; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+    .submit-btn:hover:not(:disabled) { background: var(--red-lt); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(155,31,31,0.35); }
     .submit-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
     .form-note { text-align: center; font-size: 0.75rem; color: #AAA; margin-top: 12px; }
@@ -362,7 +370,7 @@
     /* ── Success ── */
     .success-wrap { text-align: center; padding: 40px 24px; display: none; max-width: 480px; margin: 0 auto; }
     .success-icon { font-size: 3.5rem; margin-bottom: 20px; display: block; }
-    .success-wrap h2 { color: var(--candle-lt); font-size: 2rem; margin-bottom: 12px; }
+    .success-wrap h2 { color: #E8B0B0; font-size: 2rem; margin-bottom: 12px; }
     .success-wrap p { color: rgba(247,240,230,0.7); line-height: 1.8; }
     .success-wrap a { display: inline-block; margin-top: 28px; padding: 14px 32px; border: 1px solid rgba(247,240,230,0.3); color: var(--snow); border-radius: 100px; text-decoration: none; font-size: 0.85rem; transition: 0.15s; }
     .success-wrap a:hover { background: rgba(255,255,255,0.08); }
@@ -382,7 +390,7 @@
   <div class="nav-center">
     <ul class="nav-links">
       <li><a href="/meny.html">Meny</a></li>
-      <li><a href="/jul.html" style="color:var(--candle-lt,#F0C97A);font-weight:700;">🎄 Julebestillinger</a></li>
+      <li><a href="/jul.html" style="color:#E8B0B0;font-weight:700;">🎄 Julebestillinger</a></li>
       <li><a href="/anbefalinger.html">Anbefalinger</a></li>
       <li><a href="/provesmaking.html">Prøvesmaking</a></li>
       <li><a href="/kurs.html">Kurs</a></li>
@@ -411,24 +419,37 @@
   <canvas id="snowCanvas"></canvas>
   <div class="hero-glow"></div>
 
-  <!-- Pine branch SVG left & right -->
+  <!-- Pine tree SVG – left & right with twinkling lights -->
   <svg class="pine-left" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M170 320 L170 60" stroke="#2D5A35" stroke-width="6" stroke-linecap="round"/>
-    <path d="M170 280 L80 220 L110 215 L60 170 L95 167 L50 120 L85 119 L55 75 L105 85 L170 120" fill="#1B4A28" opacity="0.9"/>
-    <path d="M170 280 L260 220 L230 215 L280 170 L245 167 L290 120 L255 119 L285 75 L235 85 L170 120" fill="#245C32" opacity="0.7"/>
-    <circle cx="170" cy="60" r="8" fill="#D4913A" opacity="0.9"/>
-    <circle cx="82" cy="222" r="5" fill="#8B1919" opacity="0.8"/>
-    <circle cx="258" cy="222" r="4" fill="#D4913A" opacity="0.7"/>
-    <circle cx="58" cy="172" r="4" fill="#8B1919" opacity="0.6"/>
+    <path d="M170 325 L170 65" stroke="#3A6640" stroke-width="7" stroke-linecap="round"/>
+    <path d="M170 290 L70 218 L105 213 L52 162 L90 159 L44 108 L82 107 L50 66 L108 78 L170 118" fill="#1B4A28" opacity="0.95"/>
+    <path d="M170 290 L270 218 L235 213 L288 162 L250 159 L296 108 L258 107 L290 66 L232 78 L170 118" fill="#265535" opacity="0.8"/>
+    <!-- Star -->
+    <polygon points="170,52 174,63 186,63 177,70 180,81 170,74 160,81 163,70 154,63 166,63" fill="#FFF8F0" opacity="0.9"/>
+    <!-- Twinkling lights: red, warm-white -->
+    <circle class="light-1" cx="80" cy="220" r="5" fill="#C42929"/>
+    <circle class="light-2" cx="105" cy="163" r="4" fill="#F4EEE6"/>
+    <circle class="light-3" cx="55" cy="108" r="4" fill="#C42929"/>
+    <circle class="light-4" cx="235" cy="215" r="4" fill="#F4EEE6"/>
+    <circle class="light-5" cx="258" cy="162" r="4" fill="#C42929"/>
+    <circle class="light-2" cx="88" cy="107" r="3" fill="#F4EEE6"/>
+    <circle class="light-3" cx="270" cy="220" r="5" fill="#9B1F1F"/>
+    <circle class="light-1" cx="292" cy="108" r="3" fill="#F4EEE6"/>
   </svg>
-  <svg class="pine-right" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M170 320 L170 60" stroke="#2D5A35" stroke-width="6" stroke-linecap="round"/>
-    <path d="M170 280 L80 220 L110 215 L60 170 L95 167 L50 120 L85 119 L55 75 L105 85 L170 120" fill="#1B4A28" opacity="0.9"/>
-    <path d="M170 280 L260 220 L230 215 L280 170 L245 167 L290 120 L255 119 L285 75 L235 85 L170 120" fill="#245C32" opacity="0.7"/>
-    <circle cx="170" cy="60" r="8" fill="#D4913A" opacity="0.9"/>
-    <circle cx="82" cy="222" r="4" fill="#D4913A" opacity="0.7"/>
-    <circle cx="258" cy="222" r="5" fill="#8B1919" opacity="0.8"/>
-    <circle cx="280" cy="172" r="4" fill="#8B1919" opacity="0.6"/>
+  <svg class="pine-right" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform:none;">
+    <path d="M170 325 L170 65" stroke="#3A6640" stroke-width="7" stroke-linecap="round"/>
+    <path d="M170 290 L70 218 L105 213 L52 162 L90 159 L44 108 L82 107 L50 66 L108 78 L170 118" fill="#265535" opacity="0.8"/>
+    <path d="M170 290 L270 218 L235 213 L288 162 L250 159 L296 108 L258 107 L290 66 L232 78 L170 118" fill="#1B4A28" opacity="0.95"/>
+    <polygon points="170,52 174,63 186,63 177,70 180,81 170,74 160,81 163,70 154,63 166,63" fill="#FFF8F0" opacity="0.9"/>
+    <!-- Mirror lights -->
+    <circle class="light-3" cx="260" cy="220" r="5" fill="#C42929"/>
+    <circle class="light-4" cx="235" cy="163" r="4" fill="#F4EEE6"/>
+    <circle class="light-1" cx="285" cy="108" r="4" fill="#C42929"/>
+    <circle class="light-2" cx="105" cy="215" r="4" fill="#F4EEE6"/>
+    <circle class="light-5" cx="82" cy="162" r="4" fill="#C42929"/>
+    <circle class="light-3" cx="252" cy="107" r="3" fill="#F4EEE6"/>
+    <circle class="light-4" cx="70" cy="220" r="5" fill="#9B1F1F"/>
+    <circle class="light-2" cx="48" cy="108" r="3" fill="#F4EEE6"/>
   </svg>
 
   <div class="jul-hero-inner">
