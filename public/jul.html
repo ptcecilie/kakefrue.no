@@ -7,128 +7,312 @@
   <meta name="description" content="Bestill hjemmelagde julekaker og julebakst fra Kakefrue i Porsgrunn. Kling, lefse, krumkaker, pepperkaker og mer.">
   <link rel="stylesheet" href="/css/main.css?v=2.8">
   <style>
+    :root {
+      --jul-green: #1A3320;
+      --jul-green-mid: #2D5233;
+      --jul-gold: #C9954A;
+      --jul-gold-light: #E8C47A;
+      --jul-red: #8B2020;
+      --jul-cream: #FDF8F0;
+    }
+
+    body { background: var(--jul-cream); }
+
+    /* ── Hero ── */
     .jul-hero {
-      background: linear-gradient(135deg, #2D4A2A 0%, #3D6B38 50%, #2D4A2A 100%);
+      background: var(--jul-green);
       color: white;
-      padding: 80px 24px 64px;
+      padding: 96px 24px 80px;
       text-align: center;
       position: relative;
       overflow: hidden;
     }
-    .jul-hero::before {
-      content: '';
+    .jul-hero-stars {
       position: absolute;
       inset: 0;
-      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+      overflow: hidden;
     }
-    .jul-hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 16px; color: white; }
-    .jul-hero p { font-size: 1.1rem; opacity: 0.85; max-width: 560px; margin: 0 auto 8px; }
-    .jul-hero .eyebrow { font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.7; margin-bottom: 16px; display: block; }
+    .jul-star {
+      position: absolute;
+      color: var(--jul-gold-light);
+      opacity: 0;
+      animation: twinkle 4s ease-in-out infinite;
+      font-size: 0.9rem;
+    }
+    @keyframes twinkle {
+      0%,100% { opacity: 0; transform: scale(0.8); }
+      50% { opacity: 0.6; transform: scale(1.1); }
+    }
+    .jul-hero-ribbon {
+      display: inline-block;
+      border: 1px solid rgba(201,149,74,0.5);
+      color: var(--jul-gold-light);
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 6px 20px;
+      border-radius: 100px;
+      margin-bottom: 24px;
+    }
+    .jul-hero h1 {
+      font-size: clamp(2.4rem, 6vw, 4.2rem);
+      color: white;
+      margin-bottom: 16px;
+      line-height: 1.1;
+    }
+    .jul-hero h1 em { color: var(--jul-gold-light); font-style: normal; }
+    .jul-hero-sub {
+      font-size: 1.1rem;
+      opacity: 0.75;
+      max-width: 520px;
+      margin: 0 auto 32px;
+      line-height: 1.7;
+    }
+    .jul-hero-deco {
+      font-size: 1.4rem;
+      letter-spacing: 0.6em;
+      opacity: 0.4;
+      margin-top: 32px;
+    }
+    .jul-hero-scroll {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.7);
+      font-size: 0.8rem;
+      padding: 10px 22px;
+      border-radius: 100px;
+      text-decoration: none;
+      margin-top: 24px;
+      transition: background 0.2s;
+    }
+    .jul-hero-scroll:hover { background: rgba(255,255,255,0.14); color: white; }
 
+    /* ── Gallery strip ── */
+    .jul-gallery-strip {
+      background: var(--jul-green-mid);
+      overflow: hidden;
+      height: 220px;
+      display: none;
+    }
+    .jul-gallery-track {
+      display: flex;
+      height: 100%;
+      gap: 3px;
+      animation: julScroll 40s linear infinite;
+    }
+    .jul-gallery-strip:hover .jul-gallery-track { animation-play-state: paused; }
+    @keyframes julScroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .jul-gallery-track img { height: 100%; width: auto; object-fit: cover; flex-shrink: 0; }
+
+    /* ── Section divider ── */
+    .jul-divider {
+      text-align: center;
+      padding: 56px 24px 12px;
+      position: relative;
+    }
+    .jul-divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(201,149,74,0.3), transparent);
+    }
+    .jul-divider h2 {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      color: var(--jul-green);
+      margin-bottom: 8px;
+      position: relative;
+      background: var(--jul-cream);
+      display: inline-block;
+      padding: 0 20px;
+    }
+    .jul-divider p { opacity: 0.6; max-width: 480px; margin: 8px auto 0; font-size: 0.95rem; }
+
+    /* ── Product grid ── */
     .products-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 20px;
-      margin-bottom: 40px;
+      margin-bottom: 48px;
     }
     .product-card {
       background: white;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      border-radius: 16px;
+      box-shadow: 0 2px 16px rgba(26,51,32,0.08);
       overflow: hidden;
       cursor: pointer;
       border: 2.5px solid transparent;
-      transition: border-color 0.2s, transform 0.15s;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
       position: relative;
     }
-    .product-card:hover { transform: translateY(-2px); }
-    .product-card.selected { border-color: #3D6B38; }
-    .product-card-img {
-      aspect-ratio: 4/3;
-      background: linear-gradient(135deg, #F0F7EE, #D4E8D0);
+    .product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(26,51,32,0.14); }
+    .product-card.selected { border-color: var(--jul-green-mid); box-shadow: 0 0 0 4px rgba(45,82,51,0.12); }
+    .product-emoji-wrap {
+      aspect-ratio: 16/9;
+      background: linear-gradient(135deg, #EFF7EC, #D5EACF);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 3.5rem;
+      font-size: 3rem;
+      position: relative;
     }
     .product-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .product-card-body { padding: 16px; }
-    .product-card-body h3 { font-size: 1rem; margin-bottom: 4px; }
-    .product-card-body .price { color: #3D6B38; font-weight: 700; font-size: 1.05rem; }
-    .product-card-body .desc { font-size: 0.82rem; opacity: 0.6; margin-top: 4px; }
     .product-check {
       position: absolute;
       top: 10px;
       right: 10px;
-      width: 28px; height: 28px;
+      width: 30px; height: 30px;
       border-radius: 50%;
-      background: #3D6B38;
+      background: var(--jul-green-mid);
       color: white;
       display: none;
       align-items: center;
       justify-content: center;
       font-size: 1rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     }
     .product-card.selected .product-check { display: flex; }
+    .product-card-body { padding: 18px; }
+    .product-card-body h3 { font-size: 1rem; margin-bottom: 4px; color: var(--jul-green); }
+    .product-price { color: var(--jul-gold); font-weight: 700; font-size: 1.05rem; }
+    .product-unit { font-weight: 400; font-size: 0.82rem; color: #888; }
+    .product-desc { font-size: 0.82rem; color: #777; margin-top: 4px; line-height: 1.5; }
     .qty-row {
       display: none;
       align-items: center;
       gap: 10px;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(0,0,0,0.07);
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #F0EDE8;
     }
     .product-card.selected .qty-row { display: flex; }
     .qty-btn {
-      width: 30px; height: 30px;
+      width: 32px; height: 32px;
       border-radius: 50%;
-      border: 1.5px solid #3D6B38;
+      border: 1.5px solid var(--jul-green-mid);
       background: transparent;
-      color: #3D6B38;
+      color: var(--jul-green-mid);
       font-size: 1.2rem;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: background 0.15s;
     }
-    .qty-btn:hover { background: #3D6B38; color: white; }
-    .qty-val { font-weight: 700; min-width: 24px; text-align: center; }
+    .qty-btn:hover { background: var(--jul-green-mid); color: white; }
+    .qty-val { font-weight: 700; min-width: 28px; text-align: center; font-size: 1rem; color: var(--jul-green); }
 
-    .order-form { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 32px; }
-    .order-form h2 { margin-bottom: 24px; font-size: 1.3rem; }
+    /* ── Order form ── */
+    .order-section { background: var(--jul-green); padding: 64px 24px; margin-top: 16px; }
+    .order-card {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 680px;
+      margin: 0 auto;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+    }
+    .order-card h2 { color: var(--jul-green); font-size: 1.5rem; margin-bottom: 6px; }
+    .order-card > p { opacity: 0.55; font-size: 0.9rem; margin-bottom: 28px; }
+
+    .summary-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 14px 0;
+      margin-bottom: 20px;
+      border-top: 1px solid #F0EDE8;
+      border-bottom: 1px solid #F0EDE8;
+    }
+    .summary-pill {
+      background: #EFF7EC;
+      color: var(--jul-green-mid);
+      border-radius: 100px;
+      font-size: 0.8rem;
+      padding: 4px 12px;
+      font-weight: 600;
+    }
+
     .delivery-opts { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
     .delivery-opt {
       flex: 1; min-width: 140px;
-      border: 2px solid rgba(0,0,0,0.1);
-      border-radius: var(--radius-sm);
-      padding: 14px 16px;
+      border: 2px solid #E8E3DC;
+      border-radius: 12px;
+      padding: 16px;
       cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .delivery-opt.active { border-color: var(--jul-green-mid); background: #EFF7EC; }
+    .delivery-opt strong { display: block; margin-bottom: 3px; font-size: 0.95rem; color: var(--jul-green); }
+    .delivery-opt span { opacity: 0.55; font-size: 0.8rem; }
+
+    .jul-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid #E0D8CE;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: #FDFAF6;
       transition: border-color 0.15s;
-      font-size: 0.9rem;
+      box-sizing: border-box;
     }
-    .delivery-opt.active { border-color: #3D6B38; background: #F0F7EE; }
-    .delivery-opt strong { display: block; margin-bottom: 2px; }
-    .delivery-opt span { opacity: 0.6; font-size: 0.8rem; }
+    .jul-input:focus { outline: none; border-color: var(--jul-green-mid); background: white; }
+    .jul-label { display: block; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; color: var(--jul-green); margin-bottom: 6px; text-transform: uppercase; }
 
-    .summary-bar {
-      background: #F0F7EE;
-      border-radius: var(--radius-sm);
-      padding: 16px 20px;
-      margin-bottom: 24px;
-      font-size: 0.9rem;
+    .jul-submit {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      background: var(--jul-green);
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 8px;
     }
-    .summary-bar strong { color: #2D4A2A; }
+    .jul-submit:hover { background: var(--jul-green-mid); transform: translateY(-1px); }
+    .jul-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-    .success-msg {
+    .success-card {
       text-align: center;
-      padding: 64px 24px;
+      padding: 56px 24px;
       display: none;
+      max-width: 480px;
+      margin: 0 auto;
     }
-    .success-msg .icon { font-size: 4rem; margin-bottom: 16px; }
-    .success-msg h2 { color: #2D4A2A; margin-bottom: 12px; }
+    .success-icon { font-size: 4rem; margin-bottom: 20px; display: block; }
+    .success-card h2 { color: white; font-size: 2rem; margin-bottom: 12px; }
+    .success-card p { color: rgba(255,255,255,0.75); font-size: 1rem; line-height: 1.7; }
+
+    /* ── Info strip ── */
+    .jul-info-strip {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+      padding: 32px 24px;
+      background: white;
+      border-bottom: 1px solid rgba(26,51,32,0.08);
+    }
+    .jul-info-item { text-align: center; }
+    .jul-info-item .icon { font-size: 1.8rem; margin-bottom: 6px; }
+    .jul-info-item strong { display: block; font-size: 0.85rem; color: var(--jul-green); }
+    .jul-info-item span { font-size: 0.78rem; opacity: 0.55; }
 
     @media (max-width: 640px) {
       .products-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .order-card { padding: 24px 20px; }
     }
   </style>
 </head>
@@ -139,7 +323,7 @@
   <div class="nav-center">
     <ul class="nav-links">
       <li><a href="/meny.html">Meny</a></li>
-      <li><a href="/jul.html" style="color:var(--gold);">🎄 Julebestilling</a></li>
+      <li><a href="/jul.html" style="color:#2D5233; font-weight:700;">🎄 Julebestillinger</a></li>
       <li><a href="/anbefalinger.html">Anbefalinger</a></li>
       <li><a href="/provesmaking.html">Prøvesmaking</a></li>
       <li><a href="/kurs.html">Kurs</a></li>
@@ -147,14 +331,12 @@
       <li><a href="/book.html" class="nav-cta">Book din kake</a></li>
     </ul>
   </div>
-  <button class="hamburger" id="hamburger" aria-label="Meny">
-    <span></span><span></span><span></span>
-  </button>
+  <button class="hamburger" id="hamburger" aria-label="Meny"><span></span><span></span><span></span></button>
 </nav>
 
 <div class="mobile-menu" id="mobileMenu">
   <a href="/meny.html">Meny</a>
-  <a href="/jul.html">🎄 Julebestilling</a>
+  <a href="/jul.html">🎄 Julebestillinger</a>
   <a href="/anbefalinger.html">Anbefalinger</a>
   <a href="/provesmaking.html">Prøvesmaking</a>
   <a href="/kurs.html">Kurs</a>
@@ -165,140 +347,167 @@
 
 <div class="page-content">
 
+  <!-- Hero -->
   <div class="jul-hero">
-    <span class="eyebrow">Sesong 2024</span>
-    <h1>🎄 Julebakst fra Kakefrue</h1>
-    <p>Hjemmelagde juleklassikere laget med kjærlighet – akkurat som bestemors, bare enda litt bedre.</p>
+    <div class="jul-hero-stars" id="starsContainer"></div>
+    <div style="position:relative;">
+      <div class="jul-hero-ribbon">✦ Julebakst 2024 ✦</div>
+      <h1>Julebakst laget<br>med <em>kjærlighet</em></h1>
+      <p class="jul-hero-sub">Hjemmelagde juleklassikere fra Kakefrue – kling, lefse, krumkaker og mer. Laget av Cecilie, med samme omhu som alle kakene hennes.</p>
+      <a href="#bestill" class="jul-hero-scroll">Se hva jeg lager ↓</a>
+      <div class="jul-hero-deco">✦ ❄ ✦ ❄ ✦</div>
+    </div>
   </div>
 
   <!-- Gallery strip -->
-  <div id="julGalleryWrap" style="display:none; overflow:hidden; background:#1E3A1A;">
-    <div id="julGallery" style="display:flex; gap:4px; padding:4px 0;"></div>
+  <div class="jul-gallery-strip" id="julGalleryStrip">
+    <div class="jul-gallery-track" id="julGallery"></div>
   </div>
 
-  <section style="padding: 64px 24px;">
-    <div class="container" style="max-width:960px;">
+  <!-- Info strip -->
+  <div class="jul-info-strip">
+    <div class="jul-info-item"><div class="icon">🏠</div><strong>Henting i Porsgrunn</strong><span>Avtalt tid</span></div>
+    <div class="jul-info-item"><div class="icon">🚗</div><strong>Levering</strong><span>200 kr i Porsgrunn/omegn</span></div>
+    <div class="jul-info-item"><div class="icon">📞</div><strong>Personlig bekreftelse</strong><span>Cecilie tar kontakt</span></div>
+    <div class="jul-info-item"><div class="icon">🎁</div><strong>Gavepakning</strong><span>Spør gjerne</span></div>
+  </div>
 
-      <!-- Product selection -->
-      <h2 style="margin-bottom:8px;">Velg hva du vil ha</h2>
-      <p style="opacity:0.6; margin-bottom:28px; font-size:0.95rem;">Trykk på produktene du vil bestille og velg antall.</p>
-
-      <div class="products-grid" id="productsGrid">
-        <!-- Loaded dynamically -->
+  <!-- Products -->
+  <section id="bestill" style="padding: 16px 24px 48px; background: var(--jul-cream);">
+    <div class="container" style="max-width:1000px;">
+      <div class="jul-divider">
+        <h2>Velg dine favoritter</h2>
+        <p>Trykk på det du vil ha og velg antall. Du kan bestille flere av hvert.</p>
       </div>
+      <div class="products-grid" id="productsGrid"></div>
+    </div>
+  </section>
 
-      <!-- Order form -->
-      <div class="order-form" id="orderForm">
-        <h2>Din bestilling</h2>
+  <!-- Order form -->
+  <div class="order-section">
+    <div id="orderFormWrap">
+      <div class="order-card">
+        <h2>🎄 Send bestilling</h2>
+        <p>Jeg bekrefter bestillingen og avtaler levering/henting med deg.</p>
 
-        <div class="summary-bar" id="summaryBar" style="display:none;">
-          <strong>Valgte produkter: </strong><span id="summaryText"></span>
+        <div id="summaryPills" style="display:none;">
+          <p style="font-size:0.8rem;color:#888;margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Ditt valg</p>
+          <div class="summary-pills" id="pillsContainer"></div>
         </div>
 
-        <div class="form-group" style="margin-bottom:20px;">
-          <label class="form-label">Henting eller levering?</label>
+        <div style="margin-bottom:20px;">
+          <label class="jul-label">Henting eller levering?</label>
           <div class="delivery-opts">
             <div class="delivery-opt active" data-val="henting" onclick="setDelivery('henting')">
               <strong>🏠 Henting</strong>
-              <span>Du henter i Porsgrunn</span>
+              <span>Du henter hos Cecilie i Porsgrunn</span>
             </div>
             <div class="delivery-opt" data-val="levering" onclick="setDelivery('levering')">
               <strong>🚗 Levering</strong>
               <span>+200 kr i Porsgrunn/omegn</span>
             </div>
           </div>
-          <div id="addressRow" style="display:none; margin-top:12px;">
-            <input class="form-input" id="address" placeholder="Leveringsadresse" style="width:100%;">
+          <div id="addressRow" style="display:none;">
+            <input class="jul-input" id="address" placeholder="Leveringsadresse">
           </div>
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-          <div class="form-group">
-            <label class="form-label">Navn *</label>
-            <input class="form-input" id="fullName" placeholder="Ditt fulle navn">
+          <div>
+            <label class="jul-label">Navn *</label>
+            <input class="jul-input" id="fullName" placeholder="Ditt fulle navn">
           </div>
-          <div class="form-group">
-            <label class="form-label">Telefon *</label>
-            <input class="form-input" id="phone" type="tel" placeholder="Ditt telefonnummer">
+          <div>
+            <label class="jul-label">Telefon *</label>
+            <input class="jul-input" id="phone" type="tel" placeholder="Ditt telefonnummer">
           </div>
         </div>
-        <div class="form-group" style="margin-bottom:16px;">
-          <label class="form-label">E-post</label>
-          <input class="form-input" id="email" type="email" placeholder="Din e-postadresse (valgfritt)">
+        <div style="margin-bottom:16px;">
+          <label class="jul-label">E-post</label>
+          <input class="jul-input" id="email" type="email" placeholder="Valgfritt">
         </div>
-        <div class="form-group" style="margin-bottom:24px;">
-          <label class="form-label">Kommentar / ønsker</label>
-          <textarea class="form-input" id="note" rows="3" placeholder="Spesielle ønsker, allergier eller andre beskjeder..."></textarea>
+        <div style="margin-bottom:24px;">
+          <label class="jul-label">Kommentar</label>
+          <textarea class="jul-input" id="note" rows="3" placeholder="Allergier, spesielle ønsker, levering til jul-dato..."></textarea>
         </div>
 
-        <div id="formError" style="color:#c00; margin-bottom:16px; display:none; font-size:0.9rem;"></div>
+        <div id="formError" style="color:#8B2020; background:#FFF0F0; border-radius:8px; padding:10px 14px; margin-bottom:16px; display:none; font-size:0.9rem;"></div>
 
-        <button class="btn btn-primary btn-lg" onclick="submitOrder()" id="submitBtn" style="background:#3D6B38; border-color:#3D6B38; width:100%;">
-          Send julebestilling
-        </button>
-        <p style="text-align:center; font-size:0.8rem; opacity:0.5; margin-top:12px;">Jeg tar kontakt for å bekrefte bestillingen og avtale detaljer.</p>
+        <button class="jul-submit" onclick="submitOrder()" id="submitBtn">🎄 Send julebestilling</button>
+        <p style="text-align:center; font-size:0.78rem; opacity:0.45; margin-top:12px;">Ingen betaling nå – Cecilie tar kontakt for bekreftelse og betalingsdetaljer.</p>
       </div>
-
-      <!-- Success -->
-      <div class="success-msg" id="successMsg">
-        <div class="icon">🎄</div>
-        <h2>Takk for bestillingen!</h2>
-        <p>Jeg tar kontakt så snart som mulig for å bekrefte og avtale detaljer.</p>
-        <a href="/" class="btn btn-outline" style="margin-top:24px;">Tilbake til forsiden</a>
-      </div>
-
     </div>
-  </section>
+
+    <div class="success-card" id="successMsg">
+      <span class="success-icon">🎄</span>
+      <h2>Takk for bestillingen!</h2>
+      <p>Jeg tar kontakt så snart som mulig for å bekrefte og avtale alle detaljer om henting eller levering.</p>
+      <a href="/" class="btn btn-outline" style="margin-top:28px; border-color:rgba(255,255,255,0.3); color:white;">Tilbake til forsiden</a>
+    </div>
+  </div>
 
 </div>
 
-<footer style="background:var(--brown);color:rgba(255,255,255,0.7);padding:40px 24px;text-align:center;font-size:0.85rem;">
-  <p style="margin:0;">© 2024 Kakefrue – Cecilie Linder · Porsgrunn · <a href="mailto:cecilie@kakefrue.no" style="color:var(--gold);text-decoration:none;">cecilie@kakefrue.no</a></p>
+<footer style="background:#111C14; color:rgba(255,255,255,0.5); padding:40px 24px; text-align:center; font-size:0.82rem;">
+  <p style="margin:0 0 8px; font-size:1.5rem;">🎄</p>
+  <p style="margin:0;">© 2024 Kakefrue – Cecilie Linder · Porsgrunn · <a href="mailto:cecilie@kakefrue.no" style="color:var(--jul-gold-light);text-decoration:none;">cecilie@kakefrue.no</a></p>
 </footer>
 
 <script>
 const PRODUCTS = [
-  { key: 'kling_6',           name: 'Kling',                   unit: '6 stk',   price: 180, emoji: '🥞' },
-  { key: 'lefse_6',           name: 'Nordlandslefse',          unit: '6 stk',   price: 150, emoji: '🫓' },
-  { key: 'krumkaker_12',      name: 'Krumkaker',               unit: '12 stk',  price: 200, emoji: '🍪' },
-  { key: 'pepperkake_12',     name: 'Pepperkaker',             unit: '12 stk',  price: 150, emoji: '🎄' },
-  { key: 'kransekake_stenger_12', name: 'Kransekakestenger',  unit: '12 stk',  price: 220, emoji: '🍡' },
-  { key: 'kransekake_18',     name: 'Hel kransekake',          unit: '18 ringer', price: 850, emoji: '💍' },
-  { key: 'mandelkake',        name: 'Mandelkake',              unit: 'per stk', price: 350, emoji: '🎂' },
-  { key: 'cookies_12',        name: 'Chocolate Chip Cookies',  unit: '12 stk',  price: 180, emoji: '🍪' },
+  { key: 'kling_6',               name: 'Kling',                  unit: '6 stk',    price: 180, emoji: '🥞', desc: 'Den klassiske julefavoritten – luftig og hjemmelaget' },
+  { key: 'lefse_6',               name: 'Nordlandslefse',         unit: '6 stk',    price: 150, emoji: '🫓', desc: 'Myk og smakfull nordlandstradisjon' },
+  { key: 'krumkaker_12',          name: 'Krumkaker',              unit: '12 stk',   price: 200, emoji: '🍪', desc: 'Sprø og delikate – perfekt til julebordet' },
+  { key: 'pepperkake_12',         name: 'Pepperkaker',            unit: '12 stk',   price: 150, emoji: '🎄', desc: 'Hjemmelagde med deilig julekrydder' },
+  { key: 'kransekake_stenger_12', name: 'Kransekakestenger',      unit: '12 stk',   price: 220, emoji: '🍡', desc: 'Seige og mandelrike stenger med glasur' },
+  { key: 'kransekake_18',         name: 'Hel kransekake',         unit: '18 ringer',price: 850, emoji: '💍', desc: 'Imponerende klassiker til nyttår og feiring' },
+  { key: 'mandelkake',            name: 'Mandelkake',             unit: 'per stk',  price: 350, emoji: '🎂', desc: 'Saftig og smakfull – en julegave til smaksløkene' },
+  { key: 'cookies_12',            name: 'Chocolate Chip Cookies', unit: '12 stk',   price: 180, emoji: '🍪', desc: 'American style – seige, store og fulle av sjokolade' },
 ];
 
-let selected = {}; // key → qty
+let selected = {};
 let delivery = 'henting';
-let julPhotos = {};
 
-// Load jul photos
+// Twinkling stars
+const starsEl = document.getElementById('starsContainer');
+for (let i = 0; i < 24; i++) {
+  const s = document.createElement('span');
+  s.className = 'jul-star';
+  s.textContent = ['✦','❄','✶','·'][Math.floor(Math.random()*4)];
+  s.style.left = Math.random()*100 + '%';
+  s.style.top = Math.random()*100 + '%';
+  s.style.animationDelay = (Math.random()*4) + 's';
+  s.style.fontSize = (0.6 + Math.random()*1.2) + 'rem';
+  starsEl.appendChild(s);
+}
+
+// Gallery strip
 fetch('/api/photos?category=jul').then(r => r.json()).then(photos => {
   if (!photos.length) return;
-  const wrap = document.getElementById('julGalleryWrap');
-  const gallery = document.getElementById('julGallery');
-  gallery.innerHTML = photos.map(p =>
-    `<img src="${p.url}" alt="${p.alt_text||'Julebakst'}" style="height:200px;width:auto;object-fit:cover;flex-shrink:0;">`
+  const strip = document.getElementById('julGalleryStrip');
+  const track = document.getElementById('julGallery');
+  const doubled = [...photos, ...photos];
+  track.innerHTML = doubled.map(p =>
+    `<img src="${p.url}" alt="${p.alt_text||'Julebakst'}">`
   ).join('');
-  wrap.style.display = 'block';
-  photos.forEach(p => { julPhotos[p.alt_text?.toLowerCase()] = p.url; });
-  renderProducts();
-}).catch(() => { renderProducts(); });
+  strip.style.display = 'block';
+}).catch(() => {});
 
 function renderProducts() {
   const grid = document.getElementById('productsGrid');
   grid.innerHTML = PRODUCTS.map(p => `
     <div class="product-card ${selected[p.key] ? 'selected' : ''}" id="card-${p.key}" onclick="toggleProduct('${p.key}')">
       <div class="product-check">✓</div>
-      <div class="product-card-img">${p.emoji}</div>
+      <div class="product-emoji-wrap">${p.emoji}</div>
       <div class="product-card-body">
         <h3>${p.name}</h3>
-        <div class="price">${p.price} kr <span style="font-weight:400;font-size:0.85rem;opacity:0.7;">/ ${p.unit}</span></div>
+        <div class="product-price">${p.price} kr <span class="product-unit">/ ${p.unit}</span></div>
+        <div class="product-desc">${p.desc}</div>
         <div class="qty-row" onclick="event.stopPropagation()">
           <button class="qty-btn" onclick="changeQty('${p.key}', -1)">−</button>
           <span class="qty-val" id="qty-${p.key}">${selected[p.key] || 1}</span>
           <button class="qty-btn" onclick="changeQty('${p.key}', 1)">+</button>
-          <span style="font-size:0.8rem; opacity:0.5;">${p.unit}</span>
+          <span style="font-size:0.78rem;color:#999;">${p.unit}</span>
         </div>
       </div>
     </div>
@@ -307,31 +516,26 @@ function renderProducts() {
 }
 
 function toggleProduct(key) {
-  if (selected[key]) {
-    delete selected[key];
-  } else {
-    selected[key] = 1;
-  }
+  if (selected[key]) { delete selected[key]; } else { selected[key] = 1; }
   renderProducts();
 }
 
 function changeQty(key, delta) {
-  const newVal = (selected[key] || 1) + delta;
-  if (newVal < 1) { delete selected[key]; }
-  else { selected[key] = newVal; }
+  const v = (selected[key] || 1) + delta;
+  if (v < 1) { delete selected[key]; } else { selected[key] = v; }
   renderProducts();
 }
 
 function updateSummary() {
-  const bar = document.getElementById('summaryBar');
-  const txt = document.getElementById('summaryText');
   const keys = Object.keys(selected);
-  if (!keys.length) { bar.style.display = 'none'; return; }
-  bar.style.display = 'block';
-  txt.textContent = keys.map(k => {
+  const wrap = document.getElementById('summaryPills');
+  const pills = document.getElementById('pillsContainer');
+  if (!keys.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  pills.innerHTML = keys.map(k => {
     const p = PRODUCTS.find(x => x.key === k);
-    return `${p.name} × ${selected[k]}`;
-  }).join(', ');
+    return `<span class="summary-pill">${p.name} × ${selected[k]}</span>`;
+  }).join('');
 }
 
 function setDelivery(val) {
@@ -347,8 +551,8 @@ async function submitOrder() {
   const note = document.getElementById('note').value.trim();
   const address = document.getElementById('address')?.value.trim() || '';
   const errEl = document.getElementById('formError');
-
   errEl.style.display = 'none';
+
   const keys = Object.keys(selected);
   if (!keys.length) { errEl.textContent = 'Velg minst ett produkt.'; errEl.style.display = 'block'; return; }
   if (!fullName) { errEl.textContent = 'Skriv inn ditt navn.'; errEl.style.display = 'block'; return; }
@@ -369,22 +573,18 @@ async function submitOrder() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ full_name: fullName, phone, email, delivery, address, products, note })
     });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Ukjent feil');
-    }
-    document.getElementById('orderForm').style.display = 'none';
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Ukjent feil'); }
+    document.getElementById('orderFormWrap').style.display = 'none';
     document.getElementById('successMsg').style.display = 'block';
     document.getElementById('successMsg').scrollIntoView({ behavior: 'smooth' });
   } catch (e) {
     errEl.textContent = 'Feil: ' + e.message;
     errEl.style.display = 'block';
     btn.disabled = false;
-    btn.textContent = 'Send julebestilling';
+    btn.textContent = '🎄 Send julebestilling';
   }
 }
 
-// Hamburger menu
 document.getElementById('hamburger').addEventListener('click', () => {
   document.getElementById('mobileMenu').classList.toggle('open');
 });
