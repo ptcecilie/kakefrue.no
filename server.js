@@ -1058,17 +1058,6 @@ app.put('/api/admin/settings', requireAdmin, async (req, res) => {
 });
 
 // ============================================================
-// Catch-all: serve index.html for SPA-like routing
-// ============================================================
-app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'Ikke funnet' });
-  }
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// ============================================================
-// ============================================================
 // Photos API
 // ============================================================
 
@@ -1165,6 +1154,16 @@ app.delete('/api/admin/photos/:id', requireAdmin, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
   }
+});
+
+// ============================================================
+// Catch-all: serve index.html for SPA-like routing
+// ============================================================
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Ikke funnet' });
+  }
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ============================================================
