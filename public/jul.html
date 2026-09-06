@@ -4,401 +4,359 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Julebestillinger – Kakefrue</title>
-  <meta name="description" content="Bestill hjemmelagde julekaker og julebakst fra Kakefrue i Porsgrunn – kling, lefse, krumkaker, pepperkaker og mer.">
+  <meta name="description" content="Bestill hjemmelagde julekaker fra Kakefrue i Porsgrunn – kling, lefse, krumkaker, pepperkaker og mer.">
   <link rel="stylesheet" href="/css/main.css?v=2.8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@600&family=Lato:wght@300;400;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@500;700&family=Lato:wght@300;400;700&display=swap">
   <style>
     :root {
-      --night:      #0D1528;
-      --forest:     #1A3D21;
+      --warm-dark:  #160B05;
+      --warm-mid:   #3A1A10;
       --red:        #8B1A1A;
-      --red-lt:     #B02222;
+      --red-lt:     #A82020;
       --amber:      #C4893A;
       --amber-lt:   #E8B96A;
-      --snow:       #F4EEE6;
-      --frost:      #C8D8E8;
-      --cream-mid:  #EAE0D4;
-      --body-text:  #231A14;
+      --cream:      #F5EDD6;
+      --cream-dk:   #E8D9BE;
+      --body:       #2D1A0E;
+      --muted:      #8A6A50;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
-    body { margin: 0; background: var(--snow); color: var(--body-text); font-family: 'Lato', sans-serif; font-weight: 300; }
-    h1,h2,h3 { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; }
+    body { margin: 0; background: var(--cream); color: var(--body); font-family: 'Lato', sans-serif; font-weight: 300; }
+    h1,h2,h3 { font-family: 'Playfair Display', Georgia, serif; }
 
-    /* ── Nav override ── */
-    .nav { background: rgba(10,16,36,0.97); border-color: rgba(196,137,58,0.15); }
-    .nav-logo { color: var(--snow); }
+    /* Nav */
+    .nav { background: rgba(18,8,3,0.96); border-color: rgba(196,137,58,0.12); }
+    .nav-logo { color: var(--cream); }
     .nav-logo span { color: var(--amber-lt); }
-    .nav-links a { color: rgba(244,238,230,0.6); }
-    .nav-links a:hover { color: var(--snow); opacity: 1; }
-    .nav-cta { background: rgba(139,26,26,0.2) !important; color: #EABABA !important; border-color: rgba(139,26,26,0.4) !important; }
-    .hamburger span { background: var(--snow); }
+    .nav-links a { color: rgba(245,237,214,0.6); }
+    .nav-links a:hover { color: var(--cream); }
+    .nav-cta { background: rgba(139,26,26,0.22) !important; color: #EABABA !important; border-color: rgba(139,26,26,0.38) !important; }
+    .hamburger span { background: var(--cream); }
 
-    /* ── Hero ── */
+    /* ══ HERO ══ */
     .jul-hero {
       position: relative;
-      min-height: 90vh;
+      min-height: 92vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
       overflow: hidden;
-      background: var(--night);
-      padding: 120px 24px 80px;
+      background: var(--warm-dark);
+      padding: 130px 24px 100px;
     }
     #snowCanvas {
-      position: absolute;
-      inset: 0;
+      position: absolute; inset: 0;
       width: 100%; height: 100%;
-      pointer-events: none;
+      pointer-events: none; z-index: 0;
     }
-    /* Warm amber glow – the julestjerne light source */
-    .hero-glow {
-      position: absolute;
-      width: 560px; height: 560px;
-      top: 32%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: radial-gradient(ellipse at center,
-        rgba(196,137,58,0.22) 0%,
-        rgba(196,100,20,0.10) 40%,
-        transparent 70%);
-      pointer-events: none;
-      z-index: 1;
+    .hero-ambiance {
+      position: absolute; inset: 0; z-index: 1; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 38%, rgba(196,137,58,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 20% 80%, rgba(139,26,26,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 80% 80%, rgba(139,26,26,0.10) 0%, transparent 60%);
     }
+    .jul-hero-inner { position: relative; z-index: 3; max-width: 580px; }
+
     /* Julestjerne */
-    .julestjerne-wrap {
-      position: relative;
-      z-index: 2;
-      margin-bottom: 24px;
-    }
-    .julestjerne-svg {
-      width: 90px;
-      height: 90px;
-      filter: drop-shadow(0 0 14px rgba(196,137,58,0.7));
-      animation: starPulse 3s ease-in-out infinite;
+    .star-wrap { margin-bottom: 20px; }
+    .star-svg {
+      width: 80px; height: 80px;
+      animation: starPulse 3.5s ease-in-out infinite;
+      filter: drop-shadow(0 0 12px rgba(196,137,58,0.6));
     }
     @keyframes starPulse {
-      0%,100% { filter: drop-shadow(0 0 10px rgba(196,137,58,0.65)); }
-      50%      { filter: drop-shadow(0 0 26px rgba(232,185,106,0.9)); }
+      0%,100% { filter: drop-shadow(0 0 8px rgba(196,137,58,0.55)); }
+      50%      { filter: drop-shadow(0 0 28px rgba(232,185,106,0.85)); }
     }
 
-    .jul-hero-inner { position: relative; z-index: 2; max-width: 600px; }
-    .jul-eyebrow {
-      display: inline-block;
-      font-family: 'Lato', sans-serif;
-      font-weight: 700;
-      font-size: 0.68rem;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--amber-lt);
-      border: 1px solid rgba(196,137,58,0.35);
-      padding: 6px 18px;
-      border-radius: 100px;
-      margin-bottom: 22px;
+    .hero-kursiv {
+      font-family: 'Dancing Script', cursive;
+      font-size: clamp(1.1rem, 2.5vw, 1.55rem);
+      color: rgba(196,137,58,0.75);
+      display: block;
+      margin-bottom: 16px;
+      font-weight: 500;
     }
     .jul-hero h1 {
-      font-size: clamp(2.6rem, 6.5vw, 4.8rem);
-      color: var(--snow);
-      line-height: 1.08;
-      margin: 0 0 8px;
-      text-shadow: 0 2px 30px rgba(0,0,0,0.5);
+      font-size: clamp(2.8rem, 6.5vw, 5rem);
+      font-weight: 700;
+      color: var(--cream);
+      line-height: 1.07;
+      margin: 0 0 18px;
+      text-shadow: 0 3px 32px rgba(0,0,0,0.55);
     }
-    .jul-hero h1 em {
-      font-style: italic;
-      color: var(--amber-lt);
-    }
-    .jul-script {
-      font-family: 'Dancing Script', cursive;
-      font-size: clamp(1.2rem, 2.8vw, 1.75rem);
-      color: rgba(200,216,232,0.75);
-      display: block;
-      margin-bottom: 24px;
-    }
-    .jul-hero-sub {
-      font-size: 0.97rem;
-      color: rgba(244,238,230,0.58);
-      max-width: 420px;
+    .jul-hero h1 em { font-style: italic; color: var(--amber-lt); }
+    .hero-ingress {
+      font-size: 1rem;
+      color: rgba(245,237,214,0.55);
+      max-width: 400px;
       margin: 0 auto 36px;
-      line-height: 1.85;
-      font-weight: 300;
+      line-height: 1.9;
     }
-    .jul-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
+    .hero-btn {
+      display: inline-block;
       background: var(--red);
-      color: #F7F0E8;
-      padding: 15px 34px;
-      border-radius: 100px;
+      color: var(--cream);
+      padding: 14px 32px;
+      border-radius: 40px;
       font-family: 'Lato', sans-serif;
       font-weight: 700;
-      font-size: 0.88rem;
-      letter-spacing: 0.06em;
+      font-size: 0.87rem;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       text-decoration: none;
       transition: background 0.2s, transform 0.15s;
-      box-shadow: 0 4px 24px rgba(139,26,26,0.45);
+      box-shadow: 0 4px 20px rgba(139,26,26,0.4);
     }
-    .jul-cta:hover { background: var(--red-lt); transform: translateY(-2px); }
+    .hero-btn:hover { background: var(--red-lt); transform: translateY(-2px); }
 
-    /* Pine trees – dark silhouettes against the night */
-    .pine-left, .pine-right {
-      position: absolute;
-      bottom: 0;
-      width: 320px;
-      height: 360px;
-      pointer-events: none;
-      opacity: 0.8;
+    /* Pine trees */
+    .pine-l, .pine-r {
+      position: absolute; bottom: 0;
+      width: 310px; height: 380px;
+      pointer-events: none; z-index: 2;
+      opacity: 0.82;
     }
-    .pine-left { left: -30px; }
-    .pine-right { right: -30px; }
+    .pine-l { left: -20px; }
+    .pine-r { right: -20px; transform: scaleX(-1); }
 
-    /* Twinkling lights */
-    @keyframes twinkle { 0%,100% { opacity:1; } 50% { opacity:0.1; } }
-    .light-1 { animation: twinkle 1.8s ease-in-out infinite; }
-    .light-2 { animation: twinkle 2.3s ease-in-out 0.4s infinite; }
-    .light-3 { animation: twinkle 1.5s ease-in-out 0.9s infinite; }
-    .light-4 { animation: twinkle 2.7s ease-in-out 1.2s infinite; }
-    .light-5 { animation: twinkle 1.9s ease-in-out 0.2s infinite; }
+    @keyframes twinkle { 0%,100%{opacity:1;} 50%{opacity:0.08;} }
+    .l1 { animation: twinkle 1.7s ease-in-out infinite; }
+    .l2 { animation: twinkle 2.4s ease-in-out 0.5s infinite; }
+    .l3 { animation: twinkle 1.4s ease-in-out 1.0s infinite; }
+    .l4 { animation: twinkle 2.8s ease-in-out 1.4s infinite; }
+    .l5 { animation: twinkle 2.0s ease-in-out 0.2s infinite; }
 
-    /* ── Gallery strip ── */
-    .jul-strip {
-      background: var(--forest);
-      overflow: hidden;
-      height: 200px;
-      display: none;
+    /* Wave divider */
+    .wave-bottom {
+      position: absolute; bottom: -2px; left: 0; right: 0;
+      z-index: 4; line-height: 0;
     }
-    .jul-strip-track {
-      display: flex;
-      height: 100%;
-      gap: 2px;
-      animation: stripScroll 50s linear infinite;
-    }
-    .jul-strip:hover .jul-strip-track { animation-play-state: paused; }
-    @keyframes stripScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-    .jul-strip-track img { height: 100%; width: auto; object-fit: cover; flex-shrink: 0; }
+    .wave-bottom svg { display: block; width: 100%; }
 
-    /* ── Info band ── */
-    .jul-info {
-      background: #5C1818;
-      color: rgba(247,240,230,0.85);
-      display: flex;
-      justify-content: center;
-      gap: 0;
-      flex-wrap: wrap;
-    }
-    .jul-info-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 20px 32px;
-      border-right: 1px solid rgba(255,255,255,0.1);
-      font-size: 0.85rem;
-    }
-    .jul-info-item:last-child { border-right: none; }
-    .jul-info-item .icon { font-size: 1.4rem; }
-    .jul-info-item strong { display: block; color: #E8B0B0; font-size: 0.85rem; font-weight: 700; }
-    .jul-info-item span { opacity: 0.6; font-size: 0.78rem; }
-
-    /* ── Section ── */
-    .jul-section { padding: 72px 24px 56px; }
-    .jul-section-head { text-align: center; margin-bottom: 48px; }
-    .jul-section-head h2 { font-size: clamp(1.8rem, 3.5vw, 2.6rem); color: var(--forest); margin-bottom: 8px; }
-    .jul-section-head p { color: #7A6A55; max-width: 440px; margin: 0 auto; font-size: 0.95rem; line-height: 1.7; }
-
-    /* Pine divider */
-    .pine-divider {
+    /* ══ BREV-SEKSJON ══ */
+    .brev {
+      background: var(--cream);
+      padding: 56px 24px 40px;
       text-align: center;
-      margin: 4px 0 40px;
-      color: var(--frost);
-      font-size: 1rem;
-      letter-spacing: 0.5em;
-      opacity: 0.7;
     }
-
-    /* ── Products ── */
-    .products-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 18px;
-      max-width: 1020px;
-      margin: 0 auto 56px;
-    }
-    .product-card {
-      background: white;
-      border-radius: 14px;
-      overflow: hidden;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
-      position: relative;
-      box-shadow: 0 2px 12px rgba(28,66,37,0.07);
-    }
-    .product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(28,66,37,0.13); }
-    .product-card.selected { border-color: var(--red); }
-    .product-card.selected::after {
-      content: '✓';
-      position: absolute;
-      top: 10px; right: 10px;
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      background: var(--red);
-      color: white;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.85rem;
-      font-weight: 700;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-    }
-    .product-emoji-bg {
-      aspect-ratio: 4/3;
-      background: linear-gradient(145deg, #EAF4E5, #D0E8CA);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.6rem;
-    }
-    .product-body { padding: 16px 16px 18px; }
-    .product-body h3 { font-family: 'Playfair Display', serif; font-size: 0.95rem; color: var(--forest); margin: 0 0 4px; }
-    .product-price { font-weight: 700; color: var(--red); font-size: 1rem; }
-    .product-unit { font-weight: 300; font-size: 0.78rem; color: #AAA; }
-    .product-desc { font-size: 0.78rem; color: #888; margin-top: 5px; line-height: 1.55; }
-    .qty-row {
-      display: none;
-      align-items: center;
-      gap: 10px;
-      margin-top: 14px;
-      padding-top: 13px;
-      border-top: 1px solid #F0EBE3;
-    }
-    .product-card.selected .qty-row { display: flex; }
-    .qty-btn {
-      width: 30px; height: 30px;
-      border-radius: 50%;
-      border: 1.5px solid var(--red);
-      background: transparent;
-      color: var(--red);
-      font-size: 1.1rem;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: 0.15s;
-    }
-    .qty-btn:hover { background: var(--red); color: white; }
-    .qty-val { font-weight: 700; min-width: 26px; text-align: center; color: var(--red); }
-
-    /* ── Order section ── */
-    .order-section {
-      background: linear-gradient(160deg, #1A0A0A 0%, #3A1010 50%, #1A0808 100%);
-      padding: 72px 24px 80px;
-    }
-    .order-section h2.form-title {
-      font-family: 'Playfair Display', serif;
-      color: var(--snow);
-      text-align: center;
-      font-size: clamp(1.6rem, 3vw, 2.4rem);
-      margin-bottom: 6px;
-    }
-    .order-section .form-subtitle {
-      text-align: center;
-      color: rgba(247,240,230,0.5);
-      font-size: 0.9rem;
-      margin-bottom: 40px;
-    }
-    .order-card {
-      background: var(--snow);
-      border-radius: 20px;
-      padding: 40px;
-      max-width: 640px;
+    .brev-inner {
+      max-width: 520px;
       margin: 0 auto;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.35), 0 0 0 1px rgba(196,137,58,0.18);
     }
-
-    .pills-wrap { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 24px; }
-    .pill {
-      background: #F5EBEB;
+    .brev p {
+      font-size: 1.05rem;
+      line-height: 2;
+      color: var(--muted);
+      margin: 0 0 14px;
+    }
+    .brev-sign {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.5rem;
       color: var(--red);
-      border-radius: 100px;
-      font-size: 0.78rem;
       font-weight: 700;
-      padding: 5px 13px;
-      border: 1px solid rgba(155,31,31,0.15);
-    }
-
-    .field-label {
       display: block;
-      font-size: 0.73rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #3D1A1A;
-      margin-bottom: 7px;
-    }
-    .field-input {
-      width: 100%;
-      padding: 13px 16px;
-      border: 1.5px solid #DDD5C8;
-      border-radius: 10px;
-      font-size: 0.92rem;
-      font-family: 'Lato', sans-serif;
-      font-weight: 300;
-      background: white;
-      transition: border-color 0.15s;
-      box-sizing: border-box;
-      color: var(--body-text);
-    }
-    .field-input:focus { outline: none; border-color: var(--red); }
-    textarea.field-input { resize: vertical; min-height: 90px; }
-    .field-row { margin-bottom: 18px; }
-
-    .delivery-row { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
-    .del-opt {
-      flex: 1; min-width: 130px;
-      border: 1.5px solid #DDD5C8;
-      border-radius: 12px;
-      padding: 15px 16px;
-      cursor: pointer;
-      transition: 0.15s;
-    }
-    .del-opt.active { border-color: var(--red); background: #F9EFEF; }
-    .del-opt strong { display: block; font-size: 0.88rem; color: #3D1A1A; margin-bottom: 3px; }
-    .del-opt span { font-size: 0.75rem; color: #999; }
-
-    .submit-btn {
-      width: 100%;
-      padding: 17px;
-      border: none;
-      border-radius: 12px;
-      background: var(--red);
-      color: white;
-      font-family: 'Lato', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      transition: 0.2s;
       margin-top: 4px;
     }
-    .submit-btn:hover:not(:disabled) { background: var(--red-lt); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(155,31,31,0.35); }
-    .submit-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .brev-detaljer {
+      display: flex;
+      justify-content: center;
+      gap: 6px 24px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .brev-detaljer span::before { content: '· '; }
+    .brev-detaljer span:first-child::before { content: ''; }
 
-    .form-note { text-align: center; font-size: 0.75rem; color: #AAA; margin-top: 12px; }
-    .form-error { background: #FDECEA; color: #7A1A1A; border-radius: 8px; padding: 10px 14px; font-size: 0.87rem; margin-bottom: 16px; display: none; }
+    /* Bølgedeler ned til produkter */
+    .wave-cream-dk { background: var(--cream); }
+    .wave-cream-dk svg { display: block; }
 
-    /* ── Success ── */
-    .success-wrap { text-align: center; padding: 40px 24px; display: none; max-width: 480px; margin: 0 auto; }
-    .success-icon { font-size: 3.5rem; margin-bottom: 20px; display: block; }
-    .success-wrap h2 { color: #E8B0B0; font-size: 2rem; margin-bottom: 12px; }
-    .success-wrap p { color: rgba(247,240,230,0.7); line-height: 1.8; }
-    .success-wrap a { display: inline-block; margin-top: 28px; padding: 14px 32px; border: 1px solid rgba(247,240,230,0.3); color: var(--snow); border-radius: 100px; text-decoration: none; font-size: 0.85rem; transition: 0.15s; }
-    .success-wrap a:hover { background: rgba(255,255,255,0.08); }
+    /* ══ PRODUKTER ══ */
+    .produkter-seksjon {
+      background: var(--cream-dk);
+      padding: 8px 24px 64px;
+    }
+    .seksjon-tittel {
+      text-align: center;
+      padding: 40px 0 36px;
+    }
+    .seksjon-tittel h2 {
+      font-size: clamp(1.7rem, 3.5vw, 2.4rem);
+      font-weight: 700;
+      color: var(--body);
+      margin: 0 0 6px;
+    }
+    .seksjon-tittel .skriv {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.05rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
 
-    @media (max-width: 640px) {
-      .products-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-      .order-card { padding: 24px 18px; }
-      .jul-info-item { padding: 16px 20px; }
-      .pine-left, .pine-right { width: 200px; height: 200px; }
+    .produkt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .produkt-kort {
+      background: var(--cream);
+      border-radius: 16px;
+      padding: 20px 18px 18px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+      position: relative;
+    }
+    .produkt-kort:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(45,26,14,0.10); }
+    .produkt-kort.valgt { border-color: var(--red); background: #FEF8F5; }
+    .produkt-kort.valgt::after {
+      content: '✓';
+      position: absolute; top: 12px; right: 12px;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--red); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; font-weight: 700;
+    }
+    .kort-emoji { font-size: 2rem; margin-bottom: 10px; display: block; }
+    .kort-navn {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem; font-weight: 700;
+      color: var(--body); margin: 0 0 3px;
+    }
+    .kort-pris { font-size: 0.9rem; font-weight: 700; color: var(--red); }
+    .kort-enhet { font-size: 0.75rem; color: var(--muted); font-weight: 300; }
+    .kort-desc { font-size: 0.78rem; color: var(--muted); margin-top: 6px; line-height: 1.6; }
+    .qty-rad {
+      display: none;
+      align-items: center; gap: 10px;
+      margin-top: 13px; padding-top: 12px;
+      border-top: 1px solid var(--cream-dk);
+    }
+    .produkt-kort.valgt .qty-rad { display: flex; }
+    .qty-knapp {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 1.5px solid var(--red); background: transparent; color: var(--red);
+      font-size: 1.05rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: 0.12s;
+    }
+    .qty-knapp:hover { background: var(--red); color: white; }
+    .qty-tall { font-weight: 700; min-width: 22px; text-align: center; color: var(--red); font-size: 0.92rem; }
+
+    /* ══ BILDEGALLLERI ══ */
+    .jul-strip { overflow: hidden; height: 190px; display: none; background: var(--warm-dark); }
+    .jul-strip-track { display: flex; height: 100%; gap: 3px; animation: stripScroll 55s linear infinite; }
+    .jul-strip:hover .jul-strip-track { animation-play-state: paused; }
+    @keyframes stripScroll { from{transform:translateX(0);} to{transform:translateX(-50%);} }
+    .jul-strip-track img { height: 100%; width: auto; object-fit: cover; flex-shrink: 0; }
+
+    /* ══ BESTILLING ══ */
+    .bestilling-seksjon {
+      background: var(--warm-dark);
+      padding: 64px 24px 80px;
+      position: relative;
+    }
+    .bestilling-top-wave { line-height: 0; background: var(--cream-dk); }
+    .bestilling-top-wave svg { display: block; width: 100%; }
+
+    .bestilling-tittel {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .bestilling-tittel h2 {
+      font-size: clamp(1.6rem, 3vw, 2.3rem);
+      color: var(--cream);
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+    .bestilling-tittel p {
+      color: rgba(245,237,214,0.45);
+      font-size: 0.88rem;
+    }
+
+    .bestillingskort {
+      background: var(--cream);
+      border-radius: 22px;
+      padding: 38px;
+      max-width: 620px;
+      margin: 0 auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.38), 0 0 0 1px rgba(196,137,58,0.15);
+    }
+
+    .valgte-piller { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+    .pille {
+      background: #F5EAE8; color: var(--red);
+      border-radius: 100px; font-size: 0.77rem; font-weight: 700;
+      padding: 4px 12px; border: 1px solid rgba(139,26,26,0.13);
+    }
+
+    .felt-label {
+      display: block; font-size: 0.71rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--body); margin-bottom: 6px;
+    }
+    .felt-input {
+      width: 100%; padding: 12px 15px;
+      border: 1.5px solid #DDD0BC; border-radius: 10px;
+      font-size: 0.92rem; font-family: 'Lato', sans-serif; font-weight: 300;
+      background: white; color: var(--body);
+      transition: border-color 0.15s;
+    }
+    .felt-input:focus { outline: none; border-color: var(--amber); }
+    textarea.felt-input { resize: vertical; min-height: 86px; }
+    .felt-rad { margin-bottom: 16px; }
+
+    .levering-rad { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .lev-valg {
+      flex: 1; min-width: 120px;
+      border: 1.5px solid #DDD0BC; border-radius: 12px;
+      padding: 13px 14px; cursor: pointer; transition: 0.14s;
+    }
+    .lev-valg.aktiv { border-color: var(--red); background: #FDF5F3; }
+    .lev-valg strong { display: block; font-size: 0.87rem; color: var(--body); margin-bottom: 2px; }
+    .lev-valg span { font-size: 0.74rem; color: var(--muted); }
+
+    .send-knapp {
+      width: 100%; padding: 16px; border: none; border-radius: 12px;
+      background: var(--red); color: white;
+      font-family: 'Lato', sans-serif; font-size: 0.95rem; font-weight: 700;
+      letter-spacing: 0.04em; cursor: pointer; transition: 0.18s; margin-top: 4px;
+    }
+    .send-knapp:hover:not(:disabled) { background: var(--red-lt); transform: translateY(-1px); }
+    .send-knapp:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .skjema-note { text-align: center; font-size: 0.73rem; color: var(--muted); margin-top: 10px; }
+    .skjema-feil { background: #FDECEA; color: #7A1A1A; border-radius: 8px; padding: 9px 13px; font-size: 0.85rem; margin-bottom: 14px; display: none; }
+
+    /* Suksess */
+    .suksess { text-align: center; padding: 40px 20px; display: none; max-width: 440px; margin: 0 auto; }
+    .suksess-ikon { font-size: 3rem; margin-bottom: 18px; display: block; }
+    .suksess h2 {
+      font-family: 'Dancing Script', cursive; font-size: 2.2rem; font-weight: 700;
+      color: var(--amber-lt); margin-bottom: 10px;
+    }
+    .suksess p { color: rgba(245,237,214,0.65); line-height: 1.9; }
+    .suksess a {
+      display: inline-block; margin-top: 24px; padding: 12px 28px;
+      border: 1px solid rgba(245,237,214,0.25); color: var(--cream);
+      border-radius: 100px; text-decoration: none; font-size: 0.84rem; transition: 0.14s;
+    }
+    .suksess a:hover { background: rgba(255,255,255,0.07); }
+
+    @media (max-width: 620px) {
+      .produkt-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .bestillingskort { padding: 22px 16px; }
+      .pine-l, .pine-r { width: 180px; height: 240px; }
     }
   </style>
 </head>
@@ -409,7 +367,7 @@
   <div class="nav-center">
     <ul class="nav-links">
       <li><a href="/meny.html">Meny</a></li>
-      <li><a href="/jul.html" style="color:#E8B0B0;font-weight:700;">🎄 Julebestillinger</a></li>
+      <li><a href="/jul.html" style="color:var(--amber-lt,#E8B96A);font-weight:700;">🎄 Julebestillinger</a></li>
       <li><a href="/anbefalinger.html">Anbefalinger</a></li>
       <li><a href="/provesmaking.html">Prøvesmaking</a></li>
       <li><a href="/kurs.html">Kurs</a></li>
@@ -433,324 +391,280 @@
 
 <div class="page-content">
 
-<!-- ── HERO ── -->
+<!-- ══ HERO ══ -->
 <div class="jul-hero">
   <canvas id="snowCanvas"></canvas>
-  <div class="hero-glow"></div>
+  <div class="hero-ambiance"></div>
 
-  <!-- Grantre venstre (silhuett mot nattehimmelen) -->
-  <svg class="pine-left" viewBox="0 0 320 360" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M160 355 L160 70" stroke="#223A28" stroke-width="8" stroke-linecap="round"/>
-    <path d="M160 310 L55 230 L95 224 L38 168 L80 164 L28 108 L72 106 L42 62 L100 76 L160 120 L218 76 L278 62 L248 106 L292 108 L240 164 L282 168 L222 224 L262 230 L160 310Z" fill="#152B1C" opacity="0.92"/>
-    <polygon points="160,55 164,67 177,67 167,75 171,88 160,80 149,88 153,75 143,67 156,67" fill="#E8C87A" opacity="0.85"/>
-    <circle class="light-1" cx="62" cy="232" r="5.5" fill="#C42929"/>
-    <circle class="light-3" cx="43" cy="168" r="4"   fill="#E8C87A"/>
-    <circle class="light-2" cx="32" cy="110" r="4.5" fill="#C42929"/>
-    <circle class="light-4" cx="78" cy="165" r="3.5" fill="#F4EEE6"/>
-    <circle class="light-5" cx="258" cy="232" r="5"  fill="#E8C87A"/>
-    <circle class="light-1" cx="244" cy="166" r="4"  fill="#C42929"/>
-    <circle class="light-3" cx="288" cy="110" r="4"  fill="#F4EEE6"/>
-    <circle class="light-2" cx="100" cy="106" r="3.5" fill="#E8C87A"/>
-    <circle class="light-4" cx="276" cy="60"  r="3"  fill="#C42929"/>
+  <!-- Gran venstre -->
+  <svg class="pine-l" viewBox="0 0 310 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M155 370 L155 72" stroke="#2A3D20" stroke-width="9" stroke-linecap="round"/>
+    <path d="M155 330 L45 245 L88 238 L28 178 L74 173 L18 110 L65 108 L35 62 L98 78 L155 122 L212 78 L275 62 L245 108 L292 110 L236 173 L282 178 L222 238 L265 245 L155 330Z" fill="#162412" opacity="0.94"/>
+    <polygon points="155,57 159,70 173,70 163,78 167,92 155,84 143,92 147,78 137,70 151,70" fill="#E8C870" opacity="0.88"/>
+    <circle class="l1" cx="50"  cy="247" r="5"   fill="#C42929"/>
+    <circle class="l3" cx="35"  cy="178" r="4"   fill="#E8C870"/>
+    <circle class="l2" cx="22"  cy="112" r="4.5" fill="#C42929"/>
+    <circle class="l4" cx="73"  cy="173" r="3.5" fill="#F4EEE6"/>
+    <circle class="l5" cx="260" cy="245" r="5"   fill="#E8C870"/>
+    <circle class="l1" cx="238" cy="175" r="4"   fill="#C42929"/>
+    <circle class="l3" cx="288" cy="112" r="4"   fill="#F4EEE6"/>
+    <circle class="l2" cx="95"  cy="108" r="3.5" fill="#E8C870"/>
   </svg>
 
-  <!-- Grantre høyre (speilbilde) -->
-  <svg class="pine-right" viewBox="0 0 320 360" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform:scaleX(-1);">
-    <path d="M160 355 L160 70" stroke="#223A28" stroke-width="8" stroke-linecap="round"/>
-    <path d="M160 310 L55 230 L95 224 L38 168 L80 164 L28 108 L72 106 L42 62 L100 76 L160 120 L218 76 L278 62 L248 106 L292 108 L240 164 L282 168 L222 224 L262 230 L160 310Z" fill="#152B1C" opacity="0.92"/>
-    <polygon points="160,55 164,67 177,67 167,75 171,88 160,80 149,88 153,75 143,67 156,67" fill="#E8C87A" opacity="0.85"/>
-    <circle class="light-3" cx="62"  cy="232" r="5"   fill="#E8C87A"/>
-    <circle class="light-1" cx="43"  cy="168" r="4.5" fill="#C42929"/>
-    <circle class="light-4" cx="32"  cy="110" r="4"   fill="#E8C87A"/>
-    <circle class="light-2" cx="78"  cy="165" r="3.5" fill="#F4EEE6"/>
-    <circle class="light-1" cx="258" cy="232" r="5.5" fill="#C42929"/>
-    <circle class="light-5" cx="244" cy="166" r="4"   fill="#E8C87A"/>
-    <circle class="light-3" cx="288" cy="110" r="4"   fill="#C42929"/>
-    <circle class="light-4" cx="100" cy="106" r="3.5" fill="#F4EEE6"/>
-    <circle class="light-2" cx="276" cy="60"  r="3"   fill="#E8C87A"/>
+  <!-- Gran høyre (speil) -->
+  <svg class="pine-r" viewBox="0 0 310 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M155 370 L155 72" stroke="#2A3D20" stroke-width="9" stroke-linecap="round"/>
+    <path d="M155 330 L45 245 L88 238 L28 178 L74 173 L18 110 L65 108 L35 62 L98 78 L155 122 L212 78 L275 62 L245 108 L292 110 L236 173 L282 178 L222 238 L265 245 L155 330Z" fill="#162412" opacity="0.94"/>
+    <polygon points="155,57 159,70 173,70 163,78 167,92 155,84 143,92 147,78 137,70 151,70" fill="#E8C870" opacity="0.88"/>
+    <circle class="l3" cx="50"  cy="247" r="5"   fill="#E8C870"/>
+    <circle class="l1" cx="35"  cy="178" r="4"   fill="#C42929"/>
+    <circle class="l4" cx="22"  cy="112" r="4.5" fill="#F4EEE6"/>
+    <circle class="l2" cx="73"  cy="173" r="3.5" fill="#E8C870"/>
+    <circle class="l1" cx="260" cy="245" r="5"   fill="#C42929"/>
+    <circle class="l5" cx="238" cy="175" r="4"   fill="#E8C870"/>
+    <circle class="l3" cx="288" cy="112" r="4"   fill="#C42929"/>
+    <circle class="l4" cx="95"  cy="108" r="3.5" fill="#F4EEE6"/>
   </svg>
 
   <div class="jul-hero-inner">
-    <!-- Julestjerne -->
-    <div class="julestjerne-wrap">
-      <svg class="julestjerne-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Ytre glow-ringer -->
-        <circle cx="50" cy="50" r="46" fill="rgba(196,137,58,0.06)"/>
-        <circle cx="50" cy="50" r="32" fill="rgba(196,137,58,0.10)"/>
-        <!-- 8-takket adventsstjerne -->
-        <path d="M50 8 L54 42 L82 18 L58 46 L92 50 L58 54 L82 82 L54 58 L50 92 L46 58 L18 82 L42 54 L8 50 L42 46 L18 18 L46 42 Z"
-              fill="#C4893A"/>
-        <!-- Indre glød -->
-        <path d="M50 22 L53 44 L68 28 L54 46 L72 50 L54 54 L68 72 L53 56 L50 78 L47 56 L32 72 L46 54 L28 50 L46 46 L32 28 L47 44 Z"
-              fill="#F0C868" opacity="0.75"/>
-        <!-- Senterkjerne -->
-        <circle cx="50" cy="50" r="7" fill="#FDE9A0" opacity="0.9"/>
+    <div class="star-wrap">
+      <svg class="star-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="46" fill="rgba(196,137,58,0.05)"/>
+        <circle cx="50" cy="50" r="30" fill="rgba(196,137,58,0.09)"/>
+        <path d="M50 8 L54 42 L82 18 L58 46 L92 50 L58 54 L82 82 L54 58 L50 92 L46 58 L18 82 L42 54 L8 50 L42 46 L18 18 L46 42 Z" fill="#C4893A"/>
+        <path d="M50 22 L53 44 L68 30 L54 46 L72 50 L54 54 L68 70 L53 56 L50 78 L47 56 L32 70 L46 54 L28 50 L46 46 L32 30 L47 44 Z" fill="#F0C868" opacity="0.7"/>
+        <circle cx="50" cy="50" r="7" fill="#FDE9A0" opacity="0.88"/>
       </svg>
     </div>
 
-    <div class="jul-eyebrow">✦ Julebakst · Sesong 2024 ✦</div>
-    <h1>Hjemmelaget jul<br>fra <em>Kakefrue</em></h1>
-    <span class="jul-script">– akkurat som bestemor lagde det –</span>
-    <p class="jul-hero-sub">Kling, lefse, krumkaker, pepperkaker og mer. Alt bakt med hender som kan kunsten, i et kjøkken som lukter av jul.</p>
-    <a href="#bestill" class="jul-cta">Se hva jeg baker ↓</a>
+    <span class="hero-kursiv">– det lukter av jul i kjøkkenet mitt –</span>
+    <h1>Hjemmelaget bakst<br>til <em>din</em> julefest</h1>
+    <p class="hero-ingress">Kling, lefse, krumkaker, pepperkaker. Bakt med kjærlighet og oppskrifter som har vart i generasjoner.</p>
+    <a href="#bestill" class="hero-btn">Se hva jeg baker denne julen</a>
+  </div>
+
+  <!-- Bølge ned til krem -->
+  <div class="wave-bottom">
+    <svg viewBox="0 0 1440 72" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,40 C240,72 480,8 720,40 C960,72 1200,10 1440,36 L1440,72 L0,72 Z" fill="#F5EDD6"/>
+    </svg>
   </div>
 </div>
 
-<!-- ── Gallery strip ── -->
-<div class="jul-strip" id="julGalleryStrip">
+<!-- ══ PERSONLIG BREV ══ -->
+<div class="brev">
+  <div class="brev-inner">
+    <p>Hvert år fra november til julaften fyller kjøkkenet seg med lukten av kardemomme, smør og kanel. Jeg baker det som alltid har smakt av jul – og nå kan du bestille det rett hjem til deg.</p>
+    <p>Ingen betaling nå – vi tar en prat, avtaler detaljer, og så baker jeg til deg.</p>
+    <span class="brev-sign">– Cecilie</span>
+    <div class="brev-detaljer">
+      <span>Henting i Porsgrunn</span>
+      <span>Levering +200 kr</span>
+      <span>Gavepakning</span>
+      <span>Bestilling innen 15. des</span>
+    </div>
+  </div>
+</div>
+
+<!-- Bølge ned til produkter -->
+<div class="wave-cream-dk">
+  <svg viewBox="0 0 1440 56" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,20 C360,56 1080,0 1440,28 L1440,56 L0,56 Z" fill="#E8D9BE"/>
+  </svg>
+</div>
+
+<!-- ══ PRODUKTER ══ -->
+<section class="produkter-seksjon" id="bestill">
+  <div class="seksjon-tittel">
+    <h2>Hva vil du ha i år?</h2>
+    <span class="skriv">Trykk på det du vil bestille</span>
+  </div>
+  <div class="produkt-grid" id="produktGrid"></div>
+</section>
+
+<!-- ══ BILDEGALLERI ══ -->
+<div class="jul-strip" id="julStripWrap">
   <div class="jul-strip-track" id="julGallery"></div>
 </div>
 
-<!-- ── Info band ── -->
-<div class="jul-info">
-  <div class="jul-info-item"><span class="icon">🏠</span><div><strong>Henting i Porsgrunn</strong><span>Avtalt tid</span></div></div>
-  <div class="jul-info-item"><span class="icon">🚗</span><div><strong>Levering</strong><span>+200 kr i omegn</span></div></div>
-  <div class="jul-info-item"><span class="icon">📞</span><div><strong>Personlig bekreftelse</strong><span>Cecilie ringer deg</span></div></div>
-  <div class="jul-info-item"><span class="icon">🎁</span><div><strong>Gavepakning</strong><span>Bare spør!</span></div></div>
+<!-- Bølge ned til bestilling -->
+<div class="bestilling-top-wave">
+  <svg viewBox="0 0 1440 64" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,28 C480,64 960,0 1440,32 L1440,64 L0,64 Z" fill="#160B05"/>
+  </svg>
 </div>
 
-<!-- ── Products ── -->
-<section class="jul-section" id="bestill">
-  <div class="jul-section-head">
-    <h2>Velg dine julesmaker</h2>
-    <div class="pine-divider">🌲 ❄ 🌲</div>
-    <p>Trykk på det du vil bestille og velg antall. Kombiner så mye du vil.</p>
-  </div>
-  <div class="products-grid" id="productsGrid"></div>
-</section>
-
-<!-- ── Order form ── -->
-<div class="order-section">
-  <div id="orderFormWrap">
-    <h2 class="form-title">Send din bestilling</h2>
-    <p class="form-subtitle">Ingen betaling nå – Cecilie tar kontakt for å bekrefte og avtale detaljer.</p>
-
-    <div class="order-card">
-      <div id="summarySection" style="display:none; margin-bottom:22px;">
-        <div class="field-label" style="margin-bottom:10px;">Ditt valg</div>
-        <div class="pills-wrap" id="pillsContainer"></div>
-        <hr style="border:none;border-top:1px solid #E8E0D6;margin:0 0 22px;">
+<!-- ══ BESTILLINGSSKJEMA ══ -->
+<div class="bestilling-seksjon">
+  <div id="skjemaWrap">
+    <div class="bestilling-tittel">
+      <h2>Send meg en beskjed</h2>
+      <p>Jeg ringer deg for å bekrefte og avtale alt det praktiske.</p>
+    </div>
+    <div class="bestillingskort">
+      <div id="valgteSeksjon" style="display:none;margin-bottom:20px;">
+        <div class="felt-label" style="margin-bottom:8px;">Du har valgt</div>
+        <div class="valgte-piller" id="pillerContainer"></div>
+        <hr style="border:none;border-top:1px solid #E8D9BE;margin:0 0 20px;">
       </div>
 
-      <div class="field-row">
-        <label class="field-label">Henting eller levering?</label>
-        <div class="delivery-row">
-          <div class="del-opt active" data-val="henting" onclick="setDelivery('henting')">
-            <strong>🏠 Henting</strong>
-            <span>Hos Cecilie i Porsgrunn</span>
+      <div class="felt-rad">
+        <label class="felt-label">Henting eller levering?</label>
+        <div class="levering-rad">
+          <div class="lev-valg aktiv" data-val="henting" onclick="settLevering('henting')">
+            <strong>Henting</strong><span>Hos meg i Porsgrunn</span>
           </div>
-          <div class="del-opt" data-val="levering" onclick="setDelivery('levering')">
-            <strong>🚗 Levering</strong>
-            <span>+200 kr</span>
+          <div class="lev-valg" data-val="levering" onclick="settLevering('levering')">
+            <strong>Levering</strong><span>+200 kr i omegn</span>
           </div>
         </div>
-        <div id="addressRow" style="display:none;">
-          <input class="field-input" id="address" placeholder="Leveringsadresse">
+        <div id="adresseRad" style="display:none;">
+          <input class="felt-input" id="adresse" placeholder="Leveringsadresse">
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" class="field-row">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="felt-rad">
         <div>
-          <label class="field-label">Navn *</label>
-          <input class="field-input" id="fullName" placeholder="Ditt fulle navn">
+          <label class="felt-label">Navn *</label>
+          <input class="felt-input" id="navn" placeholder="Ditt navn">
         </div>
         <div>
-          <label class="field-label">Telefon *</label>
-          <input class="field-input" id="phone" type="tel" placeholder="Telefonnummer">
+          <label class="felt-label">Telefon *</label>
+          <input class="felt-input" id="tlf" type="tel" placeholder="Tlf.nummer">
         </div>
       </div>
 
-      <div class="field-row">
-        <label class="field-label">E-post</label>
-        <input class="field-input" id="email" type="email" placeholder="Valgfritt">
+      <div class="felt-rad">
+        <label class="felt-label">E-post</label>
+        <input class="felt-input" id="epost" type="email" placeholder="Valgfritt">
       </div>
 
-      <div class="field-row">
-        <label class="field-label">Kommentar / ønsker</label>
-        <textarea class="field-input" id="note" placeholder="Allergier, ønsket dato, spesielle ønsker..."></textarea>
+      <div class="felt-rad">
+        <label class="felt-label">Allergier, ønsker, dato</label>
+        <textarea class="felt-input" id="merknad" placeholder="Skriv gjerne her om det er noe jeg bør vite..."></textarea>
       </div>
 
-      <div class="form-error" id="formError"></div>
-      <button class="submit-btn" onclick="submitOrder()" id="submitBtn">🎄 Send julebestilling</button>
-      <p class="form-note">Jeg bekrefter og sender betalingsinformasjon etterpå.</p>
+      <div class="skjema-feil" id="skjemaFeil"></div>
+      <button class="send-knapp" onclick="sendBestilling()" id="sendKnapp">Send bestilling 🎄</button>
+      <p class="skjema-note">Ingen betaling nå – jeg tar kontakt for å bekrefte.</p>
     </div>
   </div>
 
-  <div class="success-wrap" id="successMsg">
-    <span class="success-icon">🎄</span>
+  <div class="suksess" id="suksessMsg">
+    <span class="suksess-ikon">🎄</span>
     <h2>Tusen takk!</h2>
-    <p>Bestillingen din er mottatt. Cecilie tar kontakt så snart som mulig for å bekrefte og avtale henting eller levering.</p>
+    <p>Bestillingen er mottatt. Jeg ringer deg så snart som mulig for å bekrefte og avtale henting eller levering.</p>
     <a href="/">Tilbake til forsiden</a>
   </div>
 </div>
 
 </div><!-- page-content -->
 
-<footer style="background:#0D0A06;color:rgba(247,240,230,0.35);padding:36px 24px;text-align:center;font-size:0.8rem;">
-  <p style="margin:0 0 6px;font-size:1.1rem;letter-spacing:0.35em;">✦ ❄ ✦</p>
+<footer style="background:#0D0805;color:rgba(245,237,214,0.32);padding:32px 24px;text-align:center;font-size:0.79rem;letter-spacing:0.02em;">
+  <p style="font-family:'Dancing Script',cursive;font-size:1.1rem;color:rgba(196,137,58,0.5);margin:0 0 8px;">God jul</p>
   <p style="margin:0;">© 2024 Kakefrue – Cecilie Linder · <a href="mailto:cecilie@kakefrue.no" style="color:#C4893A;text-decoration:none;">cecilie@kakefrue.no</a></p>
 </footer>
 
 <script>
-/* ── Snowfall ── */
-(function() {
-  const canvas = document.getElementById('snowCanvas');
-  const ctx = canvas.getContext('2d');
-  let W, H, flakes = [];
-
-  function resize() {
-    W = canvas.width  = canvas.offsetWidth;
-    H = canvas.height = canvas.offsetHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  for (let i = 0; i < 90; i++) {
-    flakes.push({
-      x: Math.random() * 1200,
-      y: Math.random() * 900,
-      r: 1 + Math.random() * 2.5,
-      speed: 0.3 + Math.random() * 0.8,
-      drift: (Math.random() - 0.5) * 0.3,
-      opacity: 0.3 + Math.random() * 0.55
-    });
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-    flakes.forEach(f => {
-      ctx.beginPath();
-      ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(247,240,230,${f.opacity})`;
-      ctx.fill();
-      f.y += f.speed;
-      f.x += f.drift;
-      if (f.y > H + 4) { f.y = -4; f.x = Math.random() * W; }
-      if (f.x > W + 4) f.x = -4;
-      if (f.x < -4) f.x = W + 4;
+/* Snø */
+(function(){
+  const cv=document.getElementById('snowCanvas'), ctx=cv.getContext('2d');
+  let W,H,fl=[];
+  function resize(){ W=cv.width=cv.offsetWidth; H=cv.height=cv.offsetHeight; }
+  resize(); window.addEventListener('resize',resize);
+  for(let i=0;i<85;i++) fl.push({
+    x:Math.random()*1200, y:Math.random()*900,
+    r:0.8+Math.random()*2.4, sp:0.25+Math.random()*0.7,
+    dr:(Math.random()-.5)*0.25, op:0.25+Math.random()*0.55
+  });
+  (function draw(){
+    ctx.clearRect(0,0,W,H);
+    fl.forEach(f=>{
+      ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(245,237,214,${f.op})`; ctx.fill();
+      f.y+=f.sp; f.x+=f.dr;
+      if(f.y>H+4){f.y=-4;f.x=Math.random()*W;}
+      if(f.x>W+4)f.x=-4; if(f.x<-4)f.x=W+4;
     });
     requestAnimationFrame(draw);
-  }
-  draw();
+  })();
 })();
 
-/* ── Products ── */
-const PRODUCTS = [
-  { key:'kling_6',               name:'Kling',                  unit:'6 stk',    price:180, emoji:'🥞', desc:'Luftig og myk – den ekte julefavoritten' },
-  { key:'lefse_6',               name:'Nordlandslefse',         unit:'6 stk',    price:150, emoji:'🫓', desc:'Myk og smakfull nordlandstradisjon' },
-  { key:'krumkaker_12',          name:'Krumkaker',              unit:'12 stk',   price:200, emoji:'🍪', desc:'Sprø og delikate – perfekt til julebordet' },
-  { key:'pepperkake_12',         name:'Pepperkaker',            unit:'12 stk',   price:150, emoji:'🎄', desc:'Hjemmelagde med deilig julekrydder' },
-  { key:'kransekake_stenger_12', name:'Kransekakestenger',      unit:'12 stk',   price:220, emoji:'🍡', desc:'Seige og mandelrike med glasur' },
-  { key:'kransekake_18',         name:'Hel kransekake',         unit:'18 ringer',price:850, emoji:'💍', desc:'En imponerende juleklassiker' },
-  { key:'mandelkake',            name:'Mandelkake',             unit:'per stk',  price:350, emoji:'🎂', desc:'Saftig og smakfull julegave' },
-  { key:'cookies_12',            name:'Chocolate Chip Cookies', unit:'12 stk',   price:180, emoji:'🍪', desc:'Seige, store og fulle av sjokolade' },
+/* Produkter */
+const PRODUKTER=[
+  {k:'kling_6',      n:'Kling',                unit:'6 stk',     pris:180, em:'🥞', desc:'Luftig og myk – den ekte julefavoritten'},
+  {k:'lefse_6',      n:'Nordlandslefse',        unit:'6 stk',     pris:150, em:'🫓', desc:'Myk og smakfull nordlandstradisjon'},
+  {k:'krumkaker_12', n:'Krumkaker',             unit:'12 stk',    pris:200, em:'🍪', desc:'Sprø og delikate – perfekt til julebordet'},
+  {k:'pepperkake_12',n:'Pepperkaker',           unit:'12 stk',    pris:150, em:'🎄', desc:'Hjemmelagde med deilig julekrydder'},
+  {k:'kransekake_s', n:'Kransekakestenger',     unit:'12 stk',    pris:220, em:'🍡', desc:'Seige og mandelrike med glasur'},
+  {k:'kransekake_h', n:'Hel kransekake',        unit:'18 ringer', pris:850, em:'💍', desc:'En imponerende juleklassiker'},
+  {k:'mandelkake',   n:'Mandelkake',            unit:'per stk',   pris:350, em:'🎂', desc:'Saftig og smakfull julegave'},
+  {k:'cookies_12',   n:'Cookies',               unit:'12 stk',    pris:180, em:'🍫', desc:'Store, seige og fulle av sjokolade'},
 ];
+let valgt={}, levering='henting';
 
-let selected = {}, delivery = 'henting';
-
-/* Gallery */
-fetch('/api/photos?category=jul').then(r=>r.json()).then(photos => {
-  if (!photos.length) return;
-  const strip = document.getElementById('julGalleryStrip');
-  const track = document.getElementById('julGallery');
-  const doubled = [...photos, ...photos];
-  track.innerHTML = doubled.map(p=>`<img src="${p.url}" alt="${p.alt_text||'Julebakst'}">`).join('');
-  strip.style.display = 'block';
+fetch('/api/photos?category=jul').then(r=>r.json()).then(p=>{
+  if(!p.length)return;
+  const w=document.getElementById('julStripWrap'), t=document.getElementById('julGallery');
+  t.innerHTML=[...p,...p].map(x=>`<img src="${x.url}" alt="${x.alt_text||''}">`).join('');
+  w.style.display='block';
 }).catch(()=>{});
 
-function renderProducts() {
-  const grid = document.getElementById('productsGrid');
-  grid.innerHTML = PRODUCTS.map(p => `
-    <div class="product-card ${selected[p.key]?'selected':''}" id="card-${p.key}" onclick="toggleProduct('${p.key}')">
-      <div class="product-emoji-bg">${p.emoji}</div>
-      <div class="product-body">
-        <h3>${p.name}</h3>
-        <div class="product-price">${p.price} kr <span class="product-unit">/ ${p.unit}</span></div>
-        <div class="product-desc">${p.desc}</div>
-        <div class="qty-row" onclick="event.stopPropagation()">
-          <button class="qty-btn" onclick="changeQty('${p.key}',-1)">−</button>
-          <span class="qty-val" id="qty-${p.key}">${selected[p.key]||1}</span>
-          <button class="qty-btn" onclick="changeQty('${p.key}',1)">+</button>
-          <span style="font-size:0.75rem;color:#bbb;">${p.unit}</span>
-        </div>
+function visProdukter(){
+  document.getElementById('produktGrid').innerHTML=PRODUKTER.map(p=>`
+    <div class="produkt-kort${valgt[p.k]?' valgt':''}" id="pk-${p.k}" onclick="toggleProdukt('${p.k}')">
+      <span class="kort-emoji">${p.em}</span>
+      <div class="kort-navn">${p.n}</div>
+      <div class="kort-pris">${p.pris} kr <span class="kort-enhet">/ ${p.unit}</span></div>
+      <div class="kort-desc">${p.desc}</div>
+      <div class="qty-rad" onclick="event.stopPropagation()">
+        <button class="qty-knapp" onclick="endreAntall('${p.k}',-1)">−</button>
+        <span class="qty-tall" id="qv-${p.k}">${valgt[p.k]||1}</span>
+        <button class="qty-knapp" onclick="endreAntall('${p.k}',1)">+</button>
       </div>
     </div>`).join('');
-  updateSummary();
+  oppdaterSammendrag();
 }
-
-function toggleProduct(key) {
-  if (selected[key]) { delete selected[key]; } else { selected[key] = 1; }
-  renderProducts();
+function toggleProdukt(k){ valgt[k]?delete valgt[k]:valgt[k]=1; visProdukter(); }
+function endreAntall(k,d){ const v=(valgt[k]||1)+d; v<1?delete valgt[k]:valgt[k]=v; visProdukter(); }
+function oppdaterSammendrag(){
+  const ks=Object.keys(valgt), s=document.getElementById('valgteSeksjon'), p=document.getElementById('pillerContainer');
+  if(!ks.length){s.style.display='none';return;}
+  s.style.display='block';
+  p.innerHTML=ks.map(k=>{const pr=PRODUKTER.find(x=>x.k===k);return`<span class="pille">${pr.n} × ${valgt[k]}</span>`;}).join('');
 }
-
-function changeQty(key, d) {
-  const v = (selected[key]||1) + d;
-  if (v < 1) { delete selected[key]; } else { selected[key] = v; }
-  renderProducts();
+function settLevering(v){
+  levering=v;
+  document.querySelectorAll('.lev-valg').forEach(el=>el.classList.toggle('aktiv',el.dataset.val===v));
+  document.getElementById('adresseRad').style.display=v==='levering'?'block':'none';
 }
-
-function updateSummary() {
-  const keys = Object.keys(selected);
-  const sec = document.getElementById('summarySection');
-  const pills = document.getElementById('pillsContainer');
-  if (!keys.length) { sec.style.display='none'; return; }
-  sec.style.display = 'block';
-  pills.innerHTML = keys.map(k => {
-    const p = PRODUCTS.find(x=>x.key===k);
-    return `<span class="pill">${p.name} × ${selected[k]}</span>`;
-  }).join('');
-}
-
-function setDelivery(val) {
-  delivery = val;
-  document.querySelectorAll('.del-opt').forEach(el => el.classList.toggle('active', el.dataset.val===val));
-  document.getElementById('addressRow').style.display = val==='levering' ? 'block' : 'none';
-}
-
-async function submitOrder() {
-  const fullName = document.getElementById('fullName').value.trim();
-  const phone    = document.getElementById('phone').value.trim();
-  const email    = document.getElementById('email').value.trim();
-  const note     = document.getElementById('note').value.trim();
-  const address  = document.getElementById('address')?.value.trim() || '';
-  const err = document.getElementById('formError');
-  err.style.display = 'none';
-
-  const keys = Object.keys(selected);
-  if (!keys.length) { err.textContent='Velg minst ett produkt.'; err.style.display='block'; return; }
-  if (!fullName)    { err.textContent='Skriv inn ditt navn.';   err.style.display='block'; return; }
-  if (!phone)       { err.textContent='Skriv inn telefonnummer.'; err.style.display='block'; return; }
-
-  const products = keys.map(k => {
-    const p = PRODUCTS.find(x=>x.key===k);
-    return { key:k, name:p.name, unit:p.unit, price:p.price, qty:selected[k] };
-  });
-
-  const btn = document.getElementById('submitBtn');
-  btn.disabled = true; btn.textContent = 'Sender...';
-
-  try {
-    const res = await fetch('/api/christmas-orders', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({full_name:fullName, phone, email, delivery, address, products, note})
-    });
-    if (!res.ok) { const e=await res.json(); throw new Error(e.error||'Ukjent feil'); }
-    document.getElementById('orderFormWrap').style.display = 'none';
-    document.getElementById('successMsg').style.display = 'block';
-    document.getElementById('successMsg').scrollIntoView({behavior:'smooth'});
-  } catch(e) {
-    err.textContent = 'Feil: ' + e.message;
-    err.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = '🎄 Send julebestilling';
+async function sendBestilling(){
+  const navn=document.getElementById('navn').value.trim();
+  const tlf=document.getElementById('tlf').value.trim();
+  const epost=document.getElementById('epost').value.trim();
+  const merknad=document.getElementById('merknad').value.trim();
+  const adresse=document.getElementById('adresse')?.value.trim()||'';
+  const feil=document.getElementById('skjemaFeil');
+  feil.style.display='none';
+  if(!Object.keys(valgt).length){feil.textContent='Velg minst ett produkt.';feil.style.display='block';return;}
+  if(!navn){feil.textContent='Skriv inn navn.';feil.style.display='block';return;}
+  if(!tlf){feil.textContent='Skriv inn telefonnummer.';feil.style.display='block';return;}
+  const products=Object.keys(valgt).map(k=>{const p=PRODUKTER.find(x=>x.k===k);return{key:k,name:p.n,unit:p.unit,price:p.pris,qty:valgt[k]};});
+  const knapp=document.getElementById('sendKnapp');
+  knapp.disabled=true; knapp.textContent='Sender...';
+  try{
+    const res=await fetch('/api/christmas-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({full_name:navn,phone:tlf,email:epost,delivery:levering,address:adresse,products,note:merknad})});
+    if(!res.ok){const e=await res.json();throw new Error(e.error||'Ukjent feil');}
+    document.getElementById('skjemaWrap').style.display='none';
+    document.getElementById('suksessMsg').style.display='block';
+    document.getElementById('suksessMsg').scrollIntoView({behavior:'smooth'});
+  }catch(e){
+    feil.textContent='Feil: '+e.message; feil.style.display='block';
+    knapp.disabled=false; knapp.textContent='Send bestilling 🎄';
   }
 }
-
-document.getElementById('hamburger').addEventListener('click', () => {
-  document.getElementById('mobileMenu').classList.toggle('open');
-});
-
-renderProducts();
+document.getElementById('hamburger').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('open'));
+visProdukter();
 </script>
 </body>
 </html>
