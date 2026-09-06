@@ -214,7 +214,13 @@ async function initDB() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
-    try { await conn.query(`ALTER TABLE photos ADD COLUMN image_data LONGTEXT`); } catch (e) { /* already exists */ }
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS photo_images (
+        photo_id INT NOT NULL,
+        image_data MEDIUMTEXT NOT NULL,
+        PRIMARY KEY (photo_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
 
     // Seed default settings
     await conn.query(`

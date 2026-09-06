@@ -1079,24 +1079,24 @@ if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 // GET /api/about-image — public, returns the about section image
 app.get('/api/about-image', async (req, res) => {
   try {
-    const [rows] = await pool.query(`SELECT v FROM settings WHERE k = 'about_image_url'`);
-    res.json({ url: rows[0]?.v || null });
+    const [[row]] = await pool.query(`SELECT image_data FROM photo_images WHERE photo_id = 0`);
+    res.json({ url: row?.image_data || null });
   } catch (err) {
     res.json({ url: null });
   }
 });
 
-// POST /api/admin/about-image — upload about section image (stored as data URL in DB)
+// POST /api/admin/about-image — upload about section image
 app.post('/api/admin/about-image', requireAdmin, async (req, res) => {
   const { data, mimeType } = req.body;
   if (!data || !mimeType) return res.status(400).json({ error: 'Mangler data' });
   try {
     const dataUrl = `data:${mimeType};base64,${data}`;
-    await pool.query(`INSERT INTO settings (k, v) VALUES ('about_image_url', ?) ON DUPLICATE KEY UPDATE v = ?`, [dataUrl, dataUrl]);
+    await pool.query(`INSERT INTO photo_images (photo_id, image_data) VALUES (0, ?) ON DUPLICATE KEY UPDATE image_data = ?`, [dataUrl, dataUrl]);
     res.json({ ok: true, url: dataUrl });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Opplasting feilet' });
+    res.status(500).json({ error: 'Opplasting feilet: ' + err.message });
   }
 });
 
@@ -1104,9 +1104,11 @@ app.post('/api/admin/about-image', requireAdmin, async (req, res) => {
 app.get('/api/photos', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT id, filename, alt_text, image_data FROM photos WHERE featured = TRUE ORDER BY sort_order ASC, created_at DESC`
+      `SELECT p.id, p.filename, p.alt_text, pi.image_data
+       FROM photos p LEFT JOIN photo_images pi ON pi.photo_id = p.id
+       WHERE p.featured = TRUE ORDER BY p.sort_order ASC, p.created_at DESC`
     );
-    res.json(rows.map(r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, url: r.image_data || ('/uploads/' + r.filename) })));
+    res.json(rows.map(r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, url: r.image_data || null })));
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
   }
@@ -1115,28 +1117,31 @@ app.get('/api/photos', async (req, res) => {
 // GET /api/admin/photos — all photos
 app.get('/api/admin/photos', requireAdmin, async (req, res) => {
   try {
-    const [rows] = await pool.query(`SELECT id, filename, alt_text, featured, sort_order, created_at, image_data FROM photos ORDER BY sort_order ASC, created_at DESC`);
-    res.json(rows.map(r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, featured: r.featured, sort_order: r.sort_order, created_at: r.created_at, url: r.image_data || ('/uploads/' + r.filename) })));
+    const [rows] = await pool.query(
+      `SELECT p.id, p.filename, p.alt_text, p.featured, p.sort_order, p.created_at, pi.image_data
+       FROM photos p LEFT JOIN photo_images pi ON pi.photo_id = p.id
+       ORDER BY p.sort_order ASC, p.created_at DESC`
+    );
+    res.json(rows.map(r => ({ id: r.id, filename: r.filename, alt_text: r.alt_text, featured: r.featured, sort_order: r.sort_order, created_at: r.created_at, url: r.image_data || null })));
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
   }
 });
 
-// POST /api/admin/photos — upload base64 image (stored in DB)
+// POST /api/admin/photos — upload base64 image, stored in photo_images table
 app.post('/api/admin/photos', requireAdmin, async (req, res) => {
   const { data, mimeType, alt_text } = req.body;
   if (!data || !mimeType) return res.status(400).json({ error: 'Mangler data' });
-
-  const ext = mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
-  const filename = `photo_${Date.now()}.${ext}`;
+  const filename = `photo_${Date.now()}.jpg`;
   const dataUrl = `data:${mimeType};base64,${data}`;
-
   try {
     const [result] = await pool.query(
-      `INSERT INTO photos (filename, alt_text, featured, image_data) VALUES (?, ?, FALSE, ?)`,
-      [filename, alt_text || '', dataUrl]
+      `INSERT INTO photos (filename, alt_text, featured) VALUES (?, ?, FALSE)`,
+      [filename, alt_text || '']
     );
-    res.json({ id: result.insertId, url: dataUrl, filename });
+    const photoId = result.insertId;
+    await pool.query(`INSERT INTO photo_images (photo_id, image_data) VALUES (?, ?)`, [photoId, dataUrl]);
+    res.json({ id: photoId, url: dataUrl, filename });
   } catch (err) {
     console.error('Photo upload error:', err);
     res.status(500).json({ error: 'Opplasting feilet: ' + err.message });

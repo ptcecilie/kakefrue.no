@@ -372,6 +372,7 @@ async function uploadPhotos(input) {
         failed++;
         lastError = e.message;
         console.error('Upload failed:', f.name, e);
+        alert('Feil ved opplasting: ' + e.message);
       }
     }));
     bar.style.width = Math.round(20 + ((done + failed) / prepared.length) * 80) + '%';
