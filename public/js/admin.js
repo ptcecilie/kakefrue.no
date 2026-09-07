@@ -1248,7 +1248,7 @@ function openCourseModal(c = null) {
         <div class="form-group"><label class="form-label">Starttid</label><input class="form-input" id="m-c-time" type="time" value="${c && c.time_start ? c.time_start.substring(0,5) : ''}"></div>
         <div class="form-group"><label class="form-label">Varighet (timer)</label><input class="form-input" id="m-c-dur" type="number" value="${c ? c.duration_hours : 3}" style="max-width:100px;"></div>
         <div class="form-group"><label class="form-label">Pris (kr)</label><input class="form-input" id="m-c-price" type="number" value="${c ? (c.price||'') : ''}"></div>
-        <div class="form-group"><label class="form-label">Maks deltakere</label><input class="form-input" id="m-c-max" type="number" value="${c ? c.max_participants : 8}" style="max-width:100px;"></div>
+        <div class="form-group"><label class="form-label">Maks deltakere</label><input class="form-input" id="m-c-max" type="number" value="${c ? c.max_participants : 4}" style="max-width:100px;"></div>
       </div>
       <div class="form-group"><label class="form-label">Ta med</label><input class="form-input" id="m-c-bring" type="text" value="${c ? (c.what_to_bring||'') : ''}"></div>
       ${c ? `<div class="form-group"><label class="form-label" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="m-c-active" ${c.active?'checked':''}> Aktiv (synlig på nettside)</label></div>` : ''}
@@ -1269,7 +1269,7 @@ async function saveCourse(id) {
     time_start: $('m-c-time').value || null,
     duration_hours: parseInt($('m-c-dur').value) || 3,
     price: parseFloat($('m-c-price').value) || null,
-    max_participants: parseInt($('m-c-max').value) || 8,
+    max_participants: parseInt($('m-c-max').value) || 4,
     what_to_bring: $('m-c-bring').value || null,
     active: $('m-c-active') ? $('m-c-active').checked : true
   };
