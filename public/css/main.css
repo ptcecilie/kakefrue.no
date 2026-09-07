@@ -129,6 +129,11 @@ section { padding: var(--section-padding); }
   .nav-cta { padding: 8px 11px; font-size: 0.68rem !important; }
   .nav-logo { font-size: 1.3rem; }
 }
+/* Under dette kolliderer logoen med menyen – la hamburgeren ta over */
+@media (max-width: 900px) {
+  .nav-center { display: none; }
+  .hamburger { display: flex; }
+}
 .nav-links a {
   font-size: 0.78rem;
   font-weight: 400;

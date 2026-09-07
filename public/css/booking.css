@@ -517,3 +517,16 @@
 @media (max-width: 560px) {
   .takk-innhold { padding: 42px 22px 38px; }
 }
+
+/* Knappene må være solide når de ligger over et foto */
+.success-screen.takk .btn-primary {
+  background: #9B3A52; color: #fff; border: none; font-weight: 700;
+  box-shadow: 0 3px 14px rgba(122,42,62,0.28);
+}
+.success-screen.takk .btn-primary:hover { background: #7A2A3E; color: #fff; }
+.success-screen.takk .btn-outline {
+  background: rgba(255,255,255,0.92); color: #7A2A3E;
+  border: 1.5px solid rgba(155,58,82,0.4); font-weight: 700;
+  backdrop-filter: blur(3px);
+}
+.success-screen.takk .btn-outline:hover { background: #fff; color: #5E1E2E; }
