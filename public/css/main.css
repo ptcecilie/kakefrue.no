@@ -310,27 +310,28 @@ section { padding: var(--section-padding); }
   background: url('/assets/forside-hero.jpg') center 45% / cover no-repeat;
 }
 /* Slør som gjør teksten lesbar uten å drepe bildet */
+/* Lyst slør – bildet er lyst og luftig, så mørk duk ville kvalt det */
 .hero-slor {
   position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background:
-    radial-gradient(ellipse 62% 58% at 50% 50%, rgba(38,22,14,0.60) 0%, rgba(38,22,14,0.34) 55%, transparent 82%),
-    linear-gradient(180deg, rgba(32,18,11,0.50) 0%, transparent 30%, transparent 60%, rgba(32,18,11,0.62) 100%);
+    radial-gradient(ellipse 52% 56% at 50% 50%, rgba(255,251,245,0.86) 0%, rgba(255,250,243,0.62) 48%, rgba(255,250,243,0.18) 78%, transparent 100%),
+    linear-gradient(180deg, rgba(255,252,247,0.42) 0%, transparent 22%, transparent 68%, rgba(250,247,244,0.92) 100%);
 }
 .hero-content { position: relative; z-index: 2; }
-.hero h1 { color: #FFF9F2; text-shadow: 0 2px 26px rgba(0,0,0,0.42); }
-.hero h1 em { color: #F0D2AE; }
-.hero-eyebrow { color: #EBC79B !important; }
-.hero-sub { color: rgba(255,249,242,0.86) !important; }
+.hero h1 { color: var(--brown); text-shadow: 0 1px 18px rgba(255,252,247,0.75); }
+.hero h1 em { color: var(--gold-dark); }
+.hero-eyebrow { color: var(--gold-dark) !important; }
+.hero-sub { color: rgba(61,36,32,0.80) !important; text-shadow: 0 1px 12px rgba(255,252,247,0.7); }
 .hero .btn-primary {
-  background: rgba(255,255,255,0.95); color: #7A2A3E;
+  background: rgba(155,58,82,0.95); color: #fff;
   border: none; font-weight: 700;
 }
-.hero .btn-primary:hover { background: #fff; color: #5E1E2E; }
+.hero .btn-primary:hover { background: #7A2A3E; color: #fff; }
 .hero .btn-secondary {
-  background: rgba(255,255,255,0.14); color: #FFF9F2;
-  border: 1.5px solid rgba(255,255,255,0.42); backdrop-filter: blur(4px);
+  background: rgba(255,255,255,0.80); color: #7A2A3E;
+  border: 1.5px solid rgba(155,58,82,0.32); backdrop-filter: blur(4px);
 }
-.hero .btn-secondary:hover { background: rgba(255,255,255,0.26); color: #fff; }
+.hero .btn-secondary:hover { background: #fff; color: #5E1E2E; }
 
 .hero::after {
   content: '';
