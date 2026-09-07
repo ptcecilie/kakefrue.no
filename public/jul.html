@@ -47,34 +47,26 @@
       justify-content: center;
       text-align: center;
       overflow: hidden;
-      /* Peisvarme nedenfra – som i et opplyst julerom */
-      background:
-        radial-gradient(ellipse 90% 65% at 50% 108%, #6B2E0A 0%, #401706 38%, transparent 72%),
-        radial-gradient(ellipse 70% 50% at 12% 8%,  #4A2109 0%, transparent 62%),
-        radial-gradient(ellipse 70% 50% at 88% 8%,  #4A2109 0%, transparent 62%),
-        linear-gradient(175deg, #200D05 0%, #180903 55%, #100602 100%);
+      background: #180903;
       padding: 150px 24px 130px;
     }
-    /* Ute-av-fokus lysbokeh – ekte blur gir fotografisk dybde */
-    #bokehCanvas {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      pointer-events: none; z-index: 0;
-      filter: blur(20px);
-      opacity: 0.92;
+    /* Fotobakgrunn */
+    .hero-foto {
+      position: absolute; inset: 0; z-index: 0;
+      background: url('/assets/jul-hero.jpg') center 42% / cover no-repeat;
     }
-    /* Skarpt lag: girlander, lysgardiner, snø */
+    /* Snø faller oppå bildet */
     #snowCanvas {
       position: absolute; inset: 0;
       width: 100%; height: 100%;
       pointer-events: none; z-index: 2;
     }
-    /* Varm sentral glød */
+    /* Mørkner bildet bak teksten så den er lesbar */
     .hero-ambiance {
       position: absolute; inset: 0; z-index: 1; pointer-events: none;
       background:
-        radial-gradient(ellipse 62% 48% at 50% 58%, rgba(255,180,70,0.16) 0%, rgba(200,110,30,0.07) 48%, transparent 74%),
-        radial-gradient(ellipse 100% 40% at 50% 100%, rgba(255,130,40,0.14) 0%, transparent 70%);
+        radial-gradient(ellipse 58% 62% at 50% 52%, rgba(20,8,2,0.74) 0%, rgba(20,8,2,0.42) 55%, transparent 80%),
+        linear-gradient(180deg, rgba(16,6,2,0.55) 0%, transparent 26%, transparent 62%, rgba(16,6,2,0.72) 100%);
     }
     .jul-hero-inner { position: relative; z-index: 3; max-width: 560px; }
 
@@ -565,7 +557,7 @@
 
 <!-- ══ HERO ══ -->
 <div class="jul-hero">
-  <canvas id="bokehCanvas"></canvas>
+  <div class="hero-foto"></div>
   <div class="hero-ambiance"></div>
   <canvas id="snowCanvas"></canvas>
 
@@ -757,190 +749,49 @@
 </footer>
 
 <script>
-/* ══ JULEHERO: bokeh (uskarpt lag) + grangirlander + lysgardiner + snø ══ */
+/* ══ Snøfnugg over julebildet ══ */
 (function(){
-  const bcv=document.getElementById('bokehCanvas'), bx=bcv.getContext('2d');
-  const scv=document.getElementById('snowCanvas'),  sx=scv.getContext('2d');
+  const cv=document.getElementById('snowCanvas');
+  if(!cv) return;
+  const ctx=cv.getContext('2d');
   let W=0,H=0;
+  const snoe=[];
 
-  /* Varme lysfarger – gull, rav, litt rødt (som i bildene) */
-  const VARM=[
-    [255,214,130],[255,190,90],[255,232,175],
-    [255,170,70],[252,205,120],[255,150,80],
-    [255,224,150],[240,180,95]
-  ];
-  const pick=a=>a[Math.floor(Math.random()*a.length)];
-
-  /* ── Bokeh: store, myke lyssirkler i flere dybdelag ── */
-  const bokeh=[];
-  for(let i=0;i<58;i++){
-    const dybde=Math.random();
-    bokeh.push({
-      xf:Math.random(), yf:Math.random(),
-      r:14+dybde*52,
-      c:pick(VARM),
-      op:(0.10+Math.random()*0.30)*(0.45+dybde*0.55),
-      fase:Math.random()*Math.PI*2,
-      fart:0.12+Math.random()*0.35,
-      driv:(Math.random()-0.5)*0.00012
-    });
-  }
-
-  /* ── Grangirlander langs toppen ── */
-  const GRØNN=['#13260F','#1B3417','#24451E','#2C5424'];
-  const girlander=[];
-  function byggGirlander(){
-    girlander.length=0;
-    /* to lag: bak (mørkere, dypere fall) og foran */
-    [{sag:0.13,y0:-0.045,tett:150,skala:1.0},
-     {sag:0.085,y0:-0.02,tett:120,skala:0.78}].forEach((lag,li)=>{
-      const nåler=[],lys=[];
-      for(let i=0;i<=lag.tett;i++){
-        const xf=i/lag.tett;
-        const kvister=[];
-        const n=3+Math.floor(Math.random()*4);
-        for(let j=0;j<n;j++){
-          kvister.push({
-            v:(Math.random()*2.2)+0.5,          /* vinkel, mest nedover */
-            l:(9+Math.random()*20)*lag.skala,
-            f:GRØNN[Math.floor(Math.random()*GRØNN.length)],
-            w:0.8+Math.random()*1.1
-          });
-        }
-        nåler.push({xf,kvister});
-        /* lys tucket inn i grana */
-        if(Math.random()<0.16) lys.push({
-          xf, dy:(Math.random()-0.35)*22*lag.skala,
-          c:pick(VARM), r:2+Math.random()*1.8,
-          fase:Math.random()*Math.PI*2, fart:0.5+Math.random()*1.3
-        });
-      }
-      girlander.push({...lag,nåler,lys,li});
-    });
-  }
-
-  /* ── Hengende lysgardiner (som foran vinduet i bildene) ── */
-  const gardiner=[];
-  function byggGardiner(){
-    gardiner.length=0;
-    for(let i=0;i<22;i++){
-      const xf=Math.random();
-      const len=0.12+Math.random()*0.42;
-      const lys=[];
-      const ant=4+Math.floor(Math.random()*8);
-      for(let j=0;j<ant;j++){
-        lys.push({
-          t:(j+1)/ant,
-          c:pick(VARM), r:1.5+Math.random()*1.6,
-          fase:Math.random()*Math.PI*2, fart:0.6+Math.random()*1.6
-        });
-      }
-      gardiner.push({xf,len,lys,sving:Math.random()*Math.PI*2,amp:3+Math.random()*7});
-    }
-  }
-
-  /* ── Snø ── */
-  const snø=[];
-  function byggSnø(){
-    snø.length=0;
-    for(let i=0;i<70;i++) snø.push({
+  function bygg(){
+    snoe.length=0;
+    const antall = Math.round(W/14);
+    for(let i=0;i<antall;i++) snoe.push({
       xf:Math.random(), y:Math.random(),
-      r:0.6+Math.random()*2.0, sp:0.00022+Math.random()*0.00055,
-      dr:(Math.random()-0.5)*0.00018, op:0.18+Math.random()*0.42
+      r:0.7+Math.random()*2.3,
+      sp:0.00018+Math.random()*0.00048,
+      dr:(Math.random()-0.5)*0.00016,
+      op:0.25+Math.random()*0.5,
+      sving:Math.random()*Math.PI*2,
+      amp:0.0004+Math.random()*0.0011
     });
   }
-
   function resize(){
-    W=bcv.width=scv.width=bcv.offsetWidth;
-    H=bcv.height=scv.height=bcv.offsetHeight;
-    byggGirlander(); byggGardiner(); byggSnø();
+    W=cv.width=cv.offsetWidth; H=cv.height=cv.offsetHeight; bygg();
   }
   resize(); window.addEventListener('resize',resize);
 
-  /* myk lysflekk */
-  function glød(c,x,y,r,op,col){
-    const g=c.createRadialGradient(x,y,0,x,y,r);
-    g.addColorStop(0,   `rgba(${col[0]},${col[1]},${col[2]},${op})`);
-    g.addColorStop(0.45,`rgba(${col[0]},${col[1]},${col[2]},${op*0.35})`);
-    g.addColorStop(1,   `rgba(${col[0]},${col[1]},${col[2]},0)`);
-    c.beginPath(); c.arc(x,y,r,0,Math.PI*2); c.fillStyle=g; c.fill();
-  }
-
   let t=0;
-
-  function tegnGirlander(){
-    girlander.forEach(g=>{
-      const amp=g.sag*H, y0=g.y0*H;
-      /* nåler */
-      g.nåler.forEach(p=>{
-        const x=p.xf*W, y=y0+amp*Math.sin(p.xf*Math.PI)+34;
-        p.kvister.forEach(k=>{
-          sx.beginPath();
-          sx.strokeStyle=k.f; sx.lineWidth=k.w; sx.lineCap='round';
-          sx.moveTo(x,y);
-          sx.lineTo(x+Math.cos(k.v)*k.l, y+Math.sin(k.v)*k.l);
-          sx.stroke();
-        });
-      });
-      /* lys i grana */
-      g.lys.forEach(l=>{
-        const x=l.xf*W, y=y0+amp*Math.sin(l.xf*Math.PI)+34+l.dy;
-        const b=0.4+0.6*Math.abs(Math.sin(t*l.fart+l.fase));
-        glød(sx,x,y,l.r*7,b*0.55,l.c);
-        sx.beginPath(); sx.arc(x,y,l.r,0,Math.PI*2);
-        sx.fillStyle=`rgba(${l.c[0]},${l.c[1]},${l.c[2]},${0.7+b*0.3})`; sx.fill();
-      });
-    });
-  }
-
-  function tegnGardiner(){
-    gardiner.forEach(g=>{
-      const x0=g.xf*W;
-      const sving=Math.sin(t*0.4+g.sving)*g.amp;
-      const bunn=g.len*H;
-      /* tynn tråd */
-      sx.beginPath();
-      sx.strokeStyle='rgba(180,150,90,0.10)'; sx.lineWidth=0.7;
-      sx.moveTo(x0,20);
-      sx.quadraticCurveTo(x0+sving*0.5, 20+bunn*0.5, x0+sving, 20+bunn);
-      sx.stroke();
-      /* lysene på tråden */
-      g.lys.forEach(l=>{
-        const x=x0+sving*l.t, y=20+bunn*l.t;
-        const b=0.35+0.65*Math.abs(Math.sin(t*l.fart+l.fase));
-        glød(sx,x,y,l.r*9,b*0.5,l.c);
-        sx.beginPath(); sx.arc(x,y,l.r,0,Math.PI*2);
-        sx.fillStyle=`rgba(${l.c[0]},${l.c[1]},${l.c[2]},${0.65+b*0.35})`; sx.fill();
-      });
-    });
-  }
-
   (function tegn(){
-    /* ── uskarpt bokeh-lag ── */
-    bx.clearRect(0,0,W,H);
-    bokeh.forEach(b=>{
-      b.xf+=b.driv; if(b.xf>1.1)b.xf=-0.1; if(b.xf<-0.1)b.xf=1.1;
-      const puls=0.6+0.4*Math.sin(t*b.fart+b.fase);
-      glød(bx,b.xf*W,b.yf*H,b.r,b.op*puls,b.c);
-    });
-
-    /* ── skarpt lag ── */
-    sx.clearRect(0,0,W,H);
-    tegnGardiner();
-    tegnGirlander();
-    snø.forEach(f=>{
-      const x=f.xf*W, y=f.y*H;
-      sx.save();
-      sx.shadowColor='rgba(255,240,190,0.5)'; sx.shadowBlur=f.r*2.4;
-      sx.beginPath(); sx.arc(x,y,f.r,0,Math.PI*2);
-      sx.fillStyle=`rgba(255,250,232,${f.op})`; sx.fill();
-      sx.restore();
+    ctx.clearRect(0,0,W,H);
+    snoe.forEach(f=>{
+      const x=(f.xf+Math.sin(t*0.5+f.sving)*f.amp)*W, y=f.y*H;
+      ctx.save();
+      ctx.shadowColor='rgba(255,250,235,0.55)';
+      ctx.shadowBlur=f.r*2.4;
+      ctx.beginPath(); ctx.arc(x,y,f.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,253,245,${f.op})`; ctx.fill();
+      ctx.restore();
       f.y+=f.sp; f.xf+=f.dr;
-      if(f.y>1.02){f.y=-0.02;f.xf=Math.random();}
-      if(f.xf>1.02)f.xf=-0.02; if(f.xf<-0.02)f.xf=1.02;
+      if(f.y>1.02){ f.y=-0.02; f.xf=Math.random(); }
+      if(f.xf>1.04) f.xf=-0.04;
+      if(f.xf<-0.04) f.xf=1.04;
     });
-
-    t+=0.011;
+    t+=0.012;
     requestAnimationFrame(tegn);
   })();
 })();
