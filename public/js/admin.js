@@ -210,10 +210,11 @@ async function exportJulebestillingerExcel() {
   try {
     const orders = await api('/api/admin/christmas-orders');
     if (!orders.length) { showAlert('Ingen bestillinger å eksportere', 'error'); return; }
-    const rows = [['Nr','Dato','Navn','Telefon','E-post','Henting/Levering','Adresse','Produkter','Totalt (kr)','Kommentar']];
+    const rows = [['Nr','Dato','Navn','Telefon','E-post','Henting/Levering','Adresse','Produkter','Varesum (kr)','Levering (kr)','Totalt (kr)','Kommentar']];
     orders.forEach((o, i) => {
       const prods = (o.products || []).map(p => `${p.name} x${p.qty}`).join(', ');
-      const total = (o.products || []).reduce((s, p) => s + (p.price || 0) * (p.qty || 1), 0);
+      const varesum = (o.products || []).reduce((s, p) => s + (p.price || 0) * (p.qty || 1), 0);
+      const frakt = parseInt(o.delivery_cost) || 0;
       rows.push([
         i + 1,
         o.created_at ? new Date(o.created_at).toLocaleDateString('nb-NO') : '',
@@ -223,15 +224,17 @@ async function exportJulebestillingerExcel() {
         o.delivery === 'levering' ? 'Levering' : 'Henting',
         o.address || '',
         prods,
-        total || '',
+        varesum || 0,
+        frakt || 0,
+        varesum + frakt,
         o.note || ''
       ]);
     });
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [5,12,18,12,22,14,20,40,12,25].map(w => ({ wch: w }));
-    XLSX.utils.book_append_sheet(wb, ws, 'Julebestillinger');
-    XLSX.writeFile(wb, 'Julebestillinger 2025.xlsx');
+    ws['!cols'] = [5,12,20,13,24,15,26,42,12,13,12,26].map(w => ({ wch: w }));
+    XLSX.utils.book_append_sheet(wb, ws, 'Bestillinger');
+    XLSX.writeFile(wb, `Bestillingsliste ${new Date().getFullYear()}.xlsx`);
   } catch (e) { showAlert('Eksport feilet: ' + e.message, 'error'); }
 }
 
@@ -312,59 +315,98 @@ async function loadAboutImage() {
 }
 
 // ── Bilder ─────────────────────────────────────────────────
+let _fotoCache = [];
+
 async function loadPhotos() {
   try {
     const photos = await api('/api/admin/photos');
+    _fotoCache = photos;
     const grid = document.getElementById('photoGrid');
     const counter = document.getElementById('photoCounter');
     if (counter) {
       const visible = photos.filter(p => p.featured).length;
-      counter.textContent = `${photos.length} bilder totalt · ${visible} synlige på forsiden`;
+      counter.textContent = `${photos.length} bilder totalt · ${visible} synlige på nettsiden`;
     }
     if (!photos.length) {
-      grid.innerHTML = '<div style="text-align:center; padding:48px; opacity:0.4; grid-column:1/-1;">Ingen bilder ennå – last opp ditt første bilde!</div>';
+      grid.innerHTML = '<div style="text-align:center; padding:48px; opacity:0.4;">Ingen bilder ennå – last opp ditt første bilde!</div>';
       return;
     }
     const CATS = [
       { key: 'galleri', label: 'Galleri / Portefølje', color: '#C4956A' },
       { key: 'jul', label: 'Julebestillinger', color: '#7A9E82' },
     ];
-    const cardHtml = p => `
-      <div class="photo-card ${p.featured ? 'featured' : ''}" id="photo-${p.id}" draggable="true"
-           ondragstart="photoDragStart(event,${p.id})" ondragover="photoDragOver(event)" ondrop="photoDrop(event,${p.id})" ondragleave="photoDragLeave(event)"
-           style="cursor:grab;">
-        <div style="position:absolute;top:6px;left:6px;opacity:0.3;font-size:1rem;pointer-events:none;">⠿</div>
+
+    // rad: nr, miniatyr, kategori + tekst, synlig/slett, opp/ned
+    const radHtml = (p, i, antall) => `
+      <div class="photo-card ${p.featured ? 'featured' : ''}" id="photo-${p.id}">
+        <div class="photo-nr">${i + 1}</div>
         <img src="${p.url || ''}" alt="${p.alt_text || ''}" loading="lazy">
-        <div class="photo-card-body">
-          <select class="form-input" style="font-size:0.78rem;padding:5px 8px;margin-bottom:6px;cursor:pointer;" onchange="updatePhotoCategory(${p.id}, this.value)">
-            ${CATS.map(c => `<option value="${c.key}" ${p.category===c.key?'selected':''}>${c.label}</option>`).join('')}
-          </select>
-          <input class="form-input" style="font-size:0.8rem; padding:6px 10px; margin-bottom:8px;" value="${p.alt_text || ''}" placeholder="Bildetekst (valgfritt)" oninput="updatePhotoAlt(${p.id}, this.value)">
-          <div class="photo-card-actions">
-            <button class="photo-featured-btn ${p.featured ? 'active' : ''}" onclick="toggleFeatured(${p.id}, ${p.featured ? 'false' : 'true'})">
+        <div class="photo-felt">
+          <div style="display:flex; gap:8px; margin-bottom:7px;">
+            <select class="form-input" style="font-size:0.78rem; padding:5px 8px; max-width:190px; cursor:pointer;"
+                    onchange="updatePhotoCategory(${p.id}, this.value)">
+              ${CATS.map(c => `<option value="${c.key}" ${p.category === c.key ? 'selected' : ''}>${c.label}</option>`).join('')}
+            </select>
+            <button class="photo-featured-btn ${p.featured ? 'active' : ''}" style="flex:0 0 auto; padding:5px 14px;"
+                    onclick="toggleFeatured(${p.id}, ${p.featured ? 'false' : 'true'})">
               ${p.featured ? '✓ Synlig' : '○ Skjult'}
             </button>
-            <button class="photo-delete-btn" onclick="deletePhoto(${p.id})">🗑</button>
+            <button class="photo-delete-btn" style="padding:5px 11px;" onclick="deletePhoto(${p.id})">🗑</button>
           </div>
+          <input class="form-input" style="font-size:0.8rem; padding:6px 10px;"
+                 value="${(p.alt_text || '').replace(/"/g, '&quot;')}"
+                 placeholder="Bildetekst (valgfritt)" oninput="updatePhotoAlt(${p.id}, this.value)">
+        </div>
+        <div class="photo-sorter">
+          <button class="photo-pil" onclick="flyttFoto(${p.id}, -1)" ${i === 0 ? 'disabled' : ''} title="Flytt opp">▲</button>
+          <button class="photo-pil" onclick="flyttFoto(${p.id}, 1)" ${i === antall - 1 ? 'disabled' : ''} title="Flytt ned">▼</button>
         </div>
       </div>`;
-    const sectionHtml = (cat, items) => `
-      <div style="grid-column:1/-1; margin-top:20px; margin-bottom:4px;">
+
+    const seksjon = (cat, items) => `
+      <div style="margin-top:22px; margin-bottom:2px;">
         <div style="display:flex; align-items:center; gap:10px;">
           <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${cat.color};"></span>
           <strong style="font-size:0.95rem;">${cat.label}</strong>
-          <span style="font-size:0.8rem; opacity:0.5;">${items.filter(p=>p.featured).length} synlige · ${items.length} totalt</span>
+          <span style="font-size:0.8rem; opacity:0.5;">${items.filter(p => p.featured).length} synlige · ${items.length} totalt</span>
         </div>
         <hr style="border:none; border-top:1.5px solid ${cat.color}44; margin:8px 0 0;">
+        ${items.length ? '<p style="font-size:0.78rem; opacity:0.5; margin:8px 0 0;">Rekkefølgen her er den kunden ser. Bruk pilene til høyre for å flytte.</p>' : ''}
       </div>
-      ${items.length ? items.map(cardHtml).join('') : `<div style="grid-column:1/-1; padding:12px 0; opacity:0.4; font-size:0.85rem;">Ingen bilder i denne seksjonen</div>`}`;
+      ${items.length
+        ? items.map((p, i) => radHtml(p, i, items.length)).join('')
+        : '<div style="padding:12px 0; opacity:0.4; font-size:0.85rem;">Ingen bilder i denne seksjonen</div>'}`;
+
     grid.innerHTML = CATS.map(cat =>
-      sectionHtml(cat, photos.filter(p => (p.category || 'galleri') === cat.key))
+      seksjon(cat, photos.filter(p => (p.category || 'galleri') === cat.key))
     ).join('');
   } catch (e) {
     const grid = document.getElementById('photoGrid');
-    if (grid) grid.innerHTML = `<div style="grid-column:1/-1;padding:24px;color:red;font-size:0.9rem;">Feil ved lasting av bilder: ${e.message}</div>`;
+    if (grid) grid.innerHTML = `<div style="padding:24px; color:red; font-size:0.9rem;">Feil ved lasting av bilder: ${e.message}</div>`;
   }
+}
+
+// Flytter ett bilde opp/ned – kun innenfor sin egen kategori
+async function flyttFoto(id, retning) {
+  const meg = _fotoCache.find(p => p.id === id);
+  if (!meg) return;
+  const kat = meg.category || 'galleri';
+  const iKat = _fotoCache.filter(p => (p.category || 'galleri') === kat);
+  const fra = iKat.findIndex(p => p.id === id);
+  const til = fra + retning;
+  if (fra === -1 || til < 0 || til >= iKat.length) return;
+
+  iKat.splice(til, 0, iKat.splice(fra, 1)[0]);
+
+  document.querySelectorAll('.photo-pil').forEach(b => b.disabled = true);
+  try {
+    await Promise.all(iKat.map((p, i) =>
+      api('/api/admin/photos/' + p.id, { method: 'PUT', body: JSON.stringify({ sort_order: i }) })
+    ));
+  } catch (e) {
+    alert('Kunne ikke lagre ny rekkefølge: ' + e.message);
+  }
+  loadPhotos();
 }
 
 function compressImage(file, maxPx = 1600, quality = 0.82) {
@@ -465,28 +507,6 @@ async function updatePhotoCategory(id, category) {
     await api('/api/admin/photos/' + id, { method: 'PUT', body: JSON.stringify({ category }) });
     loadPhotos();
   } catch (e) { console.error(e); }
-}
-
-let photoDragId = null;
-function photoDragStart(e, id) { photoDragId = id; e.dataTransfer.effectAllowed = 'move'; }
-function photoDragOver(e) { e.preventDefault(); e.currentTarget.style.outline = '2.5px dashed var(--gold)'; }
-function photoDragLeave(e) { e.currentTarget.style.outline = ''; }
-async function photoDrop(e, targetId) {
-  e.preventDefault();
-  e.currentTarget.style.outline = '';
-  if (!photoDragId || photoDragId === targetId) return;
-  const grid = document.getElementById('photoGrid');
-  const cards = [...grid.querySelectorAll('.photo-card')];
-  const ids = cards.map(c => parseInt(c.id.replace('photo-', '')));
-  const fromIdx = ids.indexOf(photoDragId);
-  const toIdx = ids.indexOf(targetId);
-  if (fromIdx === -1 || toIdx === -1) return;
-  ids.splice(fromIdx, 1);
-  ids.splice(toIdx, 0, photoDragId);
-  await Promise.all(ids.map((id, i) =>
-    api('/api/admin/photos/' + id, { method: 'PUT', body: JSON.stringify({ sort_order: i }) }).catch(() => {})
-  ));
-  loadPhotos();
 }
 
 async function deletePhoto(id) {

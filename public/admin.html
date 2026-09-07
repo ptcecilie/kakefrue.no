@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin – Kakefrue</title>
-  <link rel="stylesheet" href="/css/main.css?v=3.1">
+  <link rel="stylesheet" href="/css/main.css?v=3.2">
   <style>
     body { background: #F4EEE6; }
     .admin-layout { display: flex; min-height: 100vh; padding-top: 0; }
@@ -130,9 +130,32 @@
     .stat-card .stat-label { font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em; }
     .stat-card[data-goto] { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
     .stat-card[data-goto]:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
-    .photo-card { background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; position:relative; border:2.5px solid transparent; transition:border-color 0.2s; }
+    /* Bilderad – liggende liste, lettere å sortere enn rutenett */
+    .photo-card {
+      background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
+      position:relative; border:2.5px solid transparent; transition:border-color 0.2s;
+      display:flex; align-items:center; gap:16px; padding:12px 16px;
+    }
     .photo-card.featured { border-color:#7A9E82; }
-    .photo-card img { width:100%; aspect-ratio:1/1; object-fit:cover; display:block; }
+    .photo-card img {
+      width:84px; height:84px; object-fit:cover; display:block;
+      border-radius:8px; flex-shrink:0;
+    }
+    .photo-nr {
+      flex-shrink:0; width:30px; text-align:center;
+      font-size:1rem; font-weight:700; color:var(--gold);
+      font-variant-numeric:tabular-nums;
+    }
+    .photo-felt { flex:1; min-width:0; }
+    .photo-sorter { display:flex; flex-direction:column; gap:5px; flex-shrink:0; }
+    .photo-pil {
+      width:36px; height:30px; border-radius:7px; cursor:pointer;
+      border:1.5px solid rgba(196,149,106,0.4); background:transparent;
+      color:var(--gold); font-size:0.9rem; line-height:1;
+      display:flex; align-items:center; justify-content:center; transition:all 0.14s;
+    }
+    .photo-pil:hover:not(:disabled) { background:var(--gold); color:white; }
+    .photo-pil:disabled { opacity:0.22; cursor:default; }
     .photo-card-badge { position:absolute; top:8px; left:8px; background:#7A9E82; color:white; font-size:0.7rem; font-weight:700; letter-spacing:0.04em; padding:3px 9px; border-radius:100px; box-shadow:0 2px 6px rgba(0,0,0,0.18); }
     .photo-card-body { padding:12px; }
     .photo-card-actions { display:flex; gap:8px; margin-top:8px; }
@@ -161,7 +184,10 @@
       width: 100%;
       max-width: 560px;
       max-height: 90vh;
-      overflow-y: auto;
+      /* Kolonne: kun feltene ruller, knappene står alltid synlig i bunnen */
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
     .modal-header {
       padding: 24px 28px 20px;
@@ -169,11 +195,19 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-shrink: 0;
     }
     .modal-header h3 { margin: 0; }
     .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.5; padding: 0 4px; }
-    .modal-body { padding: 24px 28px; }
-    .modal-footer { padding: 16px 28px; border-top: 1px solid rgba(201,168,132,0.15); display: flex; gap: 12px; justify-content: flex-end; }
+    .modal-body { padding: 24px 28px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+    .modal-footer {
+      padding: 16px 28px;
+      border-top: 1px solid rgba(201,168,132,0.15);
+      display: flex; gap: 12px; justify-content: flex-end;
+      flex-shrink: 0;
+      background: var(--white);
+      box-shadow: 0 -6px 14px rgba(74,55,40,0.06);
+    }
 
     /* Calendar admin */
     .admin-cal-grid {
@@ -473,7 +507,7 @@
       </div>
 
       <!-- Photo grid -->
-      <div id="photoGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:16px;">
+      <div id="photoGrid" style="display:flex; flex-direction:column; gap:10px;">
         <div style="text-align:center; padding:48px; opacity:0.4; grid-column:1/-1;">Ingen bilder ennå – last opp ditt første bilde!</div>
       </div>
     </div>
@@ -631,6 +665,6 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="/js/admin.js?v=3.3"></script>
+<script src="/js/admin.js?v=4.0"></script>
 </body>
 </html>

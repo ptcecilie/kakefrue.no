@@ -327,18 +327,20 @@ app.post('/api/tastings', async (req, res) => {
 
 // POST /api/christmas-orders
 app.post('/api/christmas-orders', async (req, res) => {
-  const { full_name, phone, email, delivery, address, products, note } = req.body;
+  const { full_name, phone, email, delivery, address, products, note, delivery_cost } = req.body;
   if (!full_name || !phone) return res.status(400).json({ error: 'Navn og telefon er påkrevd' });
   if (!products || !products.length) return res.status(400).json({ error: 'Velg minst ett produkt' });
   try {
     const [result] = await pool.query(
-      `INSERT INTO christmas_orders (full_name, phone, email, delivery, address, products, note) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [full_name.trim(), phone.trim(), email?.trim() || null, delivery || 'henting', address?.trim() || null, JSON.stringify(products), note?.trim() || null]
+      `INSERT INTO christmas_orders (full_name, phone, email, delivery, address, products, note, delivery_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [full_name.trim(), phone.trim(), email?.trim() || null, delivery || 'henting', address?.trim() || null, JSON.stringify(products), note?.trim() || null, parseInt(delivery_cost) || 0]
     );
 
     const transporter = createTransporter();
     const productList = products.map(p => `<li>${p.name} × ${p.qty} — ${p.price * p.qty} kr</li>`).join('');
-    const total = products.reduce((s, p) => s + (p.price || 0) * (p.qty || 1), 0);
+    const frakt = parseInt(delivery_cost) || 0;
+    const varesum = products.reduce((s, p) => s + (p.price || 0) * (p.qty || 1), 0);
+    const total = varesum + frakt;
 
     // Notify Cecilie
     try {

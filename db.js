@@ -159,9 +159,12 @@ async function initDB() {
         address TEXT,
         products JSON,
         note TEXT,
+        delivery_cost INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+    // Eksisterende installasjoner mangler denne – leveringstillegget ble kastet bort
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN delivery_cost INT DEFAULT 0`); } catch (e) {}
 
     await conn.query(`
       CREATE TABLE IF NOT EXISTS page_views (
