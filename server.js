@@ -416,6 +416,18 @@ app.get('/api/admin/christmas-orders', requireAdmin, async (req, res) => {
   }
 });
 
+// DELETE /api/admin/christmas-orders/:id
+app.delete('/api/admin/christmas-orders/:id', requireAdmin, async (req, res) => {
+  try {
+    const [r] = await pool.query(`DELETE FROM christmas_orders WHERE id = ?`, [req.params.id]);
+    if (!r.affectedRows) return res.status(404).json({ error: 'Fant ikke bestillingen' });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
 // POST /api/reviews — public submission, awaits approval
 app.post('/api/reviews', async (req, res) => {
   const { customer_name, review_text, rating, occasion } = req.body;

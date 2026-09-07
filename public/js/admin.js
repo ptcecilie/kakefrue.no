@@ -238,6 +238,18 @@ async function exportJulebestillingerExcel() {
   } catch (e) { showAlert('Eksport feilet: ' + e.message, 'error'); }
 }
 
+async function slettJulebestilling(id, btn) {
+  if (!confirm('Slette denne julebestillingen? Dette kan ikke angres.')) return;
+  btn.disabled = true;
+  try {
+    await api('/api/admin/christmas-orders/' + id, { method: 'DELETE' });
+    loadChristmasOrders();
+  } catch (e) {
+    alert('Kunne ikke slette: ' + e.message);
+    btn.disabled = false;
+  }
+}
+
 async function loadChristmasOrders() {
   const container = $('christmasOrdersList');
   try {
@@ -258,6 +270,7 @@ async function loadChristmasOrders() {
             <div style="display:flex;gap:8px;">
               <a href="tel:${o.phone}" class="btn btn-outline btn-sm">📞 ${o.phone}</a>
               ${o.email ? `<button class="btn btn-outline btn-sm" data-email="${o.email}" data-name="${o.full_name.replace(/"/g,'&quot;')}" onclick="openEmailModal(this.dataset.email,this.dataset.name)">✉️</button>` : ''}
+              <button class="photo-delete-btn" style="padding:7px 12px;" title="Slett bestilling" onclick="slettJulebestilling(${o.id}, this)">🗑</button>
             </div>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
@@ -265,7 +278,12 @@ async function loadChristmasOrders() {
           </div>
           <div style="font-size:0.85rem;opacity:0.6;display:flex;gap:16px;flex-wrap:wrap;">
             <span>${o.delivery === 'levering' ? `🚗 Levering: ${o.address || '—'}` : '🏠 Henting'}</span>
-            ${(o.products||[]).reduce((s,p)=>s+(p.price||0)*(p.qty||1),0)>0?`<span>💰 Totalt: <strong>${(o.products||[]).reduce((s,p)=>s+(p.price||0)*(p.qty||1),0)} kr</strong></span>`:''}
+            ${(() => {
+              const vare = (o.products||[]).reduce((s,p)=>s+(p.price||0)*(p.qty||1),0);
+              const frakt = parseInt(o.delivery_cost) || 0;
+              if (!vare) return '';
+              return `<span>💰 Varer: ${vare} kr${frakt ? ` + frakt ${frakt} kr` : ''} · Totalt: <strong>${vare + frakt} kr</strong></span>`;
+            })()}
             ${o.note ? `<span>💬 <em>${o.note}</em></span>` : ''}
           </div>
         </div>
@@ -1292,9 +1310,10 @@ function renderReviews() {
   tbody.innerHTML = allReviews.map((r, i) => `
     <tr id="review-row-${r.id}">
       <td>
-        <div style="display:flex;flex-direction:column;gap:2px;">
-          <button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:1rem;line-height:1;" onclick="moveReview(${i}, -1)" ${i === 0 ? 'disabled style="opacity:0.3;"' : ''}>↑</button>
-          <button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:1rem;line-height:1;" onclick="moveReview(${i}, 1)" ${i === allReviews.length - 1 ? 'disabled style="opacity:0.3;"' : ''}>↓</button>
+        <div class="photo-sorter">
+          <span style="font-size:0.75rem;font-weight:700;color:var(--gold);text-align:center;">${i + 1}</span>
+          <button class="photo-pil" onclick="moveReview(${i}, -1)" ${i === 0 ? 'disabled' : ''} title="Flytt opp">▲</button>
+          <button class="photo-pil" onclick="moveReview(${i}, 1)" ${i === allReviews.length - 1 ? 'disabled' : ''} title="Flytt ned">▼</button>
         </div>
       </td>
       <td><strong>${r.customer_name || '—'}</strong></td>
