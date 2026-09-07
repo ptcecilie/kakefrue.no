@@ -5,7 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Prøvesmaking – Kakefrue</title>
   <meta name="description" content="Book prøvesmaking hos Kakefrue. Perfekt for brudepar. Egenandelen på 500,- trekkes fra bryllupskaken.">
-  <link rel="stylesheet" href="/css/main.css?v=3.8">
+  <link rel="stylesheet" href="/css/main.css?v=3.9">
+  <style>
+    /* Fire steg på én linje – auto-fit brøt til 3 + 1 */
+    .steg-rad {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 28px;
+      margin-top: 40px;
+    }
+    @media (max-width: 860px) { .steg-rad { grid-template-columns: repeat(2, 1fr); gap: 32px; } }
+    @media (max-width: 480px) { .steg-rad { grid-template-columns: 1fr; gap: 28px; } }
+  </style>
 </head>
 <body>
 
@@ -51,7 +62,7 @@
   <section style="background: var(--white);">
     <div class="container" style="max-width: 860px;">
       <h2 class="section-title">Slik fungerer det</h2>
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:32px; margin-top:40px;">
+      <div class="steg-rad">
         <div style="text-align:center;">
           <div style="width:64px; height:64px; background:rgba(201,168,132,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 16px;">📝</div>
           <h4 style="margin-bottom:8px;">1. Book en tid</h4>
