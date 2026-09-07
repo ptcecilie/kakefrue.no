@@ -710,6 +710,35 @@ app.get('/api/admin/bookings/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// DELETE /api/admin/bookings/:id
+app.delete('/api/admin/bookings/:id', requireAdmin, async (req, res) => {
+  const id = req.params.id;
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    // Frigjor plassen paa datoen igjen
+    const [[b]] = await conn.query(`SELECT booking_date FROM bookings WHERE id = ?`, [id]);
+    // booking_items har fremmednokkel uten cascade og maa bort foerst
+    await conn.query(`DELETE FROM booking_items WHERE booking_id = ?`, [id]).catch(() => {});
+    const [r] = await conn.query(`DELETE FROM bookings WHERE id = ?`, [id]);
+    if (b?.booking_date) {
+      await conn.query(
+        `UPDATE available_dates SET current_bookings = GREATEST(current_bookings - 1, 0) WHERE date = ?`,
+        [b.booking_date]
+      ).catch(() => {});
+    }
+    await conn.commit();
+    if (!r.affectedRows) return res.status(404).json({ error: 'Fant ikke bestillingen' });
+    res.json({ success: true });
+  } catch (err) {
+    await conn.rollback().catch(() => {});
+    console.error('Sletting av bestilling feilet:', err);
+    res.status(500).json({ error: 'Kunne ikke slette: ' + err.message });
+  } finally {
+    conn.release();
+  }
+});
+
 // PUT /api/admin/bookings/:id
 app.put('/api/admin/bookings/:id', requireAdmin, async (req, res) => {
   const { status, admin_notes, deposit_paid, total_amount } = req.body;

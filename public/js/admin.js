@@ -885,12 +885,23 @@ function renderBookingsTable(bookings) {
       <td>${b.design_level || '—'}</td>
       <td>${statusBadge(b.status)}</td>
       <td>${b.deposit_paid ? '<span style="color:var(--sage);font-weight:700;">✓</span>' : '<span style="opacity:0.4;">Nei</span>'}</td>
-      <td style="display:flex;gap:6px;">
+      <td style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn btn-outline btn-sm" onclick="openBookingDetail(${b.id})">Detaljer</button>
         ${b.email ? `<button class="btn btn-outline btn-sm" data-email="${b.email}" data-name="${b.full_name.replace(/"/g,'&quot;')}" onclick="openEmailModal(this.dataset.email, this.dataset.name)">✉️</button>` : ''}
+        <button class="photo-delete-btn" style="padding:6px 11px;" title="Slett bestilling" onclick="slettBestilling(${b.id})">🗑</button>
       </td>
     </tr>
   `).join('');
+}
+
+async function slettBestilling(id) {
+  if (!confirm('Slette bestilling #' + id + '? Dette kan ikke angres.')) return;
+  try {
+    await api('/api/admin/bookings/' + id, { method: 'DELETE' });
+    loadBookings();
+  } catch (e) {
+    alert('Kunne ikke slette: ' + e.message);
+  }
 }
 
 function filterBookings() {
