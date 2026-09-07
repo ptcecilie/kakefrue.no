@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin – Kakefrue</title>
-  <link rel="stylesheet" href="/css/main.css?v=3.6">
+  <link rel="stylesheet" href="/css/main.css?v=3.7">
   <style>
     body { background: #F4EEE6; }
     .admin-layout { display: flex; min-height: 100vh; padding-top: 0; }
@@ -468,24 +468,42 @@
         <span style="font-size:0.85rem; opacity:0.55;">Last opp i seksjonen bildene hører hjemme i ↓</span>
       </div>
 
-      <!-- About image -->
-      <div style="background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); padding:24px; margin-bottom:28px;">
-        <h3 style="margin-bottom:4px;">«Mer enn bare en kake»-bilde</h3>
-        <p style="font-size:0.85rem; opacity:0.6; margin-bottom:20px;">Dette bildet vises i presentasjonsseksjonen på forsiden. Bruk gjerne et bilde av deg selv eller en fin kake.</p>
+      <!-- Bilder til presentasjonsseksjonene -->
+      <div style="background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); padding:24px; margin-bottom:20px;">
+        <h3 style="margin-bottom:4px;">Bilde på forsiden</h3>
+        <p style="font-size:0.85rem; opacity:0.6; margin-bottom:20px;">Vises ved siden av «Mer enn bare en kake» på forsiden.</p>
         <div style="display:flex; align-items:flex-start; gap:24px; flex-wrap:wrap;">
-          <div style="position:relative; width:180px; flex-shrink:0;">
-            <div id="aboutImagePlaceholder" style="width:180px; aspect-ratio:4/5; background:linear-gradient(135deg,#F5EDE0,#EDD9C0); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:3rem;">🎂</div>
-            <img id="aboutImagePreview" src="" alt="Om Kakefrue" style="display:none; width:180px; aspect-ratio:4/5; object-fit:cover; border-radius:var(--radius-sm);">
+          <div style="width:170px; flex-shrink:0;">
+            <div id="aboutImagePlaceholder0" style="width:170px; aspect-ratio:4/5; background:linear-gradient(135deg,#F5EDE0,#EDD9C0); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:2.6rem;">🎂</div>
+            <img id="aboutImagePreview0" src="" alt="" style="display:none; width:170px; aspect-ratio:4/5; object-fit:cover; border-radius:var(--radius-sm);">
           </div>
           <div style="display:flex; flex-direction:column; gap:12px; justify-content:center;">
-            <label class="btn btn-primary" style="cursor:pointer; display:inline-flex;" id="aboutImageBtn">
+            <label class="btn btn-primary" style="cursor:pointer; display:inline-flex;" id="aboutImageBtn0">
               📷 Last opp bilde
-              <input type="file" accept="image/*" style="display:none;" onchange="uploadAboutImage(this)">
+              <input type="file" accept="image/*" style="display:none;" onchange="uploadAboutImage(this, 0)">
             </label>
-            <p style="font-size:0.8rem; opacity:0.5; margin:0;">Anbefalt: stående format (4:5), maks 10 MB</p>
+            <p style="font-size:0.8rem; opacity:0.5; margin:0;">Stående format (4:5) passer best</p>
           </div>
         </div>
       </div>
+      <div style="background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); padding:24px; margin-bottom:20px;">
+        <h3 style="margin-bottom:4px;">Bilde på Om Kakefrue</h3>
+        <p style="font-size:0.85rem; opacity:0.6; margin-bottom:20px;">Vises øverst i historien din på Om Kakefrue-siden. Kan gjerne være et annet bilde enn det på forsiden.</p>
+        <div style="display:flex; align-items:flex-start; gap:24px; flex-wrap:wrap;">
+          <div style="width:170px; flex-shrink:0;">
+            <div id="aboutImagePlaceholder1" style="width:170px; aspect-ratio:4/5; background:linear-gradient(135deg,#F5EDE0,#EDD9C0); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:2.6rem;">🎂</div>
+            <img id="aboutImagePreview1" src="" alt="" style="display:none; width:170px; aspect-ratio:4/5; object-fit:cover; border-radius:var(--radius-sm);">
+          </div>
+          <div style="display:flex; flex-direction:column; gap:12px; justify-content:center;">
+            <label class="btn btn-primary" style="cursor:pointer; display:inline-flex;" id="aboutImageBtn1">
+              📷 Last opp bilde
+              <input type="file" accept="image/*" style="display:none;" onchange="uploadAboutImage(this, 1)">
+            </label>
+            <p style="font-size:0.8rem; opacity:0.5; margin:0;">Stående format (4:5) passer best</p>
+          </div>
+        </div>
+      </div>
+
 
       <!-- Upload progress -->
       <div id="uploadProgress" style="display:none; background:var(--white); border-radius:var(--radius); padding:16px; margin-bottom:24px; box-shadow:var(--shadow);">
@@ -662,6 +680,6 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="/js/admin.js?v=4.3"></script>
+<script src="/js/admin.js?v=4.4"></script>
 </body>
 </html>

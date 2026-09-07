@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Om Kakefrue – Håndlagde kaker i Porsgrunn</title>
   <meta name="description" content="Lær mer om Kakefrue – personen bak kakene og historien om en lidenskap for det søte liv.">
-  <link rel="stylesheet" href="/css/main.css?v=3.6">
+  <link rel="stylesheet" href="/css/main.css?v=3.7">
 </head>
 <body>
 
@@ -154,7 +154,7 @@ const mobileMenu = document.getElementById('mobileMenu');
 hamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
 
 // Bildet lastes opp i adminpanelet og deles med forsiden
-fetch('/api/about-image').then(r => r.json()).then(d => {
+fetch('/api/about-image?slot=1').then(r => r.json()).then(d => {
   if (!d.url) return;
   const img = document.getElementById('omBilde');
   img.src = d.url;

@@ -947,11 +947,24 @@ app.put('/api/admin/courses/:id', requireAdmin, async (req, res) => {
 });
 
 app.delete('/api/admin/courses/:id', requireAdmin, async (req, res) => {
+  const id = req.params.id;
+  const conn = await pool.getConnection();
   try {
-    await pool.query(`DELETE FROM courses WHERE id = ?`, [req.params.id]);
+    await conn.beginTransaction();
+    // Paameldinger og interesser peker paa kurset og maa bort foerst,
+    // ellers avviser databasen slettingen
+    await conn.query(`DELETE FROM course_registrations WHERE course_id = ?`, [id]).catch(() => {});
+    await conn.query(`DELETE FROM course_interests WHERE course_id = ?`, [id]).catch(() => {});
+    const [r] = await conn.query(`DELETE FROM courses WHERE id = ?`, [id]);
+    await conn.commit();
+    if (!r.affectedRows) return res.status(404).json({ error: 'Fant ikke kurset' });
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: 'Serverfeil' });
+    await conn.rollback().catch(() => {});
+    console.error('Kursletting feilet:', err);
+    res.status(500).json({ error: 'Kunne ikke slette: ' + err.message });
+  } finally {
+    conn.release();
   }
 });
 
@@ -1120,9 +1133,13 @@ const uploadsDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 // GET /api/about-image — public, returns the about section image
+// plass 0 = forsiden «Mer enn bare en kake», plass 1 = Om Kakefrue-siden
+function bildeplass(v) { return String(v) === '1' ? -1 : 0; }
+
 app.get('/api/about-image', async (req, res) => {
   try {
-    const [[row]] = await pool.query(`SELECT image_data FROM photo_images WHERE photo_id = 0`);
+    const id = bildeplass(req.query.slot);
+    const [[row]] = await pool.query(`SELECT image_data FROM photo_images WHERE photo_id = ?`, [id]);
     res.json({ url: row?.image_data || null });
   } catch (err) {
     res.json({ url: null });
@@ -1131,11 +1148,12 @@ app.get('/api/about-image', async (req, res) => {
 
 // POST /api/admin/about-image — upload about section image
 app.post('/api/admin/about-image', requireAdmin, async (req, res) => {
-  const { data, mimeType } = req.body;
+  const { data, mimeType, slot } = req.body;
   if (!data || !mimeType) return res.status(400).json({ error: 'Mangler data' });
   try {
+    const id = bildeplass(slot);
     const dataUrl = `data:${mimeType};base64,${data}`;
-    await pool.query(`INSERT INTO photo_images (photo_id, image_data) VALUES (0, ?) ON DUPLICATE KEY UPDATE image_data = ?`, [dataUrl, dataUrl]);
+    await pool.query(`INSERT INTO photo_images (photo_id, image_data) VALUES (?, ?) ON DUPLICATE KEY UPDATE image_data = ?`, [id, dataUrl, dataUrl]);
     res.json({ ok: true, url: dataUrl });
   } catch (err) {
     console.error(err);

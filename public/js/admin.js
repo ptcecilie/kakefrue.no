@@ -121,7 +121,7 @@ function loadPanel(panel) {
     case 'priser': loadPricing(); break;
     case 'kunder': loadCustomers(); break;
     case 'jul': loadChristmasOrders(); break;
-    case 'bilder': loadPhotos(); loadAboutImage(); break;
+    case 'bilder': loadPhotos(); loadAboutImages(); break;
     case 'statistikk': loadStatistikk(); break;
     case 'innstillinger': loadSettings(); break;
   }
@@ -293,44 +293,48 @@ async function loadChristmasOrders() {
 }
 
 // ── About image ────────────────────────────────────────────
-async function uploadAboutImage(input) {
+async function uploadAboutImage(input, slot = 0) {
   const file = input.files[0];
   if (!file) return;
-  const btn = document.getElementById('aboutImageBtn');
-  btn.textContent = 'Laster opp...';
+  const s = slot || 0;
+  const btn = document.getElementById('aboutImageBtn' + s);
+  const forh = document.getElementById('aboutImagePreview' + s);
+  const plass = document.getElementById('aboutImagePlaceholder' + s);
+  const gml = btn ? btn.textContent : '';
+  if (btn) btn.textContent = 'Laster opp...';
   try {
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = e => resolve(e.target.result.split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+    const { data, mimeType } = await compressImage(file, 1400, 0.84);
     const result = await api('/api/admin/about-image', {
       method: 'POST',
-      body: JSON.stringify({ data: base64, mimeType: file.type })
+      body: JSON.stringify({ data, mimeType, slot: s })
     });
-    document.getElementById('aboutImagePreview').src = result.url + '?t=' + Date.now();
-    document.getElementById('aboutImagePreview').style.display = 'block';
-    document.getElementById('aboutImagePlaceholder').style.display = 'none';
+    if (forh)  { forh.src = result.url; forh.style.display = 'block'; }
+    if (plass) plass.style.display = 'none';
     showAlert('Bilde lastet opp! ✓', 'success');
   } catch (e) {
-    showAlert('Opplasting feilet', 'error');
+    showAlert('Opplasting feilet: ' + e.message, 'error');
   } finally {
-    btn.textContent = '📷 Bytt bilde';
+    if (btn) btn.textContent = gml || '📷 Last opp bilde';
     input.value = '';
   }
 }
 
-async function loadAboutImage() {
-  try {
-    const data = await fetch('/api/about-image').then(r => r.json());
-    if (data.url) {
-      document.getElementById('aboutImagePreview').src = data.url;
-      document.getElementById('aboutImagePreview').style.display = 'block';
-      document.getElementById('aboutImagePlaceholder').style.display = 'none';
-    }
-  } catch (e) {}
+// Henter begge bildene naar bildepanelet aapnes
+async function loadAboutImages() {
+  for (const s of [0, 1]) {
+    try {
+      const d = await fetch('/api/about-image?slot=' + s).then(r => r.json());
+      const forh = document.getElementById('aboutImagePreview' + s);
+      const plass = document.getElementById('aboutImagePlaceholder' + s);
+      if (d.url && forh) {
+        forh.src = d.url; forh.style.display = 'block';
+        if (plass) plass.style.display = 'none';
+      }
+    } catch {}
+  }
 }
+
+
 
 // ── Bilder ─────────────────────────────────────────────────
 let _fotoCache = [];
@@ -1278,7 +1282,12 @@ async function saveCourse(id) {
 
 async function deleteCourse(id) {
   if (!confirm('Slette dette kurset?')) return;
-  try { await api('/api/admin/courses/' + id, { method: 'DELETE' }); loadCourses(); } catch {}
+  try {
+    await api('/api/admin/courses/' + id, { method: 'DELETE' });
+    loadCourses();
+  } catch (e) {
+    alert('Kunne ikke slette kurset: ' + e.message);
+  }
 }
 
 async function viewRegistrations(courseId, title) {

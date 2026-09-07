@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book din kake – Kakefrue</title>
   <meta name="description" content="Book din håndlagde kake fra Kakefrue i Porsgrunn. Enkel bestilling i noen få steg.">
-  <link rel="stylesheet" href="/css/main.css?v=3.6">
+  <link rel="stylesheet" href="/css/main.css?v=3.7">
   <link rel="stylesheet" href="/css/booking.css">
 </head>
 <body>
@@ -50,12 +50,6 @@
         <div class="progress-step active" data-step="1"><div class="step-num">1</div><span>Deg</span></div>
         <div class="progress-step" data-step="2"><div class="step-num">2</div><span>Dato</span></div>
         <div class="progress-step" data-step="3"><div class="step-num">3</div><span>Anledning</span></div>
-        <div class="progress-step" data-step="4"><div class="step-num">4</div><span>Type</span></div>
-        <div class="progress-step" data-step="5"><div class="step-num">5</div><span>Allergier</span></div>
-        <div class="progress-step" data-step="6"><div class="step-num">6</div><span>Detaljer</span></div>
-        <div class="progress-step" data-step="7"><div class="step-num">7</div><span>Design</span></div>
-        <div class="progress-step" data-step="8"><div class="step-num">8</div><span>Oppsummering</span></div>
-      </div>
     </div>
   </div>
 
@@ -133,7 +127,7 @@
       <div class="step" id="step3">
         <div class="booking-card-header">
           <h2 class="booking-step-title">Hva skal feires?</h2>
-          <p class="booking-step-sub">Velg anledning og antall gjester – hjelper meg å planlegge størrelse.</p>
+          <p class="booking-step-sub">Velg anledning og antall gjester. Så tar jeg kontakt for å planlegge kaken sammen med deg.</p>
         </div>
         <div class="booking-card-body">
           <div class="option-grid cols-3">
@@ -162,7 +156,7 @@
         </div>
         <div class="booking-card-footer">
           <button class="btn btn-outline" id="step3Back">&larr; Tilbake</button>
-          <button class="btn btn-primary" id="step3Next">Neste &rarr;</button>
+          <button class="btn btn-primary btn-lg" id="step3Next">Send bestilling &rarr;</button>
         </div>
       </div>
 
@@ -555,9 +549,9 @@
       <div class="step" id="stepSuccess">
         <div class="success-screen">
           <div class="success-icon">🎉</div>
-          <h2>Bestilling bekreftet!</h2>
-          <p>Tusen takk! Din kakebestilling er mottatt og depositum er betalt. Jeg gleder meg til å lage noe spesielt for deg.</p>
-          <p style="font-size:0.9rem; margin-top:0;">Se etter en bekreftelse på e-post. Jeg tar kontakt med deg for å bekrefte detaljer nærmere datoen.</p>
+          <h2>Takk for forespørselen!</h2>
+          <p>Forespørselen din er mottatt. Jeg tar kontakt med deg for å gå gjennom smak, design og størrelse – og gir deg en pris.</p>
+          <p style="font-size:0.9rem; margin-top:0;">Datoen er reservert når depositum på 50 % er betalt med Vipps. Jeg svarer så raskt jeg kan.</p>
           <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-top:32px;">
             <a href="/" class="btn btn-primary">Tilbake til forsiden</a>
             <a href="/anbefalinger.html" class="btn btn-outline">Les anbefalinger</a>
@@ -582,7 +576,7 @@
 
 </div><!-- /page-content -->
 
-<script src="/js/booking.js?v=2.0"></script>
+<script src="/js/booking.js?v=3.0"></script>
 <script>
 const hamburger = document.getElementById('hamburger');
 const mobileMenu = document.getElementById('mobileMenu');

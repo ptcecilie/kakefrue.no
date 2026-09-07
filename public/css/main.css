@@ -685,3 +685,28 @@ section { padding: var(--section-padding); }
   .gallery-grid { grid-template-columns: 1fr; }
   .review-card { flex: 0 0 280px; }
 }
+
+/* ── Sidetopp med fotobakgrunn ── */
+.page-hero.med-foto {
+  position: relative;
+  overflow: hidden;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 24px;
+}
+.page-hero.med-foto > .ph-bakgrunn {
+  position: absolute; inset: 0; z-index: 0;
+  background-size: cover; background-position: center 48%;
+}
+.page-hero.med-foto > .ph-slor {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    radial-gradient(ellipse 56% 62% at 50% 50%, rgba(255,251,245,0.88) 0%, rgba(255,250,243,0.66) 46%, rgba(255,250,243,0.20) 78%, transparent 100%),
+    linear-gradient(180deg, rgba(255,252,247,0.46) 0%, transparent 24%, transparent 66%, rgba(250,247,244,0.94) 100%);
+}
+.page-hero.med-foto > *:not(.ph-bakgrunn):not(.ph-slor) { position: relative; z-index: 2; }
+.page-hero.med-foto h1 { text-shadow: 0 1px 18px rgba(255,252,247,0.8); }
+.page-hero.med-foto p { text-shadow: 0 1px 12px rgba(255,252,247,0.7); }

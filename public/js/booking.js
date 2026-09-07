@@ -305,11 +305,38 @@ document.querySelectorAll('[data-occasion]').forEach(card => {
 });
 
 $('step3Back').addEventListener('click', () => goToStep(2));
-$('step3Next').addEventListener('click', () => {
+$('step3Next').addEventListener('click', async () => {
   if (!state.occasion) return alert('Velg en anledning.');
   state.occasionCustom = $('occasionCustom')?.value?.trim() || '';
   state.guestCount = parseInt($('guestCount').value) || null;
-  goToStep(4);
+
+  // Bestillingen avsluttes her – resten avtales direkte med kunden
+  const knapp = $('step3Next');
+  const gml = knapp.textContent;
+  knapp.disabled = true;
+  knapp.textContent = 'Sender...';
+  try {
+    const res = await fetch('/api/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer_id: state.customerId,
+        booking_date: state.date,
+        occasion: state.occasion,
+        occasion_custom: state.occasionCustom || null,
+        guest_count: state.guestCount,
+        delivery_type: state.deliveryType || 'henting'
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Kunne ikke sende bestillingen');
+    state.bookingId = data.booking_id || data.id;
+    showSuccess();
+  } catch (e) {
+    alert('Noe gikk galt: ' + e.message + '\n\nRing meg gjerne på 900 33 039.');
+    knapp.disabled = false;
+    knapp.textContent = gml;
+  }
 });
 
 // ── Step 4: Category ───────────────────────────────────────
