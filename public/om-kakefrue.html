@@ -5,7 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Om Kakefrue – Håndlagde kaker i Porsgrunn</title>
   <meta name="description" content="Lær mer om Kakefrue – personen bak kakene og historien om en lidenskap for det søte liv.">
-  <link rel="stylesheet" href="/css/main.css?v=4.1">
+  <link rel="stylesheet" href="/css/main.css?v=4.2">
+  <style>
+    /* Fire kort på én linje – auto-fit brøt til 3 + 1 */
+    .steg-rad {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 22px;
+      align-items: stretch;
+    }
+    .steg-rad > div { display: flex; flex-direction: column; }
+    @media (max-width: 900px) { .steg-rad { grid-template-columns: repeat(2, 1fr); gap: 24px; } }
+    @media (max-width: 520px) { .steg-rad { grid-template-columns: 1fr; } }
+  </style>
 </head>
 <body>
 
@@ -83,7 +95,7 @@
     <div class="container" style="max-width:860px;">
       <h2 class="section-title">Det jeg tror på</h2>
       <p class="section-subtitle">Verdiene som ligger bak hvert eneste produkt</p>
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:24px;">
+      <div class="steg-rad">
         <div style="background:var(--white); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow);">
           <div style="font-size:2.5rem; margin-bottom:16px;">❤️</div>
           <h3 style="margin-bottom:8px;">Kjærlighet i hvert lag</h3>
