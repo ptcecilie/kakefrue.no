@@ -488,3 +488,66 @@
   .progress-step { display: none; }
   .progress-step.active, .progress-step.done:last-of-type { display: block; }
 }
+
+/* ============================================================
+   Takkeside – varm avslutning i stedet for et tomt kort
+   ============================================================ */
+.success-screen.takk {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+  text-align: center;
+}
+.takk-foto {
+  position: absolute; inset: 0; z-index: 0;
+  background: url('/assets/forside-hero.jpg') center 46% / cover no-repeat;
+}
+.takk-slor {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 70% at 50% 45%, rgba(255,251,246,0.94) 0%, rgba(255,250,244,0.86) 55%, rgba(253,248,242,0.96) 100%),
+    linear-gradient(180deg, rgba(255,252,248,0.6) 0%, rgba(250,245,238,0.92) 100%);
+}
+.takk-innhold { position: relative; z-index: 2; padding: 52px 40px 46px; }
+
+.takk-merke {
+  display: inline-block;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--gold-dark);
+  background: rgba(196,149,106,0.15);
+  border: 1px solid rgba(196,149,106,0.35);
+  border-radius: 100px; padding: 6px 18px; margin-bottom: 20px;
+}
+.success-screen.takk h2 {
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  margin-bottom: 10px; color: var(--brown);
+}
+.takk-ingress {
+  font-size: 1.05rem; opacity: 0.78; max-width: 420px;
+  margin: 0 auto 34px; line-height: 1.8;
+}
+
+.takk-steg {
+  max-width: 420px; margin: 0 auto 34px;
+  display: flex; flex-direction: column; gap: 16px; text-align: left;
+}
+.takk-steg-rad { display: flex; gap: 14px; align-items: flex-start; }
+.takk-nr {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--gold); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 700; margin-top: 1px;
+}
+.takk-steg-rad strong { display: block; font-size: 0.95rem; margin-bottom: 2px; }
+.takk-steg-rad span { font-size: 0.87rem; opacity: 0.7; line-height: 1.6; }
+
+.takk-knapper { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.takk-kontakt { font-size: 0.87rem; opacity: 0.65; margin: 24px 0 0; }
+.takk-kontakt a { color: var(--gold-dark); font-weight: 700; }
+
+@media (max-width: 560px) {
+  .takk-innhold { padding: 40px 22px 36px; }
+  .takk-steg { max-width: 100%; }
+  .takk-knapper .btn { width: 100%; justify-content: center; }
+}
