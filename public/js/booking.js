@@ -321,7 +321,7 @@ $('step3Next').addEventListener('click', async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         customer_id: state.customerId,
-        booking_date: state.date,
+        booking_date: state.selectedDate,
         occasion: state.occasion,
         occasion_custom: state.occasionCustom || null,
         guest_count: state.guestCount,

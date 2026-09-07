@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anbefalinger – Kakefrue</title>
   <meta name="description" content="Les hva kundene sier om Kakefrue. Ekte tilbakemeldinger fra fornøyde kunder.">
-  <link rel="stylesheet" href="/css/main.css?v=3.9">
+  <link rel="stylesheet" href="/css/main.css?v=4.0">
   <style>
     .reviews-grid {
       display: grid;
@@ -210,24 +210,6 @@
     </div>
   </section>
 
-  <section>
-    <div class="container">
-      <h2 class="section-title" id="alleTittel" style="display:none;">Alle anbefalinger</h2>
-      <div id="loading">
-        <div class="spinner"></div>
-        <p style="opacity:0.5;">Laster anbefalinger...</p>
-      </div>
-
-      <div id="empty">
-        <div style="font-size:3rem; margin-bottom:16px;">💬</div>
-        <h3>Ingen anbefalinger ennå</h3>
-        <p style="opacity:0.6; margin-top:8px;">Kom tilbake snart – jeg samler på gode historier.</p>
-      </div>
-
-      <div class="reviews-masonry" id="reviewsGrid" style="display:none;"></div>
-    </div>
-  </section>
-
   <!-- CTA -->
   <section style="background: linear-gradient(135deg, #7A2A3E 0%, #A05060 100%); text-align:center; padding: 64px 24px;">
     <h2 style="color:var(--white); margin-bottom:16px;">Bli neste fornøyde kunde</h2>
@@ -250,10 +232,9 @@
 const hamburger = document.getElementById('hamburger');
 const mobileMenu = document.getElementById('mobileMenu');
 hamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
-
-const loading = document.getElementById('loading');
+  const loading = null;
 const empty = document.getElementById('empty');
-const grid = document.getElementById('reviewsGrid');
+const grid = document.getElementById('reviewsGrid'); // fjernet – båndet viser alt
 
 const gradients = [
   'linear-gradient(135deg, #F5EDE0, #E8C8A8)',
@@ -349,19 +330,16 @@ async function submitReview(e) {
 fetch('/api/reviews')
   .then(r => r.json())
   .then(reviews => {
-    loading.style.display = 'none';
+    if (loading) loading.style.display = 'none';
     if (!reviews.length) {
-      empty.style.display = 'block';
+      if (empty) empty.style.display = 'block';
       return;
     }
-    grid.style.display = 'block';
     const rad = document.getElementById('statsRad');
     if (rad) {
       document.getElementById('statAntall').textContent = reviews.length;
       rad.style.display = 'flex';
     }
-    const tittel = document.getElementById('alleTittel');
-    if (tittel) tittel.style.display = 'block';
 
     // Rullende bånd øverst – dobbelt sett gir sømløs runde
     const spor = document.getElementById('rullSpor');
@@ -377,22 +355,11 @@ fetch('/api/reviews')
       // Lengre bånd trenger lengre tid for å holde samme fart
       spor.style.animationDuration = Math.max(40, reviews.length * 7) + 's';
     }
-    grid.innerHTML = reviews.map((r, i) => `
-      <div class="review-full-card">
-        ${r.image_url
-          ? `<img src="${r.image_url}" alt="Kakebilde" class="review-img">`
-          : `<div class="review-img-placeholder" style="background:${gradients[i % gradients.length]}">${emojis[i % emojis.length]}</div>`
-        }
-        <div class="stars">${'★'.repeat(r.rating || 5)}${'☆'.repeat(5 - (r.rating || 5))}</div>
-        <p class="text">"${r.review_text}"</p>
-        <span class="author">— ${r.customer_name}</span>
-        <span class="date">${new Date(r.created_at).toLocaleDateString('nb-NO', {year:'numeric', month:'long'})}</span>
-      </div>
-    `).join('');
+
   })
   .catch(() => {
-    loading.style.display = 'none';
-    empty.style.display = 'block';
+    if (loading) loading.style.display = 'none';
+    if (empty) empty.style.display = 'block';
   });
 </script>
 </body>
