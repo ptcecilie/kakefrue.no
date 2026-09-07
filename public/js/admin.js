@@ -350,8 +350,10 @@ async function loadPhotos() {
       return;
     }
     const CATS = [
-      { key: 'galleri', label: 'Galleri / Portefølje', color: '#C4956A' },
-      { key: 'jul', label: 'Julebestillinger', color: '#7A9E82' },
+      { key: 'galleri', label: 'Galleri / Portefølje', color: '#C4956A', kort: 'galleriet',
+        hjelp: 'Vises i det rullende galleriet på forsiden. Rekkefølgen her er den kunden ser – bruk pilene til høyre.' },
+      { key: 'jul', label: 'Julebestillinger', color: '#7A9E82', kort: 'julesiden',
+        hjelp: 'Vises i bildestripen på julesiden. Husk å sette bildene til «Synlig».' },
     ];
 
     // rad: nr, miniatyr, kategori + tekst, synlig/slett, opp/ned
@@ -382,14 +384,19 @@ async function loadPhotos() {
       </div>`;
 
     const seksjon = (cat, items) => `
-      <div style="margin-top:22px; margin-bottom:2px;">
-        <div style="display:flex; align-items:center; gap:10px;">
+      <div style="margin-top:26px; margin-bottom:2px;">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
           <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${cat.color};"></span>
           <strong style="font-size:0.95rem;">${cat.label}</strong>
           <span style="font-size:0.8rem; opacity:0.5;">${items.filter(p => p.featured).length} synlige · ${items.length} totalt</span>
+          <label class="btn btn-primary btn-sm" style="cursor:pointer; margin-left:auto;">
+            + Last opp til ${cat.kort}
+            <input type="file" accept="image/*" multiple style="display:none;"
+                   onchange="uploadPhotos(this, '${cat.key}')">
+          </label>
         </div>
-        <hr style="border:none; border-top:1.5px solid ${cat.color}44; margin:8px 0 0;">
-        ${items.length ? '<p style="font-size:0.78rem; opacity:0.5; margin:8px 0 0;">Rekkefølgen her er den kunden ser. Bruk pilene til høyre for å flytte.</p>' : ''}
+        <hr style="border:none; border-top:1.5px solid ${cat.color}44; margin:10px 0 0;">
+        <p style="font-size:0.78rem; opacity:0.5; margin:8px 0 0;">${cat.hjelp}</p>
       </div>
       ${items.length
         ? items.map((p, i) => radHtml(p, i, items.length)).join('')
@@ -452,7 +459,7 @@ function compressImage(file, maxPx = 1600, quality = 0.82) {
   });
 }
 
-async function uploadPhotos(input) {
+async function uploadPhotos(input, kategori = 'galleri') {
   const files = Array.from(input.files);
   if (!files.length) return;
 
@@ -480,7 +487,7 @@ async function uploadPhotos(input) {
       try {
         await api('/api/admin/photos', {
           method: 'POST',
-          body: JSON.stringify({ data: f.data, mimeType: f.mimeType, alt_text: '' })
+          body: JSON.stringify({ data: f.data, mimeType: f.mimeType, alt_text: '', category: kategori })
         });
         done++;
       } catch (e) {
@@ -1316,15 +1323,25 @@ function renderReviews() {
           <button class="photo-pil" onclick="moveReview(${i}, 1)" ${i === allReviews.length - 1 ? 'disabled' : ''} title="Flytt ned">▼</button>
         </div>
       </td>
-      <td><strong>${r.customer_name || '—'}</strong>${r.image_url ? ' <span title="Har bilde" style="font-size:0.9rem;">📷</span>' : ''}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${r.image_url ? `<img src="${r.image_url}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;">` : ''}
+          <strong>${r.customer_name || '—'}</strong>
+        </div>
+      </td>
       <td style="max-width:220px;">
         <span style="opacity:0.7;font-size:0.88rem;">${(r.review_text || '').slice(0, 60)}${r.review_text && r.review_text.length > 60 ? '…' : ''}</span>
         <button class="btn btn-outline btn-sm" style="margin-left:6px;padding:2px 8px;font-size:0.75rem;" onclick="openReviewDetail(${i})">Les</button>
       </td>
       <td>${r.approved ? '<span style="color:var(--sage);">✓ Synlig</span>' : '<span style="color:#C62828;">Skjult</span>'}</td>
       <td>${formatDate(r.created_at)}</td>
-      <td style="display:flex;gap:6px;">
+      <td style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn btn-outline btn-sm" onclick="toggleApproved(${r.id}, ${!r.approved})">${r.approved ? 'Skjul' : 'Godkjenn'}</button>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer;" title="${r.image_url ? 'Bytt bilde' : 'Legg til bilde av kaken'}">
+          ${r.image_url ? '🔄 Bytt bilde' : '📷 Legg til bilde'}
+          <input type="file" accept="image/*" style="display:none;" onchange="velgAnbefalingsbilde(${r.id}, this)">
+        </label>
+        ${r.image_url ? `<button class="btn btn-outline btn-sm" onclick="fjernAnbefalingsbilde(${r.id})" title="Fjern bildet">✕ Bilde</button>` : ''}
         <button class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828;" onclick="deleteReview(${r.id})">Slett</button>
       </td>
     </tr>
@@ -1351,6 +1368,33 @@ function openReviewDetail(index) {
       <button class="btn btn-primary" onclick="toggleApproved(${r.id}, ${!r.approved}); closeModal();">${r.approved ? 'Skjul' : 'Godkjenn'}</button>
     </div>
   `);
+}
+
+async function velgAnbefalingsbilde(id, input) {
+  const fil = input.files && input.files[0];
+  if (!fil) return;
+  input.value = '';
+  if (!fil.type.startsWith('image/')) { alert('Velg en bildefil.'); return; }
+  try {
+    const { data, mimeType } = await compressImage(fil, 1100, 0.78);
+    await api('/api/admin/reviews/' + id, {
+      method: 'PUT',
+      body: JSON.stringify({ image_url: `data:${mimeType};base64,${data}` })
+    });
+    loadReviews();
+  } catch (e) {
+    alert('Kunne ikke lagre bildet: ' + e.message);
+  }
+}
+
+async function fjernAnbefalingsbilde(id) {
+  if (!confirm('Fjerne bildet fra denne anbefalingen?')) return;
+  try {
+    await api('/api/admin/reviews/' + id, { method: 'PUT', body: JSON.stringify({ image_url: null }) });
+    loadReviews();
+  } catch (e) {
+    alert('Kunne ikke fjerne bildet: ' + e.message);
+  }
 }
 
 async function moveReview(index, direction) {

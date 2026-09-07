@@ -988,7 +988,7 @@ app.post('/api/admin/reviews', requireAdmin, async (req, res) => {
 });
 
 app.put('/api/admin/reviews/:id', requireAdmin, async (req, res) => {
-  const { approved, customer_name, review_text, rating } = req.body;
+  const { approved, customer_name, review_text, rating, image_url } = req.body;
   try {
     const fields = [];
     const values = [];
@@ -996,6 +996,13 @@ app.put('/api/admin/reviews/:id', requireAdmin, async (req, res) => {
     if (customer_name !== undefined) { fields.push('customer_name = ?'); values.push(customer_name); }
     if (review_text !== undefined) { fields.push('review_text = ?'); values.push(review_text); }
     if (rating !== undefined) { fields.push('rating = ?'); values.push(rating); }
+    // null fjerner bildet, en data-URL setter det
+    if (image_url !== undefined) {
+      const gyldig = image_url === null || image_url === ''
+        || (typeof image_url === 'string' && image_url.startsWith('data:image/') && image_url.length < 4_000_000);
+      if (!gyldig) return res.status(400).json({ error: 'Ugyldig bilde' });
+      fields.push('image_url = ?'); values.push(image_url || null);
+    }
     if (!fields.length) return res.status(400).json({ error: 'Ingen felter' });
     values.push(req.params.id);
     await pool.query(`UPDATE reviews SET ${fields.join(', ')} WHERE id = ?`, values);
