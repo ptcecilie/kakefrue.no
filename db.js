@@ -148,6 +148,8 @@ async function initDB() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
     try { await conn.query(`ALTER TABLE reviews ADD COLUMN sort_order INT DEFAULT 0`); } catch (e) { /* column already exists */ }
+    // TEXT rommer bare 64 kB – for lite til et bilde i base64
+    try { await conn.query(`ALTER TABLE reviews MODIFY COLUMN image_url MEDIUMTEXT`); } catch (e) {}
 
     await conn.query(`
       CREATE TABLE IF NOT EXISTS christmas_orders (

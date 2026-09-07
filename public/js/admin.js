@@ -1316,7 +1316,7 @@ function renderReviews() {
           <button class="photo-pil" onclick="moveReview(${i}, 1)" ${i === allReviews.length - 1 ? 'disabled' : ''} title="Flytt ned">▼</button>
         </div>
       </td>
-      <td><strong>${r.customer_name || '—'}</strong></td>
+      <td><strong>${r.customer_name || '—'}</strong>${r.image_url ? ' <span title="Har bilde" style="font-size:0.9rem;">📷</span>' : ''}</td>
       <td style="max-width:220px;">
         <span style="opacity:0.7;font-size:0.88rem;">${(r.review_text || '').slice(0, 60)}${r.review_text && r.review_text.length > 60 ? '…' : ''}</span>
         <button class="btn btn-outline btn-sm" style="margin-left:6px;padding:2px 8px;font-size:0.75rem;" onclick="openReviewDetail(${i})">Les</button>
@@ -1341,6 +1341,7 @@ function openReviewDetail(index) {
     </div>
     <div class="modal-body">
       <p style="font-size:0.85rem;opacity:0.5;margin-bottom:16px;">${r.approved ? '<span style="color:var(--sage);">Synlig på siden</span>' : '<span style="color:#C62828;">Ikke godkjent ennå</span>'}</p>
+      ${r.image_url ? `<img src="${r.image_url}" alt="Bilde fra kunden" style="width:100%;max-height:340px;object-fit:cover;border-radius:var(--radius-sm);margin-bottom:16px;">` : ''}
       <div style="background:var(--cream);border-radius:var(--radius-sm);padding:20px;font-style:italic;line-height:1.8;font-size:1rem;">
         "${r.review_text || ''}"
       </div>

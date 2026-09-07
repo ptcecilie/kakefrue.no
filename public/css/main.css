@@ -423,6 +423,27 @@ section { padding: var(--section-padding); }
   padding-bottom: 8px;
 }
 .reviews-track::-webkit-scrollbar { display: none; }
+
+/* Rullende bånd – settes på av JS når anbefalingene er lastet */
+.reviews-track.ruller {
+  overflow: hidden;
+  scroll-snap-type: none;
+  width: max-content;
+  animation: anbefalingRull 70s linear infinite;
+}
+.reviews-carousel:hover .reviews-track.ruller { animation-play-state: paused; }
+@keyframes anbefalingRull {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reviews-track.ruller { animation: none; overflow-x: auto; width: auto; }
+}
+/* Bilde i anbefalingskort på forsiden */
+.review-card img.review-foto {
+  width: 100%; aspect-ratio: 4/3; object-fit: cover;
+  border-radius: var(--radius-sm); margin-bottom: 14px; display: block;
+}
 .review-card {
   flex: 0 0 340px;
   scroll-snap-align: start;

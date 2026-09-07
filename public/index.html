@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kakefrue – Håndlagde kaker i Porsgrunn</title>
   <meta name="description" content="Kakefrue lager unike, håndlagde kaker til dine spesielle anledninger i Porsgrunn. Bryllupskaker, bursdagskaker, konfirmasjonskaker og mer.">
-  <link rel="stylesheet" href="/css/main.css?v=3.2">
+  <link rel="stylesheet" href="/css/main.css?v=3.3">
 </head>
 <body>
 
@@ -313,13 +313,16 @@ fetch('/api/photos').then(r => r.json()).then(photos => {
 fetch('/api/reviews').then(r => r.json()).then(reviews => {
   if (!reviews.length) return;
   const track = document.getElementById('reviewsTrack');
-  track.innerHTML = reviews.map(r => `
+  const kort = r => `
     <div class="review-card">
+      ${r.image_url ? `<img class="review-foto" src="${r.image_url}" alt="Kake fra Kakefrue" loading="lazy">` : ''}
       <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
       <p class="review-text">"${r.review_text}"</p>
       <span class="review-author">— ${r.customer_name}</span>
-    </div>
-  `).join('');
+    </div>`;
+  // Dobbelt sett gjør at båndet kan rulle sømløst rundt
+  track.innerHTML = [...reviews, ...reviews].map(kort).join('');
+  if (reviews.length > 2) track.classList.add('ruller');
 }).catch(() => {});
 </script>
 </body>

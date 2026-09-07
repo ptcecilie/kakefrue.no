@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Om Kakefrue – Håndlagde kaker i Porsgrunn</title>
   <meta name="description" content="Lær mer om Kakefrue – personen bak kakene og historien om en lidenskap for det søte liv.">
-  <link rel="stylesheet" href="/css/main.css?v=3.2">
+  <link rel="stylesheet" href="/css/main.css?v=3.3">
 </head>
 <body>
 
@@ -53,7 +53,8 @@
     <div class="container" style="max-width:860px;">
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:64px; align-items:center;">
         <div>
-          <div style="background:linear-gradient(135deg, #F5EDE0, #EDD9C0); border-radius:var(--radius); aspect-ratio:4/5; display:flex; align-items:center; justify-content:center; font-size:6rem;">👩‍🍳</div>
+          <div id="omBildePlassholder" style="background:linear-gradient(135deg, #F5EDE0, #EDD9C0); border-radius:var(--radius); aspect-ratio:4/5; display:flex; align-items:center; justify-content:center; font-size:6rem;">👩‍🍳</div>
+          <img id="omBilde" src="" alt="Cecilie – Kakefrue" style="display:none; width:100%; aspect-ratio:4/5; object-fit:cover; border-radius:var(--radius); box-shadow:var(--shadow);">
         </div>
         <div>
           <span class="tag tag-gold" style="margin-bottom:16px;">Min historie</span>
@@ -116,11 +117,6 @@
           <span style="font-size:0.85rem; opacity:0.65;">Mattilsynet</span>
         </div>
         <div style="text-align:center;">
-          <div style="width:80px; height:80px; background:rgba(201,168,122,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto 12px;">📜</div>
-          <strong style="display:block; font-size:0.9rem;">Kurs i</strong>
-          <span style="font-size:0.85rem; opacity:0.65;">Næringsmiddelhygiene</span>
-        </div>
-        <div style="text-align:center;">
           <div style="width:80px; height:80px; background:rgba(232,170,170,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto 12px;">⭐</div>
           <strong style="display:block; font-size:0.9rem;">100+</strong>
           <span style="font-size:0.85rem; opacity:0.65;">Fornøyde kunder</span>
@@ -156,6 +152,15 @@
 const hamburger = document.getElementById('hamburger');
 const mobileMenu = document.getElementById('mobileMenu');
 hamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+
+// Bildet lastes opp i adminpanelet og deles med forsiden
+fetch('/api/about-image').then(r => r.json()).then(d => {
+  if (!d.url) return;
+  const img = document.getElementById('omBilde');
+  img.src = d.url;
+  img.style.display = 'block';
+  document.getElementById('omBildePlassholder').style.display = 'none';
+}).catch(() => {});
 </script>
 </body>
 </html>

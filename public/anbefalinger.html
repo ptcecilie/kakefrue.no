@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anbefalinger – Kakefrue</title>
   <meta name="description" content="Les hva kundene sier om Kakefrue. Ekte tilbakemeldinger fra fornøyde kunder.">
-  <link rel="stylesheet" href="/css/main.css?v=3.2">
+  <link rel="stylesheet" href="/css/main.css?v=3.3">
   <style>
     .reviews-grid {
       display: grid;
@@ -43,6 +43,35 @@
     }
     #loading { text-align: center; padding: 48px; }
     #empty { display: none; text-align: center; padding: 64px 24px; }
+
+    /* Murverkslayout – kortene får høyden innholdet krever */
+    .reviews-masonry { columns: 3 320px; column-gap: 22px; }
+    .reviews-masonry .review-full-card {
+      break-inside: avoid; margin: 0 0 22px; display: block;
+    }
+    @media (max-width: 700px) { .reviews-masonry { columns: 1; } }
+
+    /* Nøkkeltall øverst */
+    .stats-rad {
+      display: flex; justify-content: center; gap: 48px; flex-wrap: wrap;
+      margin-top: 26px; padding-top: 24px;
+      border-top: 1px solid rgba(196,149,106,0.25);
+    }
+    .stat b {
+      display: block; font-family: var(--font-heading);
+      font-size: 2.1rem; color: var(--gold-dark); line-height: 1;
+    }
+    .stat span { font-size: 0.78rem; letter-spacing: 0.07em; text-transform: uppercase; opacity: 0.55; }
+
+    /* Bildeopplasting */
+    .bilde-slipp {
+      border: 2px dashed rgba(196,149,106,0.45); border-radius: var(--radius-sm);
+      padding: 22px; text-align: center; cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .bilde-slipp:hover { border-color: var(--gold); background: rgba(196,149,106,0.05); }
+    .bilde-slipp input { display: none; }
+    #bildeForhaandsvis { max-height: 190px; border-radius: var(--radius-sm); margin: 0 auto 10px; display: none; }
   </style>
 </head>
 <body>
@@ -81,7 +110,62 @@
     <span class="tag tag-gold" style="margin-bottom:12px;">Ekte tilbakemeldinger</span>
     <h1>Hva kundene sier</h1>
     <p>Ingenting gjør meg gladere enn fornøyde kunder. Her er noen av tilbakemeldingene jeg har fått.</p>
+    <div class="stats-rad" id="statsRad" style="display:none;">
+      <div class="stat"><b id="statAntall">–</b><span>Anbefalinger</span></div>
+      <div class="stat"><b>2015</b><span>Baker siden</span></div>
+      <div class="stat"><b>Porsgrunn</b><span>Laget for hånd i</span></div>
+    </div>
+    <a href="#legg-igjen" class="btn btn-primary" style="margin-top:26px;">Legg igjen din anbefaling</a>
   </div>
+
+  <!-- Legg igjen anbefaling -->
+  <section style="background: var(--white); padding-top:56px; padding-bottom:56px;" id="legg-igjen">
+    <div class="container" style="max-width:660px;">
+      <div style="text-align:center; margin-bottom:30px;">
+        <span class="tag tag-gold" style="margin-bottom:12px;">Del din opplevelse</span>
+        <h2>Har du bestilt fra Kakefrue?</h2>
+        <p style="margin-top:12px; opacity:0.7;">Det betyr mye for meg å høre hvordan det gikk – og du hjelper neste kunde med å velge.</p>
+      </div>
+
+      <div id="reviewFormWrap" style="background:var(--cream); border-radius:var(--radius); padding:32px;">
+        <div id="reviewSuccess" style="display:none; text-align:center; padding:24px;">
+          <div style="font-size:3rem; margin-bottom:16px;">🎂</div>
+          <h3>Tusen takk!</h3>
+          <p style="opacity:0.7; margin-top:8px;">Tilbakemeldingen din er mottatt og blir synlig etter godkjenning.</p>
+        </div>
+        <form id="reviewForm" onsubmit="submitReview(event)">
+          <div class="form-group">
+            <label class="form-label">Ditt navn *</label>
+            <input class="form-input" name="customer_name" type="text" placeholder="Fornavn eller fullt navn" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Din tilbakemelding *</label>
+            <textarea class="form-input" name="review_text" rows="5" required style="resize:vertical;"
+              placeholder="Fortell gjerne hva du bestilte, hvilken anledning det var, og hva du synes..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Bilde av kaken <span style="font-weight:300; opacity:0.6;">(valgfritt)</span></label>
+            <label class="bilde-slipp" for="bildeFil">
+              <img id="bildeForhaandsvis" alt="Forhåndsvisning">
+              <div id="bildeTekst">
+                <div style="font-size:1.8rem; margin-bottom:6px;">📷</div>
+                <strong style="font-size:0.9rem;">Trykk for å velge bilde</strong>
+                <p style="font-size:0.8rem; opacity:0.6; margin:4px 0 0;">Kaken din vises sammen med anbefalingen</p>
+              </div>
+              <input type="file" id="bildeFil" accept="image/*" onchange="velgBilde(this)">
+            </label>
+            <button type="button" id="fjernBilde" onclick="fjernBilde()" style="display:none; margin-top:8px; background:none; border:none; color:#C62828; font-size:0.82rem; cursor:pointer; text-decoration:underline;">Fjern bildet</button>
+          </div>
+
+          <div id="reviewError" class="alert alert-error" style="display:none; margin-bottom:16px;"></div>
+          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;" id="reviewSubmitBtn">Send tilbakemelding ✓</button>
+          <p style="text-align:center; font-size:0.78rem; opacity:0.5; margin:12px 0 0;">Anbefalingen vises på siden etter at jeg har godkjent den.</p>
+        </form>
+      </div>
+    </div>
+  </section>
 
   <section>
     <div class="container">
@@ -96,42 +180,7 @@
         <p style="opacity:0.6; margin-top:8px;">Kom tilbake snart – jeg samler på gode historier.</p>
       </div>
 
-      <div class="reviews-grid" id="reviewsGrid" style="display:none;"></div>
-    </div>
-  </section>
-
-  <!-- Leave a review -->
-  <section style="background: var(--white);">
-    <div class="container" style="max-width:620px;">
-      <div style="text-align:center; margin-bottom:36px;">
-        <span class="tag tag-gold" style="margin-bottom:12px;">Del din opplevelse</span>
-        <h2>Har du bestilt fra Kakefrue?</h2>
-        <p style="margin-top:12px; opacity:0.7;">Jeg setter utrolig stor pris på tilbakemeldinger – det betyr alt for meg å høre hvordan det gikk!</p>
-      </div>
-
-      <div id="reviewFormWrap" style="background:var(--cream); border-radius:var(--radius); padding:32px;">
-        <div id="reviewSuccess" style="display:none; text-align:center; padding:24px;">
-          <div style="font-size:3rem; margin-bottom:16px;">🎂</div>
-          <h3>Tusen takk!</h3>
-          <p style="opacity:0.7; margin-top:8px;">Tilbakemeldingen din er mottatt og blir synlig etter godkjenning.</p>
-        </div>
-        <form id="reviewForm" onsubmit="submitReview(event)">
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-            <div class="form-group" style="grid-column:1/-1;">
-              <label class="form-label">Ditt navn *</label>
-              <input class="form-input" name="customer_name" type="text" placeholder="Fornavn eller fullt navn" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Din tilbakemelding *</label>
-            <textarea class="form-input" name="review_text" rows="5" placeholder="Fortell gjerne hva du bestilte, hvilken anledning det var, og hva du synes..." required style="resize:vertical;"></textarea>
-          </div>
-
-          <div id="reviewError" class="alert alert-error" style="display:none; margin-bottom:16px;"></div>
-          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;" id="reviewSubmitBtn">Send tilbakemelding ✓</button>
-        </form>
-      </div>
+      <div class="reviews-masonry" id="reviewsGrid" style="display:none;"></div>
     </div>
   </section>
 
@@ -171,6 +220,57 @@ const gradients = [
 ];
 const emojis = ['🎂','🧁','💒','🌸','✨','🎀','🍰','🥂'];
 
+let valgtBilde = null;
+
+// Krymper bildet i nettleseren – ellers blir base64 altfor stort å sende
+function komprimer(fil, maksPx = 1100, kvalitet = 0.78) {
+  return new Promise((ok, feil) => {
+    const leser = new FileReader();
+    leser.onerror = feil;
+    leser.onload = e => {
+      const bilde = new Image();
+      bilde.onerror = feil;
+      bilde.onload = () => {
+        let { width: b, height: h } = bilde;
+        if (b > maksPx || h > maksPx) {
+          if (b > h) { h = Math.round(h * maksPx / b); b = maksPx; }
+          else       { b = Math.round(b * maksPx / h); h = maksPx; }
+        }
+        const c = document.createElement('canvas');
+        c.width = b; c.height = h;
+        c.getContext('2d').drawImage(bilde, 0, 0, b, h);
+        ok(c.toDataURL('image/jpeg', kvalitet));
+      };
+      bilde.src = e.target.result;
+    };
+    leser.readAsDataURL(fil);
+  });
+}
+
+async function velgBilde(input) {
+  const fil = input.files && input.files[0];
+  if (!fil) return;
+  if (!fil.type.startsWith('image/')) { alert('Velg en bildefil.'); input.value = ''; return; }
+  try {
+    valgtBilde = await komprimer(fil);
+    const vis = document.getElementById('bildeForhaandsvis');
+    vis.src = valgtBilde; vis.style.display = 'block';
+    document.getElementById('bildeTekst').style.display = 'none';
+    document.getElementById('fjernBilde').style.display = 'inline';
+  } catch {
+    alert('Kunne ikke lese bildet. Prøv et annet.');
+    input.value = '';
+  }
+}
+
+function fjernBilde() {
+  valgtBilde = null;
+  document.getElementById('bildeFil').value = '';
+  document.getElementById('bildeForhaandsvis').style.display = 'none';
+  document.getElementById('bildeTekst').style.display = 'block';
+  document.getElementById('fjernBilde').style.display = 'none';
+}
+
 async function submitReview(e) {
   e.preventDefault();
   const form = e.target;
@@ -186,7 +286,8 @@ async function submitReview(e) {
       body: JSON.stringify({
         customer_name: form.customer_name.value,
         review_text: form.review_text.value,
-        rating: 5
+        rating: 5,
+        image_url: valgtBilde
       })
     });
     const json = await res.json();
@@ -209,7 +310,12 @@ fetch('/api/reviews')
       empty.style.display = 'block';
       return;
     }
-    grid.style.display = 'grid';
+    grid.style.display = 'block';
+    const rad = document.getElementById('statsRad');
+    if (rad) {
+      document.getElementById('statAntall').textContent = reviews.length;
+      rad.style.display = 'flex';
+    }
     grid.innerHTML = reviews.map((r, i) => `
       <div class="review-full-card">
         ${r.image_url
