@@ -336,34 +336,66 @@ app.post('/api/christmas-orders', async (req, res) => {
       [full_name.trim(), phone.trim(), email?.trim() || null, delivery || 'henting', address?.trim() || null, JSON.stringify(products), note?.trim() || null]
     );
 
+    const transporter = createTransporter();
+    const productList = products.map(p => `<li>${p.name} × ${p.qty} — ${p.price * p.qty} kr</li>`).join('');
+    const total = products.reduce((s, p) => s + (p.price || 0) * (p.qty || 1), 0);
+
     // Notify Cecilie
     try {
-      const transporter = createTransporter();
-      const productList = products.map(p => `<li>${p.name} – ${p.qty}</li>`).join('');
       await transporter.sendMail({
         from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
         to: 'cecilie@kakefrue.no',
-        subject: `🎄 Ny julebestilling fra ${full_name.trim()}`,
+        subject: `🎄 Ny julebestilling fra ${full_name.trim()} – ${total} kr`,
         html: `
           <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
-            <h2 style="color:#2D5A27;">🎄 Ny julebestilling!</h2>
+            <h2 style="color:#8B1A1A;">🎄 Ny julebestilling!</h2>
             <table style="width:100%;border-collapse:collapse;margin:16px 0;">
               <tr><td style="padding:6px 0;opacity:0.6;width:140px;">Navn</td><td><strong>${full_name.trim()}</strong></td></tr>
               <tr><td style="padding:6px 0;opacity:0.6;">Telefon</td><td>${phone.trim()}</td></tr>
               ${email ? `<tr><td style="padding:6px 0;opacity:0.6;">E-post</td><td>${email.trim()}</td></tr>` : ''}
-              <tr><td style="padding:6px 0;opacity:0.6;">Levering</td><td>${delivery === 'levering' ? 'Levering: ' + (address || '—') : 'Henting'}</td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Levering</td><td>${delivery === 'levering' ? 'Levering til: ' + (address || '—') : 'Henting i Porsgrunn'}</td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Totalt</td><td><strong>${total} kr</strong> (Vipps 90033039)</td></tr>
             </table>
             <div style="background:white;border-radius:8px;padding:16px;margin:16px 0;">
               <strong>Bestilte produkter:</strong>
               <ul style="margin:10px 0 0;padding-left:20px;">${productList}</ul>
             </div>
             ${note ? `<p><strong>Kommentar:</strong> ${note}</p>` : ''}
-            <p><a href="https://www.kakefrue.no/admin.html" style="color:#8B72BE;">Se i adminpanelet →</a></p>
-            <p style="font-size:0.8rem;opacity:0.4;margin-top:24px;">– Kakefrue varslingssystem</p>
+            <p><a href="https://www.kakefrue.no/admin.html" style="color:#8B1A1A;">Se i adminpanelet →</a></p>
           </div>
         `
       });
     } catch (mailErr) { console.log('[Christmas notify] Email not sent:', mailErr.message); }
+
+    // Send confirmation to customer
+    if (email) {
+      try {
+        await transporter.sendMail({
+          from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
+          to: email.trim(),
+          subject: `🎄 Bestillingsbekreftelse fra Kakefrue`,
+          html: `
+            <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
+              <h2 style="color:#8B1A1A;margin-bottom:4px;">Tusen takk, ${full_name.trim().split(' ')[0]}!</h2>
+              <p style="color:#6B5040;margin-bottom:24px;">Bestillingen din er registrert. Betal med Vipps for å bekrefte.</p>
+              <div style="background:white;border-radius:10px;padding:20px;margin-bottom:20px;">
+                <strong style="display:block;margin-bottom:10px;">Du har bestilt:</strong>
+                <ul style="margin:0;padding-left:20px;color:#3D2420;">${productList}</ul>
+                <div style="margin-top:14px;padding-top:14px;border-top:1px solid #EEE;font-size:1.1rem;font-weight:700;color:#8B1A1A;">Totalt: ${total} kr</div>
+              </div>
+              <div style="background:#FF5B24;border-radius:12px;padding:20px;text-align:center;color:white;">
+                <div style="font-size:0.8rem;opacity:0.85;margin-bottom:4px;">BETAL MED VIPPS TIL</div>
+                <div style="font-size:2rem;font-weight:900;letter-spacing:0.05em;">90 03 30 39</div>
+                <div style="font-size:0.85rem;opacity:0.85;margin-top:4px;">Cecilie Linder · Skriv «${full_name.trim()}» som melding</div>
+              </div>
+              <p style="color:#8A6858;font-size:0.82rem;margin-top:20px;">Levering: ${delivery === 'levering' ? 'Leveres til ' + (address || '—') : 'Hentes i Porsgrunn'}</p>
+              ${note ? `<p style="color:#8A6858;font-size:0.82rem;">Kommentar: ${note}</p>` : ''}
+              <p style="color:#B0A090;font-size:0.75rem;margin-top:24px;">Spørsmål? Ring 900 33 039 eller skriv på <a href="https://m.me/kakefrue" style="color:#C4956A;">Messenger</a>.</p>
+            </div>
+          `
+        });
+      } catch (mailErr) { console.log('[Christmas customer email] Not sent:', mailErr.message); }
+    }
 
     res.json({ ok: true, id: result.insertId });
   } catch (err) {

@@ -471,18 +471,40 @@
     }
     .kontakt-linje a:hover { color: var(--cream); border-color: rgba(245,237,214,0.3); background: rgba(255,255,255,0.04); }
 
-    .vipps-info {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(196,137,58,0.25);
-      border-radius: 14px;
-      padding: 16px 20px;
-      margin-top: 24px;
-      text-align: center;
-      max-width: 900px;
-      margin-left: auto; margin-right: auto;
+    /* Vipps betaling */
+    .vipps-betal-knapp {
+      display: inline-flex; align-items: center; gap: 11px;
+      background: #FF5B24; color: white;
+      border: none; cursor: pointer;
+      padding: 17px 32px; border-radius: 14px;
+      font-family: 'Lato', sans-serif; font-size: 1rem; font-weight: 700;
+      letter-spacing: 0.02em;
+      box-shadow: 0 6px 24px rgba(255,91,36,0.4);
+      transition: 0.18s; text-decoration: none;
+      width: 100%; justify-content: center; margin-top: 20px;
     }
-    .vipps-info p { color: rgba(245,237,214,0.5); font-size: 0.82rem; margin: 0; line-height: 1.7; }
-    .vipps-info strong { color: var(--amber-lt); }
+    .vipps-betal-knapp:hover { background: #E84E1B; transform: translateY(-1px); box-shadow: 0 8px 28px rgba(255,91,36,0.5); }
+    .vipps-betal-knapp svg { flex-shrink: 0; }
+
+    .vipps-boks {
+      background: white; border-radius: 18px;
+      padding: 28px 24px; text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+      max-width: 420px; margin: 0 auto;
+    }
+    .vipps-boks-beloprad {
+      display: flex; align-items: baseline; justify-content: center; gap: 8px;
+      margin: 8px 0 4px;
+    }
+    .vipps-boks-belop {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.6rem; font-weight: 700; color: #3D2420;
+    }
+    .vipps-boks-tlf {
+      font-size: 1.5rem; font-weight: 700; color: #FF5B24;
+      letter-spacing: 0.04em; margin: 4px 0 16px;
+    }
+    .vipps-boks-mottaker { font-size: 0.82rem; color: #8A6858; margin-bottom: 0; }
 
     @media (max-width: 720px) {
       .bestilling-layout { grid-template-columns: 1fr; gap: 16px; }
@@ -678,7 +700,7 @@
       <!-- HØYRE: Produktmeny -->
       <div class="bestilling-kolonne">
         <div class="kolonne-tittel">Velg hva du vil ha</div>
-        <div class="frist-banner">Bestillingsfrist: 1. desember 2025</div>
+        <div class="frist-banner">Bestillingsfrist: 1. desember 2026</div>
         <ul class="produkt-liste" id="produktListe"></ul>
         <div class="total-rad" id="totalRad" style="display:none;">
           <span>Totalt</span>
@@ -689,11 +711,8 @@
 
     <div style="max-width:900px;margin:0 auto;">
       <div class="skjema-feil" id="skjemaFeil"></div>
-      <button class="send-knapp" onclick="sendBestilling()" id="sendKnapp">Send bestilling 🎄</button>
-    </div>
-
-    <div class="vipps-info">
-      <p>Etter bestilling betaler du med <strong>Vipps til 90033039</strong> (Cecilie Linder) – oppgi ditt navn som melding.<br>Du mottar kvittering på SMS eller e-post.</p>
+      <button class="send-knapp" onclick="sendBestilling()" id="sendKnapp">Gå til betaling med Vipps</button>
+      <p style="text-align:center;font-size:0.75rem;color:rgba(245,237,214,0.3);margin-top:10px;">Bestillingen lagres og du betaler trygt via Vipps</p>
     </div>
 
     <div class="kontakt-linje">
@@ -708,11 +727,37 @@
     </div>
   </div>
 
-  <div class="suksess" id="suksessMsg">
+  <!-- VIPPS BETALING SIDE -->
+  <div class="suksess" id="vippsBetalSide" style="display:none;max-width:520px;">
     <span class="suksess-ikon">🎄</span>
-    <h2>Tusen takk!</h2>
-    <p id="suksessTekst">Bestillingen er mottatt! Betal med Vipps til <strong style="color:var(--amber-lt);">90033039</strong> – skriv ditt navn som melding.<br><br>Jeg bekrefter bestillingen din så snart jeg mottar betaling.</p>
-    <a href="/">Tilbake til forsiden</a>
+    <h2 style="margin-bottom:6px;">Bestilling registrert!</h2>
+    <p style="color:rgba(245,237,214,0.55);font-size:0.88rem;margin-bottom:28px;">Nå gjenstår bare betalingen – betal trygt med Vipps.</p>
+
+    <div class="vipps-boks">
+      <p style="font-size:0.8rem;color:#8A6858;margin:0 0 4px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Betal til</p>
+      <div class="vipps-boks-tlf">90 03 30 39</div>
+      <p class="vipps-boks-mottaker">Cecilie Linder</p>
+      <div class="vipps-boks-beloprad">
+        <span class="vipps-boks-belop" id="vippsBelopVis">0</span>
+        <span style="font-size:1.1rem;color:#3D2420;font-weight:700;">kr</span>
+      </div>
+      <p style="font-size:0.78rem;color:#8A6858;margin:0 0 20px;">Skriv <strong id="vippsNavnVis"></strong> som melding i Vipps</p>
+
+      <a href="#" id="vippsDeepLink" class="vipps-betal-knapp" onclick="vippsKlikket()">
+        <svg width="22" height="22" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="white"/><text x="24" y="34" text-anchor="middle" font-size="26" font-family="Arial Black,sans-serif" fill="#FF5B24" font-weight="900">V</text></svg>
+        Åpne Vipps og betal
+      </a>
+      <p style="font-size:0.73rem;color:#B0A090;margin:14px 0 0;">Åpner Vipps-appen på mobil · Skriv inn beløp manuelt på nettbrett/PC</p>
+    </div>
+
+    <div id="vippsEtterBetalt" style="display:none;margin-top:24px;">
+      <p style="color:rgba(245,237,214,0.65);font-size:0.88rem;line-height:1.8;">
+        Betalingen er sendt til Kakefrue.<br>
+        <span id="kvitteringTekst"></span>
+      </p>
+    </div>
+
+    <a href="/" style="display:inline-block;margin-top:24px;padding:10px 24px;border:1px solid rgba(245,237,214,0.2);color:rgba(245,237,214,0.5);border-radius:100px;text-decoration:none;font-size:0.82rem;">Tilbake til forsiden</a>
   </div>
 </div>
 
@@ -788,9 +833,9 @@
 
 /* Produkter */
 const PRODUKTER=[
-  {k:'kling',          n:'Kling',            unit:'2 stk',     pris:189, desc:'Luftig og myk – den ekte julefavoritten'},
+  {k:'kling',          n:'Kling',            unit:'2 stk',     pris:189, desc:'Luftig og myk – den ekte julefavoritten', popular:true},
   {k:'nordlandslefse', n:'Nordlandslefse',   unit:'3 stk',     pris:250, desc:'Tykklefse med smør, kanel og sukker'},
-  {k:'pepperkakdrom',  n:'Pepperkakedrøm',  unit:'6 stk',     pris:159, desc:'Kakefrues spesial – silkemyk pepperkakekrem i mandelskall', hit:true},
+  {k:'pepperkakdrom',  n:'Pepperkakedrøm',  unit:'6 stk',     pris:159, desc:'Kakefrues spesial – silkemyk pepperkakekrem i mandelskall', hit:true, popular:true},
   {k:'gulebomber',     n:'Gule bomber',      unit:'6 stk',     pris:129, desc:'Luftige choux-boller fylt med deilig krem'},
   {k:'krumkaker',      n:'Krumkaker',        unit:'6 stk',     pris:129, desc:'Sprø og delikate – perfekt til julebordet'},
   {k:'cookies',        n:'Cookies',          unit:'5 stk',     pris:99,  desc:'Store og seige hjemmelagde cookies', gfEkstra:20},
@@ -814,7 +859,7 @@ function visProdukter(){
     const visPris=p.gfEkstra&&gf?p.pris+p.gfEkstra:p.pris;
     return`<li class="produkt-rad" style="flex-wrap:wrap;">
       <div class="produkt-info">
-        <div class="produkt-navn-liten">${p.n}${p.hit?' <span style="background:#8B1A1A;color:white;font-size:0.6rem;padding:2px 7px;border-radius:100px;letter-spacing:0.04em;font-weight:700;vertical-align:middle;">HIT</span>':''}</div>
+        <div class="produkt-navn-liten">${p.n}${p.hit?' <span style="background:#8B1A1A;color:white;font-size:0.6rem;padding:2px 7px;border-radius:100px;letter-spacing:0.04em;font-weight:700;vertical-align:middle;margin-left:4px;">HIT</span>':''}${p.popular?' <span style="background:rgba(196,149,106,0.18);color:#C4956A;font-size:0.6rem;padding:2px 7px;border-radius:100px;letter-spacing:0.04em;font-weight:700;vertical-align:middle;margin-left:4px;border:1px solid rgba(196,149,106,0.3);">POPULÆR</span>':''}</div>
         <div class="produkt-detalj">${p.unit}${p.desc?' · '+p.desc:''}</div>
       </div>
       <div class="produkt-pris-liten">${visPris},-</div>
@@ -850,6 +895,7 @@ function settLevering(v){
   document.querySelectorAll('.lev-valg').forEach(el=>el.classList.toggle('aktiv',el.dataset.val===v));
   document.getElementById('adresseRad').style.display=v==='levering'?'block':'none';
 }
+let _vippsTotal=0, _vippsNavn='';
 async function sendBestilling(){
   const navn=document.getElementById('navn').value.trim();
   const tlf=document.getElementById('tlf').value.trim();
@@ -869,19 +915,39 @@ async function sendBestilling(){
     return{key:k,name:p.n+(gf?' (glutenfri)':''),unit:p.unit,price:pris,qty:valgt[k]};
   });
   const total=products.reduce((s,p)=>s+p.price*p.qty,0);
+  _vippsTotal=total; _vippsNavn=navn;
   const knapp=document.getElementById('sendKnapp');
-  knapp.disabled=true; knapp.textContent='Sender...';
+  knapp.disabled=true; knapp.textContent='Registrerer bestilling...';
   try{
     const res=await fetch('/api/christmas-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({full_name:navn,phone:tlf,email:epost,delivery:levering,address:adresse,products,note:merknad})});
     if(!res.ok){const e=await res.json();throw new Error(e.error||'Ukjent feil');}
-    document.getElementById('suksessTekst').innerHTML=`Bestillingen er mottatt! Betal <strong style="color:var(--amber-lt);">${total} kr</strong> med Vipps til <strong style="color:var(--amber-lt);">90033039</strong> – skriv <strong style="color:var(--amber-lt);">${navn}</strong> som melding.<br><br>Jeg bekrefter bestillingen din så snart jeg mottar betaling.`;
+
+    /* Bygg Vipps deep link */
+    const ore=total*100;
+    const msg=encodeURIComponent('Julekaker '+navn);
+    const vippsUrl=`vipps://?phone=4790033039&amount=${ore}&message=${msg}`;
+    document.getElementById('vippsDeepLink').href=vippsUrl;
+    document.getElementById('vippsBelopVis').textContent=total;
+    document.getElementById('vippsNavnVis').textContent=navn;
+
+    /* Kvittering-tekst */
+    const kvTekst=epost?`Bestillingsbekreftelse er sendt til ${epost}.`:'Ta vare på denne siden som bekreftelse.';
+    document.getElementById('kvitteringTekst').textContent=kvTekst;
+
     document.getElementById('skjemaWrap').style.display='none';
-    document.getElementById('suksessMsg').style.display='block';
-    document.getElementById('suksessMsg').scrollIntoView({behavior:'smooth'});
+    const betalSide=document.getElementById('vippsBetalSide');
+    betalSide.style.display='block';
+    betalSide.scrollIntoView({behavior:'smooth'});
   }catch(e){
     feil.textContent='Feil: '+e.message; feil.style.display='block';
-    knapp.disabled=false; knapp.textContent='Send bestilling 🎄';
+    knapp.disabled=false; knapp.textContent='Gå til betaling med Vipps';
   }
+}
+function vippsKlikket(){
+  /* Vis "etter betalt"-melding etter 3 sek (bruker har åpnet Vipps) */
+  setTimeout(()=>{
+    document.getElementById('vippsEtterBetalt').style.display='block';
+  },3000);
 }
 document.getElementById('hamburger').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('open'));
 visProdukter();
