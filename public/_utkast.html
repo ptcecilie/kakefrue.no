@@ -1,0 +1,86 @@
+<title>Hero-utkast</title>
+<link rel="stylesheet" href="/css/main.css?v=3.4">
+<style>
+  body { background:#8A8A8A; margin:0; }
+  .merke { color:#fff; font:700 0.8rem/1 Lato,sans-serif; letter-spacing:.12em;
+           text-transform:uppercase; padding:22px 26px 10px; }
+  .ramme { background:var(--cream); margin:0 0 34px; overflow:hidden; }
+
+  /* ── A: delt – tekst til venstre, bilde til høyre ── */
+  .heroA { display:grid; grid-template-columns:1.05fr 1fr; min-height:560px; align-items:center; }
+  .heroA-tekst { padding:70px 60px; }
+  .heroA-foto { height:100%; min-height:560px; background-size:cover; background-position:center 38%; }
+  .eyebrow { display:block; font:700 0.76rem/1 Lato,sans-serif; letter-spacing:.16em;
+             text-transform:uppercase; color:var(--gold); margin-bottom:18px; }
+  .tittel { font-family:'Playfair Display',serif; font-size:3.1rem; line-height:1.1; margin:0 0 18px; color:var(--brown); }
+  .tittel em { font-style:italic; color:var(--gold-dark); }
+  .ingress { font-size:1rem; line-height:1.9; opacity:.72; max-width:400px; margin:0 0 30px; }
+  .knapper { display:flex; gap:12px; flex-wrap:wrap; }
+
+  /* ── B: bilde i full bredde med tekst oppå ── */
+  .heroB { position:relative; min-height:560px; display:flex; align-items:center;
+           justify-content:center; text-align:center; background-size:cover; background-position:center 42%; }
+  .heroB::after { content:''; position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(255,252,248,.62) 0%, rgba(255,250,244,.80) 45%, rgba(250,247,244,.94) 100%); }
+  .heroB-inn { position:relative; z-index:1; max-width:560px; padding:60px 30px; }
+
+  /* ── C: bilde i full bredde, mørkt og filmatisk ── */
+  .heroC { position:relative; min-height:560px; display:flex; align-items:center;
+           justify-content:center; text-align:center; background-size:cover; background-position:center 40%; }
+  .heroC::after { content:''; position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(45,28,20,.42) 0%, rgba(45,28,20,.55) 100%); }
+  .heroC-inn { position:relative; z-index:1; max-width:560px; padding:60px 30px; }
+  .heroC .tittel { color:#FFF9F2; text-shadow:0 2px 24px rgba(0,0,0,.35); }
+  .heroC .tittel em { color:#F0D2AE; }
+  .heroC .ingress { color:rgba(255,249,242,.85); margin-left:auto; margin-right:auto; }
+  .heroC .eyebrow { color:#EBC79B; }
+  .heroC .knapper { justify-content:center; }
+  .heroB .knapper { justify-content:center; }
+  .heroB .ingress { margin-left:auto; margin-right:auto; }
+</style>
+
+<p class="merke">A · Delt – bilde ved siden av teksten</p>
+<div class="ramme">
+  <div class="heroA">
+    <div class="heroA-tekst">
+      <span class="eyebrow">Håndlagde kaker fra Porsgrunn</span>
+      <h1 class="tittel">Kaker laget med<br><em>kjærlighet</em></h1>
+      <p class="ingress">Hver kake er laget spesielt for deg og din anledning. Ingen er like – og det er akkurat slik det skal være.</p>
+      <div class="knapper">
+        <a href="#" class="btn btn-primary btn-lg">Book din kake</a>
+        <a href="#" class="btn btn-secondary btn-lg">Se hva jeg lager</a>
+      </div>
+    </div>
+    <div class="heroA-foto" style="background-image:url('/assets/_mock-hero-a.jpg')"></div>
+  </div>
+</div>
+
+<p class="merke">B · Bilde i full bredde, lyst slør over</p>
+<div class="ramme">
+  <div class="heroB" style="background-image:url('/assets/_mock-hero-b.jpg')">
+    <div class="heroB-inn">
+      <span class="eyebrow">Håndlagde kaker fra Porsgrunn</span>
+      <h1 class="tittel">Kaker laget med<br><em>kjærlighet</em></h1>
+      <p class="ingress">Hver kake er laget spesielt for deg og din anledning. Ingen er like – og det er akkurat slik det skal være.</p>
+      <div class="knapper">
+        <a href="#" class="btn btn-primary btn-lg">Book din kake</a>
+        <a href="#" class="btn btn-secondary btn-lg">Se hva jeg lager</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="merke">C · Bilde i full bredde, mørkt slør – som julesiden</p>
+<div class="ramme">
+  <div class="heroC" style="background-image:url('/assets/_mock-hero-c.jpg')">
+    <div class="heroC-inn">
+      <span class="eyebrow">Håndlagde kaker fra Porsgrunn</span>
+      <h1 class="tittel">Kaker laget med<br><em>kjærlighet</em></h1>
+      <p class="ingress">Hver kake er laget spesielt for deg og din anledning. Ingen er like – og det er akkurat slik det skal være.</p>
+      <div class="knapper">
+        <a href="#" class="btn btn-lg" style="background:#fff;color:#7A2A3E;border:none;font-weight:700;">Book din kake</a>
+        <a href="#" class="btn btn-lg" style="background:rgba(255,255,255,.14);color:#fff;border:1.5px solid rgba(255,255,255,.4);">Se hva jeg lager</a>
+      </div>
+    </div>
+  </div>
+</div>
