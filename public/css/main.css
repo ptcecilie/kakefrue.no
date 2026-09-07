@@ -715,3 +715,28 @@ section { padding: var(--section-padding); }
 .page-hero.med-foto > *:not(.ph-bakgrunn):not(.ph-slor) { position: relative; z-index: 2; }
 .page-hero.med-foto h1 { text-shadow: 0 1px 18px rgba(255,252,247,0.8); }
 .page-hero.med-foto p { text-shadow: 0 1px 12px rgba(255,252,247,0.7); }
+
+
+/* ============================================================
+   Mobil – fingervennlige trykkflater
+   ============================================================ */
+@media (max-width: 900px) {
+  /* Hamburgeren er hovednavigasjonen på mobil og var bare 32px høy */
+  .hamburger {
+    width: 46px; height: 46px;
+    align-items: center; justify-content: center;
+    padding: 0; margin-right: -6px;
+  }
+  .hamburger span { width: 26px; }
+
+  /* Menyvalgene i mobilmenyen */
+  .mobile-menu a { padding: 16px 0; font-size: 1.05rem; }
+}
+@media (max-width: 600px) {
+  /* Lenker i footeren lå på 24px – for lite å treffe */
+  .footer-col a { padding: 9px 0; margin-bottom: 2px; }
+  .social-links a { min-width: 44px; min-height: 44px; display: inline-flex;
+                    align-items: center; justify-content: center; }
+  /* Knapper skal fylle bredden så de er lette å treffe */
+  .btn { min-height: 46px; }
+}
