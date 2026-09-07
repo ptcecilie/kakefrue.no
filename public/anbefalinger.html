@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anbefalinger – Kakefrue</title>
   <meta name="description" content="Les hva kundene sier om Kakefrue. Ekte tilbakemeldinger fra fornøyde kunder.">
-  <link rel="stylesheet" href="/css/main.css?v=3.3">
+  <link rel="stylesheet" href="/css/main.css?v=3.4">
   <style>
     .reviews-grid {
       display: grid;
@@ -43,6 +43,40 @@
     }
     #loading { text-align: center; padding: 48px; }
     #empty { display: none; text-align: center; padding: 64px 24px; }
+
+    /* Rullende bånd øverst – samme prinsipp som bildegalleriet */
+    .rull-ramme { position: relative; overflow: hidden; padding: 4px 0 10px; }
+    .rull-ramme::before, .rull-ramme::after {
+      content: ''; position: absolute; top: 0; bottom: 0; width: 90px; z-index: 2; pointer-events: none;
+    }
+    .rull-ramme::before { left: 0;  background: linear-gradient(90deg, var(--cream), transparent); }
+    .rull-ramme::after  { right: 0; background: linear-gradient(270deg, var(--cream), transparent); }
+    .rull-spor {
+      display: flex; gap: 22px; width: max-content;
+      animation: anbefalingRull 80s linear infinite;
+    }
+    .rull-ramme:hover .rull-spor { animation-play-state: paused; }
+    .rull-kort {
+      flex: 0 0 330px;
+      background: var(--white); border-radius: var(--radius);
+      padding: 24px; box-shadow: var(--shadow);
+      display: flex; flex-direction: column;
+    }
+    .rull-kort img {
+      width: 100%; aspect-ratio: 4/3; object-fit: cover;
+      border-radius: var(--radius-sm); margin-bottom: 14px;
+    }
+    .rull-kort .stars { color: var(--gold); font-size: 1rem; margin-bottom: 10px; }
+    .rull-kort .text {
+      flex: 1; font-style: italic; opacity: 0.85; line-height: 1.7;
+      font-size: 0.92rem; margin-bottom: 14px;
+      display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .rull-kort .author { font-weight: 700; font-size: 0.88rem; color: var(--gold-dark); }
+    @media (prefers-reduced-motion: reduce) {
+      .rull-spor { animation: none; }
+      .rull-ramme { overflow-x: auto; }
+    }
 
     /* Murverkslayout – kortene får høyden innholdet krever */
     .reviews-masonry { columns: 3 320px; column-gap: 22px; }
@@ -118,6 +152,13 @@
     <a href="#legg-igjen" class="btn btn-primary" style="margin-top:26px;">Legg igjen din anbefaling</a>
   </div>
 
+  <!-- Rullende anbefalinger -->
+  <section style="padding-top:44px; padding-bottom:12px;">
+    <div class="rull-ramme">
+      <div class="rull-spor" id="rullSpor"></div>
+    </div>
+  </section>
+
   <!-- Legg igjen anbefaling -->
   <section style="background: var(--white); padding-top:56px; padding-bottom:56px;" id="legg-igjen">
     <div class="container" style="max-width:660px;">
@@ -169,6 +210,7 @@
 
   <section>
     <div class="container">
+      <h2 class="section-title" id="alleTittel" style="display:none;">Alle anbefalinger</h2>
       <div id="loading">
         <div class="spinner"></div>
         <p style="opacity:0.5;">Laster anbefalinger...</p>
@@ -315,6 +357,23 @@ fetch('/api/reviews')
     if (rad) {
       document.getElementById('statAntall').textContent = reviews.length;
       rad.style.display = 'flex';
+    }
+    const tittel = document.getElementById('alleTittel');
+    if (tittel) tittel.style.display = 'block';
+
+    // Rullende bånd øverst – dobbelt sett gir sømløs runde
+    const spor = document.getElementById('rullSpor');
+    if (spor) {
+      const rullKort = r => `
+        <div class="rull-kort">
+          ${r.image_url ? `<img src="${r.image_url}" alt="Kake fra Kakefrue" loading="lazy">` : ''}
+          <div class="stars">${'★'.repeat(r.rating || 5)}${'☆'.repeat(5 - (r.rating || 5))}</div>
+          <p class="text">"${r.review_text}"</p>
+          <span class="author">— ${r.customer_name}</span>
+        </div>`;
+      spor.innerHTML = [...reviews, ...reviews].map(rullKort).join('');
+      // Lengre bånd trenger lengre tid for å holde samme fart
+      spor.style.animationDuration = Math.max(40, reviews.length * 7) + 's';
     }
     grid.innerHTML = reviews.map((r, i) => `
       <div class="review-full-card">
