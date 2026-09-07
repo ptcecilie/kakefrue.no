@@ -678,36 +678,12 @@ $('step8Pay').addEventListener('click', async () => {
     if (!bookingRes.ok) throw new Error(bookingData.error || 'Kunne ikke opprette bestilling');
     state.bookingId = bookingData.booking_id;
 
-    // Create SumUp checkout
-    $('step8Pay').textContent = 'Starter betaling...';
-    const payRes = await fetch('/api/payment/sumup/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        booking_id: state.bookingId,
-        amount: state._deposit,
-        description: `Kakefrue depositum – bestilling #${state.bookingId}`
-      })
-    });
-    const payData = await payRes.json();
-    if (!payRes.ok) throw new Error(payData.error || 'Betalingsfeil');
-
-    // Redirect to SumUp or handle dev mode
-    if (payData.redirect_url || payData.hosted_checkout_url) {
-      window.location.href = payData.redirect_url || payData.hosted_checkout_url;
-    } else {
-      // Dev mode — simulate success
-      await fetch('/api/payment/confirm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ booking_id: state.bookingId, checkout_id: payData.id })
-      });
-      showSuccess();
-    }
+    // Ingen betaling her – depositum avtales med Vipps etter kontakt
+    showSuccess();
   } catch (err) {
     showError('step8Error', err.message);
     $('step8Pay').disabled = false;
-    $('step8Pay').textContent = 'Betal depositum 💳';
+    $('step8Pay').textContent = 'Send bestilling →';
   }
 });
 
