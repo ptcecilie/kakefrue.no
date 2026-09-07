@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kurs – Kakefrue</title>
   <meta name="description" content="Lær å lage vakre kaker med Kakefrue. Se kommende kurs og meld deg på.">
-  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/main.css?v=2.9">
   <style>
     .course-card {
       background: var(--white);
@@ -65,17 +65,21 @@
   <div class="nav-center">
     <ul class="nav-links">
       <li><a href="/meny.html">Meny</a></li>
+      <li><a href="/jul.html" class="nav-jul">🎄 Julebestillinger</a></li>
       <li><a href="/anbefalinger.html">Anbefalinger</a></li>
       <li><a href="/provesmaking.html">Prøvesmaking</a></li>
-      <li><a href="/kurs.html">Kurs</a></li>
+      <li><a href="/kurs.html" class="nav-aktiv">Kurs</a></li>
       <li><a href="/om-kakefrue.html">Om Kakefrue</a></li>
       <li><a href="/book.html" class="nav-cta">Book din kake</a></li>
     </ul>
   </div>
-  <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  <button class="hamburger" id="hamburger" aria-label="Meny">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
 <div class="mobile-menu" id="mobileMenu">
   <a href="/meny.html">Meny</a>
+  <a href="/jul.html">🎄 Julebestillinger</a>
   <a href="/anbefalinger.html">Anbefalinger</a>
   <a href="/provesmaking.html">Prøvesmaking</a>
   <a href="/kurs.html">Kurs</a>

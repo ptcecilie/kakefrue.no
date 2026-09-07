@@ -122,6 +122,12 @@ section { padding: var(--section-padding); }
   transition: opacity 0.2s, color 0.2s;
 }
 .nav-links a:hover { opacity: 1; color: var(--gold); }
+/* Julebestillinger – alltid uthevet i grønt */
+.nav-links a.nav-jul { color: #3D6B38; font-weight: 600; opacity: 1; }
+.nav-links a.nav-jul:hover { color: #4E8547; }
+/* Siden man står på */
+.nav-links a.nav-aktiv { color: var(--gold); opacity: 1; font-weight: 700; }
+.nav-links a[data-aktiv] { font-weight: 700; }
 .nav-cta {
   background: rgba(196, 120, 138, 0.13);
   color: #9B3A52 !important;
