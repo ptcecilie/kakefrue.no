@@ -20,9 +20,23 @@ const TRACKED_PAGES = {
   '/anbefalinger.html': 'Anbefalinger',
   '/provesmaking.html': 'Prøvesmaking'
 };
+// Cecilies egne besok skal ikke telles med i statistikken.
+// Kapselen settes ved innlogging i admin, eller ved aa besoke ?ikkespor=1
+const ETT_AR = 365 * 24 * 60 * 60 * 1000;
+function harIkkeSporKapsel(req) {
+  return (req.headers.cookie || '').split(';').some(c => c.trim() === 'kf_ikkespor=1');
+}
+function settIkkeSpor(res) {
+  res.setHeader('Set-Cookie',
+    `kf_ikkespor=1; Max-Age=${ETT_AR / 1000}; Path=/; SameSite=Lax`);
+}
+
 app.use((req, res, next) => {
+  // Egen lenke for aa slaa det av paa en ny enhet, f.eks. mobilen
+  if (req.query.ikkespor === '1') settIkkeSpor(res);
+
   const page = TRACKED_PAGES[req.path];
-  if (page && req.method === 'GET') {
+  if (page && req.method === 'GET' && !harIkkeSporKapsel(req) && req.query.ikkespor !== '1') {
     const today = new Date().toISOString().slice(0, 10);
     pool.query(
       `INSERT INTO page_views (page, view_date, count) VALUES (?, ?, 1)
@@ -47,6 +61,12 @@ async function requireAdmin(req, res, next) {
   if (!stored || password !== stored) return res.status(401).json({ error: 'Feil passord' });
   next();
 }
+
+// POST /api/admin/ikke-spor — kalles etter innlogging i admin
+app.post('/api/admin/ikke-spor', requireAdmin, (req, res) => {
+  settIkkeSpor(res);
+  res.json({ ok: true });
+});
 
 // ============================================================
 // Public API

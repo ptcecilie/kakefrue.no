@@ -48,6 +48,8 @@ async function attemptLogin(pw) {
   adminPassword = pw;
   await api('/api/admin/stats');
   localStorage.setItem('kakefrue_admin_pw', pw);
+  // Merk denne nettleseren så Cecilies egne besøk holdes utenfor statistikken
+  api('/api/admin/ikke-spor', { method: 'POST' }).catch(() => {});
   $('loginScreen').classList.add('hidden');
   $('adminApp').classList.remove('hidden');
   initAdmin();
