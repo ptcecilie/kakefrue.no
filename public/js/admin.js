@@ -240,6 +240,107 @@ async function exportJulebestillingerExcel() {
   } catch (e) { showAlert('Eksport feilet: ' + e.message, 'error'); }
 }
 
+function aapneHentemelding(o) {
+  const varer = (o.products || []).map(p => `${p.name} x${p.qty}`).join(', ');
+  const iMorgen = new Date(Date.now() + 86400000).toLocaleDateString('nb-NO', { weekday:'long', day:'numeric', month:'long' });
+
+  openModal(`
+    <div class="modal-header">
+      <h3>Melding til ${o.full_name}</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px;">
+        <div class="form-group">
+          <label class="form-label">Når kan den hentes?</label>
+          <input class="form-input" id="hentNaar" value="${iMorgen}" oninput="byggHentetekst()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tidspunkt</label>
+          <input class="form-input" id="hentTid" placeholder="f.eks. mellom 16 og 19" oninput="byggHentetekst()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hvor</label>
+        <input class="form-input" id="hentSted" value="hos meg i Porsgrunn" oninput="byggHentetekst()">
+      </div>
+
+      <div class="form-group" style="margin-bottom:6px;">
+        <label class="form-label">Meldingen – rediger fritt</label>
+        <textarea class="form-input" id="hentTekst" rows="9" style="line-height:1.65;"></textarea>
+      </div>
+      <p style="font-size:0.78rem;opacity:0.55;margin:0 0 4px;">
+        Bestilling: ${varer || '—'}${o.delivery === 'levering' ? ' · <strong>NB: kunden valgte levering</strong>' : ''}
+      </p>
+      <div id="hentStatus" style="font-size:0.85rem;margin-top:10px;"></div>
+    </div>
+    <div class="modal-footer" style="flex-wrap:wrap;">
+      <button class="btn btn-outline" onclick="closeModal()">Lukk</button>
+      <button class="btn btn-outline" onclick="kopierHentetekst()">📋 Kopier til SMS</button>
+      ${o.email
+        ? `<button class="btn btn-primary" id="hentSendBtn" onclick="sendHentemelding('${o.email}', '${(o.full_name||'').replace(/'/g,"&apos;")}')">✉️ Send e-post</button>`
+        : `<span style="font-size:0.82rem;opacity:0.6;align-self:center;">Ingen e-post oppgitt – bruk SMS</span>`}
+    </div>
+  `);
+  window._hentKunde = o;
+  byggHentetekst();
+}
+
+function byggHentetekst() {
+  const o = window._hentKunde || {};
+  const naar = ($('hentNaar')?.value || '').trim();
+  const tid  = ($('hentTid')?.value || '').trim();
+  const sted = ($('hentSted')?.value || '').trim();
+  const fornavn = (o.full_name || '').split(' ')[0];
+  const naarDel = [naar, tid].filter(Boolean).join(' ');
+
+  $('hentTekst').value =
+`Hei ${fornavn}!
+
+Julebestillingen din er ferdig og klar til henting.
+
+Du kan hente den ${naarDel || '[fyll inn tidspunkt]'} ${sted || ''}.
+
+Si fra hvis tidspunktet ikke passer, så finner vi noe annet.
+
+Med vennlig hilsen
+Cecilie – Kakefrue
+900 33 039`;
+}
+
+function kopierHentetekst() {
+  const t = $('hentTekst').value;
+  navigator.clipboard.writeText(t).then(
+    () => { $('hentStatus').innerHTML = '<span style="color:var(--sage);">✓ Kopiert – lim inn i meldingsappen på telefonen</span>'; },
+    () => { $('hentTekst').select(); $('hentStatus').innerHTML = '<span style="opacity:0.7;">Teksten er markert – trykk Cmd+C</span>'; }
+  );
+}
+
+async function sendHentemelding(epost, navn) {
+  const btn = $('hentSendBtn');
+  btn.disabled = true; btn.textContent = 'Sender...';
+  try {
+    const r = await api('/api/admin/send-email', {
+      method: 'POST',
+      body: JSON.stringify({
+        to: epost, name: navn,
+        subject: 'Julebestillingen din er klar til henting',
+        message: $('hentTekst').value
+      })
+    });
+    if (r.mailto_fallback) {
+      $('hentStatus').innerHTML = '<span style="color:#C62828;">E-post er ikke satt opp på serveren.</span>';
+      btn.disabled = false; btn.textContent = '✉️ Send e-post';
+      return;
+    }
+    $('hentStatus').innerHTML = '<span style="color:var(--sage);">✓ Sendt til ' + epost + '</span>';
+    btn.textContent = '✓ Sendt';
+  } catch (e) {
+    $('hentStatus').innerHTML = '<span style="color:#C62828;">Feil: ' + e.message + '</span>';
+    btn.disabled = false; btn.textContent = '✉️ Send e-post';
+  }
+}
+
 async function slettJulebestilling(id, btn) {
   if (!confirm('Slette denne julebestillingen? Dette kan ikke angres.')) return;
   btn.disabled = true;
@@ -272,6 +373,7 @@ async function loadChristmasOrders() {
             <div style="display:flex;gap:8px;">
               <a href="tel:${o.phone}" class="btn btn-outline btn-sm">📞 ${o.phone}</a>
               ${o.email ? `<button class="btn btn-outline btn-sm" data-email="${o.email}" data-name="${o.full_name.replace(/"/g,'&quot;')}" onclick="openEmailModal(this.dataset.email,this.dataset.name)">✉️</button>` : ''}
+              <button class="btn btn-primary btn-sm" onclick='aapneHentemelding(${JSON.stringify(o).replace(/'/g, "&apos;")})'>📦 Klar til henting</button>
               <button class="photo-delete-btn" style="padding:7px 12px;" title="Slett bestilling" onclick="slettJulebestilling(${o.id}, this)">🗑</button>
             </div>
           </div>
