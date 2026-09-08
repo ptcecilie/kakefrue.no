@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Julebestillinger – Kakefrue</title>
   <meta name="description" content="Bestill hjemmelagde julekaker fra Kakefrue i Porsgrunn – kling, lefse, krumkaker, pepperkaker og mer.">
-  <link rel="stylesheet" href="/css/main.css?v=4.4">
+  <link rel="stylesheet" href="/css/main.css?v=4.5">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@500;700&family=Lato:wght@300;400;700&display=swap">
@@ -757,7 +757,28 @@
         <svg width="22" height="22" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="white"/><text x="24" y="34" text-anchor="middle" font-size="26" font-family="Arial Black,sans-serif" fill="#FF5B24" font-weight="900">V</text></svg>
         Åpne Vipps og betal
       </a>
-      <p style="font-size:0.73rem;color:#B0A090;margin:14px 0 0;">Åpner Vipps-appen på mobil · Skriv inn beløp manuelt på nettbrett/PC</p>
+      <p style="font-size:0.73rem;color:#B0A090;margin:14px 0 0;" id="vippsHint">Åpner Vipps-appen på mobil</p>
+
+      <div id="vippsReserve" style="display:none;margin-top:16px;padding:16px 18px;background:#FDF5F0;border:1.5px solid #E8D2C0;border-radius:12px;text-align:left;">
+        <p style="margin:0 0 10px;font-size:0.87rem;color:#3D2420;font-weight:700;">Vipps åpnet seg ikke</p>
+        <p style="margin:0 0 12px;font-size:0.83rem;color:#8A6858;line-height:1.7;">
+          Det skjer på PC og nettbrett, som ikke har Vipps-appen. Åpne Vipps på mobilen din og betal manuelt:
+        </p>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:0.9rem;">
+          <div style="display:flex;justify-content:space-between;gap:12px;">
+            <span style="color:#8A6858;">Til nummer</span>
+            <strong style="color:#FF5B24;">90 03 30 39</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:12px;">
+            <span style="color:#8A6858;">Beløp</span>
+            <strong id="reserveBelop">0 kr</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:12px;">
+            <span style="color:#8A6858;">Melding</span>
+            <strong id="reserveMelding">–</strong>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div id="vippsEtterBetalt" style="display:none;margin-top:24px;">
@@ -1045,10 +1066,30 @@ async function sendBestilling(){
   }
 }
 function vippsKlikket(){
-  /* Vis "etter betalt"-melding etter 3 sek (bruker har åpnet Vipps) */
-  setTimeout(()=>{
-    document.getElementById('vippsEtterBetalt').style.display='block';
-  },3000);
+  /* Hvis Vipps-appen aapner, mister siden fokus. Skjer ikke det innen
+     halvannet sekund, finnes ikke appen - og da viser vi tallene i klartekst. */
+  const foer = Date.now();
+  let byttet = false;
+  const merk = () => { byttet = true; };
+  document.addEventListener('visibilitychange', merk, { once:true });
+  window.addEventListener('blur', merk, { once:true });
+
+  setTimeout(() => {
+    document.removeEventListener('visibilitychange', merk);
+    window.removeEventListener('blur', merk);
+    if (byttet || document.hidden || Date.now() - foer > 2600) {
+      /* Appen tok over - vis kvitteringsteksten */
+      document.getElementById('vippsEtterBetalt').style.display = 'block';
+    } else {
+      /* Ingenting skjedde - vis reserveinformasjonen */
+      const r = document.getElementById('vippsReserve');
+      r.style.display = 'block';
+      document.getElementById('reserveBelop').textContent = _vippsTotal + ' kr';
+      document.getElementById('reserveMelding').textContent = 'Julekaker ' + _vippsNavn;
+      document.getElementById('vippsHint').style.display = 'none';
+      r.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    }
+  }, 1500);
 }
 document.getElementById('hamburger').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('open'));
 visProdukter();
