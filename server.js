@@ -436,6 +436,26 @@ app.get('/api/admin/christmas-orders', requireAdmin, async (req, res) => {
   }
 });
 
+// PUT /api/admin/christmas-orders/:id — marker som varslet
+app.put('/api/admin/christmas-orders/:id', requireAdmin, async (req, res) => {
+  const { notified, via } = req.body;
+  try {
+    if (notified === false) {
+      await pool.query(`UPDATE christmas_orders SET notified_at = NULL, notified_via = NULL WHERE id = ?`, [req.params.id]);
+    } else {
+      await pool.query(
+        `UPDATE christmas_orders SET notified_at = NOW(), notified_via = ? WHERE id = ?`,
+        [via || 'ukjent', req.params.id]
+      );
+    }
+    const [[r]] = await pool.query(`SELECT notified_at, notified_via FROM christmas_orders WHERE id = ?`, [req.params.id]);
+    res.json({ ok: true, ...r });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Serverfeil: ' + err.message });
+  }
+});
+
 // DELETE /api/admin/christmas-orders/:id
 app.delete('/api/admin/christmas-orders/:id', requireAdmin, async (req, res) => {
   try {

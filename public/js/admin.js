@@ -240,46 +240,61 @@ async function exportJulebestillingerExcel() {
   } catch (e) { showAlert('Eksport feilet: ' + e.message, 'error'); }
 }
 
+const HENTEADRESSE = 'Snarvegen 8, 3925 Porsgrunn';
+
 function aapneHentemelding(o) {
+  const levering = o.delivery === 'levering';
   const varer = (o.products || []).map(p => `${p.name} x${p.qty}`).join(', ');
   const iMorgen = new Date(Date.now() + 86400000).toLocaleDateString('nb-NO', { weekday:'long', day:'numeric', month:'long' });
+  const varslet = o.notified_at
+    ? `<div style="background:rgba(122,158,130,.14);border:1px solid rgba(122,158,130,.4);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:0.85rem;">
+         ✓ Allerede varslet ${new Date(o.notified_at).toLocaleString('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
+         ${o.notified_via ? ' på ' + o.notified_via : ''}
+         <button class="btn btn-outline btn-sm" style="margin-left:10px;padding:3px 10px;" onclick="settVarslet(${o.id}, false)">Angre</button>
+       </div>` : '';
 
   openModal(`
     <div class="modal-header">
-      <h3>Melding til ${o.full_name}</h3>
+      <h3>${levering ? '🚗 Levering' : '📦 Klar til henting'} – ${o.full_name}</h3>
       <button class="modal-close" onclick="closeModal()">&times;</button>
     </div>
     <div class="modal-body">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px;">
+      ${varslet}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
         <div class="form-group">
-          <label class="form-label">Når kan den hentes?</label>
+          <label class="form-label">${levering ? 'Leveringsdag' : 'Hentedag'}</label>
           <input class="form-input" id="hentNaar" value="${iMorgen}" oninput="byggHentetekst()">
         </div>
         <div class="form-group">
           <label class="form-label">Tidspunkt</label>
-          <input class="form-input" id="hentTid" placeholder="f.eks. mellom 16 og 19" oninput="byggHentetekst()">
+          <input class="form-input" id="hentTid" placeholder="${levering ? 'f.eks. ca. kl. 17' : 'f.eks. mellom 16 og 19'}" oninput="byggHentetekst()">
         </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Hvor</label>
-        <input class="form-input" id="hentSted" value="hos meg i Porsgrunn" oninput="byggHentetekst()">
-      </div>
+      ${levering
+        ? `<div class="form-group">
+             <label class="form-label">Leveringsadresse <span style="font-weight:300;opacity:.6;">(fra bestillingen)</span></label>
+             <input class="form-input" id="hentSted" value="${(o.address||'').replace(/"/g,'&quot;')}" oninput="byggHentetekst()">
+           </div>`
+        : `<div class="form-group">
+             <label class="form-label">Hentested</label>
+             <input class="form-input" id="hentSted" value="${HENTEADRESSE}" oninput="byggHentetekst()">
+           </div>`}
 
       <div class="form-group" style="margin-bottom:6px;">
         <label class="form-label">Meldingen – rediger fritt</label>
-        <textarea class="form-input" id="hentTekst" rows="9" style="line-height:1.65;"></textarea>
+        <textarea class="form-input" id="hentTekst" rows="10" style="line-height:1.65;"></textarea>
       </div>
-      <p style="font-size:0.78rem;opacity:0.55;margin:0 0 4px;">
-        Bestilling: ${varer || '—'}${o.delivery === 'levering' ? ' · <strong>NB: kunden valgte levering</strong>' : ''}
+      <p style="font-size:0.78rem;opacity:0.6;margin:0;">
+        📞 ${o.phone} · ${varer || '—'}
       </p>
       <div id="hentStatus" style="font-size:0.85rem;margin-top:10px;"></div>
     </div>
-    <div class="modal-footer" style="flex-wrap:wrap;">
+    <div class="modal-footer" style="flex-wrap:wrap;gap:8px;">
       <button class="btn btn-outline" onclick="closeModal()">Lukk</button>
-      <button class="btn btn-outline" onclick="kopierHentetekst()">📋 Kopier til SMS</button>
+      <button class="btn btn-outline" onclick="kopierHentetekst(${o.id})">📋 Kopier til SMS</button>
       ${o.email
-        ? `<button class="btn btn-primary" id="hentSendBtn" onclick="sendHentemelding('${o.email}', '${(o.full_name||'').replace(/'/g,"&apos;")}')">✉️ Send e-post</button>`
-        : `<span style="font-size:0.82rem;opacity:0.6;align-self:center;">Ingen e-post oppgitt – bruk SMS</span>`}
+        ? `<button class="btn btn-primary" id="hentSendBtn" onclick="sendHentemelding(${o.id}, '${o.email}', '${(o.full_name||'').replace(/'/g,"&apos;")}')">✉️ Send e-post</button>`
+        : `<span style="font-size:0.8rem;opacity:0.6;align-self:center;">Ingen e-post – bruk SMS</span>`}
     </div>
   `);
   window._hentKunde = o;
@@ -288,18 +303,31 @@ function aapneHentemelding(o) {
 
 function byggHentetekst() {
   const o = window._hentKunde || {};
+  const levering = o.delivery === 'levering';
   const naar = ($('hentNaar')?.value || '').trim();
   const tid  = ($('hentTid')?.value || '').trim();
   const sted = ($('hentSted')?.value || '').trim();
   const fornavn = (o.full_name || '').split(' ')[0];
-  const naarDel = [naar, tid].filter(Boolean).join(' ');
+  const naarDel = [naar, tid].filter(Boolean).join(' ') || '[fyll inn tidspunkt]';
 
-  $('hentTekst').value =
-`Hei ${fornavn}!
+  $('hentTekst').value = levering
+? `Hei ${fornavn}!
+
+Julebestillingen din er ferdig, og jeg kommer med den ${naarDel}.
+
+Adresse: ${sted || '[adresse mangler]'}
+
+Si fra hvis tidspunktet ikke passer, så finner vi noe annet.
+
+Med vennlig hilsen
+Cecilie – Kakefrue
+900 33 039`
+: `Hei ${fornavn}!
 
 Julebestillingen din er ferdig og klar til henting.
 
-Du kan hente den ${naarDel || '[fyll inn tidspunkt]'} ${sted || ''}.
+Du kan hente den ${naarDel}.
+Adresse: ${sted || HENTEADRESSE}
 
 Si fra hvis tidspunktet ikke passer, så finner vi noe annet.
 
@@ -308,15 +336,32 @@ Cecilie – Kakefrue
 900 33 039`;
 }
 
-function kopierHentetekst() {
-  const t = $('hentTekst').value;
-  navigator.clipboard.writeText(t).then(
-    () => { $('hentStatus').innerHTML = '<span style="color:var(--sage);">✓ Kopiert – lim inn i meldingsappen på telefonen</span>'; },
-    () => { $('hentTekst').select(); $('hentStatus').innerHTML = '<span style="opacity:0.7;">Teksten er markert – trykk Cmd+C</span>'; }
-  );
+async function settVarslet(id, varslet, via) {
+  try {
+    await api('/api/admin/christmas-orders/' + id, {
+      method: 'PUT',
+      body: JSON.stringify({ notified: varslet, via })
+    });
+    loadChristmasOrders();
+    if (!varslet) closeModal();
+  } catch (e) {
+    alert('Kunne ikke lagre status: ' + e.message);
+  }
 }
 
-async function sendHentemelding(epost, navn) {
+function kopierHentetekst(id) {
+  const t = $('hentTekst').value;
+  const etterpaa = () => {
+    $('hentStatus').innerHTML =
+      '<span style="color:var(--sage);">✓ Kopiert – lim inn i meldingsappen.</span> ' +
+      '<button class="btn btn-primary btn-sm" style="margin-left:8px;padding:4px 12px;" ' +
+      `onclick="settVarslet(${id}, true, 'SMS'); $('hentStatus').innerHTML='<span style=&quot;color:var(--sage)&quot;>✓ Markert som varslet</span>';">` +
+      'Jeg har sendt den ✓</button>';
+  };
+  navigator.clipboard.writeText(t).then(etterpaa, () => { $('hentTekst').select(); etterpaa(); });
+}
+
+async function sendHentemelding(id, epost, navn) {
   const btn = $('hentSendBtn');
   btn.disabled = true; btn.textContent = 'Sender...';
   try {
@@ -324,7 +369,7 @@ async function sendHentemelding(epost, navn) {
       method: 'POST',
       body: JSON.stringify({
         to: epost, name: navn,
-        subject: 'Julebestillingen din er klar til henting',
+        subject: 'Julebestillingen din er klar',
         message: $('hentTekst').value
       })
     });
@@ -333,6 +378,7 @@ async function sendHentemelding(epost, navn) {
       btn.disabled = false; btn.textContent = '✉️ Send e-post';
       return;
     }
+    await settVarslet(id, true, 'e-post');
     $('hentStatus').innerHTML = '<span style="color:var(--sage);">✓ Sendt til ' + epost + '</span>';
     btn.textContent = '✓ Sendt';
   } catch (e) {
@@ -362,18 +408,37 @@ async function loadChristmasOrders() {
       return;
     }
     container.innerHTML = `
-      <div style="margin-bottom:16px;font-size:0.9rem;opacity:0.6;">${orders.length} bestilling${orders.length !== 1 ? 'er' : ''} totalt</div>
+      ${(() => {
+        const varslet = orders.filter(x => x.notified_at).length;
+        const igjen = orders.length - varslet;
+        const lev = orders.filter(x => x.delivery === 'levering' && !x.notified_at).length;
+        return `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;">
+          <span style="background:var(--white);border-radius:100px;padding:7px 16px;font-size:0.85rem;box-shadow:var(--shadow);">
+            <strong>${orders.length}</strong> bestillinger
+          </span>
+          <span style="background:rgba(122,158,130,.16);border-radius:100px;padding:7px 16px;font-size:0.85rem;">
+            ✓ <strong>${varslet}</strong> varslet
+          </span>
+          ${igjen ? `<span style="background:rgba(196,120,138,.16);border-radius:100px;padding:7px 16px;font-size:0.85rem;">
+            <strong>${igjen}</strong> gjenstår</span>` : ''}
+          ${lev ? `<span style="background:rgba(196,149,106,.2);border-radius:100px;padding:7px 16px;font-size:0.85rem;">
+            🚗 <strong>${lev}</strong> skal leveres</span>` : ''}
+        </div>`;
+      })()}
       ${orders.map(o => `
         <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:16px;">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
             <div>
               <strong style="font-size:1.05rem;">${o.full_name}</strong>
               <span style="margin-left:12px;font-size:0.85rem;opacity:0.55;">${formatDate(o.created_at)}</span>
+              ${o.notified_at
+                ? `<span style="margin-left:10px;background:rgba(122,158,130,.18);color:#4A7A5A;border-radius:100px;padding:3px 11px;font-size:0.75rem;font-weight:700;">✓ Varslet ${new Date(o.notified_at).toLocaleDateString('nb-NO',{day:'numeric',month:'short'})}</span>`
+                : `<span style="margin-left:10px;background:rgba(196,120,138,.16);color:#9B3A52;border-radius:100px;padding:3px 11px;font-size:0.75rem;font-weight:700;">Ikke varslet</span>`}
             </div>
             <div style="display:flex;gap:8px;">
               <a href="tel:${o.phone}" class="btn btn-outline btn-sm">📞 ${o.phone}</a>
               ${o.email ? `<button class="btn btn-outline btn-sm" data-email="${o.email}" data-name="${o.full_name.replace(/"/g,'&quot;')}" onclick="openEmailModal(this.dataset.email,this.dataset.name)">✉️</button>` : ''}
-              <button class="btn btn-primary btn-sm" onclick='aapneHentemelding(${JSON.stringify(o).replace(/'/g, "&apos;")})'>📦 Klar til henting</button>
+              <button class="btn btn-primary btn-sm" onclick='aapneHentemelding(${JSON.stringify(o).replace(/'/g, "&apos;")})'>${o.delivery === 'levering' ? '🚗 Varsle om levering' : '📦 Klar til henting'}</button>
               <button class="photo-delete-btn" style="padding:7px 12px;" title="Slett bestilling" onclick="slettJulebestilling(${o.id}, this)">🗑</button>
             </div>
           </div>

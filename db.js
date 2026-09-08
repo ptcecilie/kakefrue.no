@@ -167,6 +167,8 @@ async function initDB() {
     `);
     // Eksisterende installasjoner mangler denne – leveringstillegget ble kastet bort
     try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN delivery_cost INT DEFAULT 0`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN notified_at DATETIME NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN notified_via VARCHAR(20) NULL`); } catch (e) {}
 
     await conn.query(`
       CREATE TABLE IF NOT EXISTS page_views (
