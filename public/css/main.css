@@ -747,10 +747,10 @@ section { padding: var(--section-padding); }
    ============================================================ */
 /* Fotoet ligger pa <html>, ikke <body>. En ::before med negativ z-index pa
    body havner BAK bodys egen bakgrunnsfarge og blir usynlig. */
-html:has(body[style*="--side-foto"]) { background: var(--cream); }
-html:has(body[style*="--side-foto"]) body { background: transparent; }
+html[style*="--side-foto"] { background: var(--cream); }
+html[style*="--side-foto"] body { background: transparent; }
 
-html:has(body[style*="--side-foto"])::before {
+html[style*="--side-foto"]::before {
   content: '';
   position: fixed;
   inset: 0;
@@ -762,7 +762,7 @@ html:has(body[style*="--side-foto"])::before {
   filter: saturate(0.92);
   pointer-events: none;
 }
-html:has(body[style*="--side-foto"])::after {
+html[style*="--side-foto"]::after {
   content: '';
   position: fixed;
   inset: 0;
@@ -773,22 +773,22 @@ html:has(body[style*="--side-foto"])::after {
     linear-gradient(180deg, rgba(250,247,244,0.50) 0%, rgba(250,247,244,0.60) 100%);
 }
 /* Alt innhold ma ligge over de to lagene */
-html:has(body[style*="--side-foto"]) body > * { position: relative; z-index: 2; }
+html[style*="--side-foto"] body > * { position: relative; z-index: 2; }
 
 /* Seksjonene er satt hvite inline pa sidene, sa dette ma vinne over det */
-body[style*="--side-foto"] section {
+html[style*="--side-foto"] body section {
   background: rgba(255,255,255,0.32) !important;
 }
 /* Vekselvis tettere band, sa siden far rytme i stedet for en lang flate */
-body[style*="--side-foto"] section:nth-of-type(even) {
+html[style*="--side-foto"] body section:nth-of-type(even) {
   background: rgba(255,255,255,0.74) !important;
   box-shadow: inset 0 1px 0 rgba(196,149,106,0.10), inset 0 -1px 0 rgba(196,149,106,0.10);
 }
 /* Kort og bokser loftes, siden de na star pa en toneflate og ikke pa hvitt */
-body[style*="--side-foto"] .card,
-body[style*="--side-foto"] .review-card,
-body[style*="--side-foto"] .steg-boks,
-body[style*="--side-foto"] .info-boks {
+html[style*="--side-foto"] body .card,
+html[style*="--side-foto"] body .review-card,
+html[style*="--side-foto"] body .steg-boks,
+html[style*="--side-foto"] body .info-boks {
   background: rgba(255,255,255,0.93);
 }
 
@@ -800,8 +800,8 @@ body[style*="--side-foto"] .info-boks {
 @media (max-width: 768px) {
   .page-hero.med-foto.kompakt { min-height: 240px; padding: 44px 20px 36px; }
   /* Fast bakgrunn koster for mye pa mobil – ruller i stedet */
-  body[style*="--side-foto"]::before,
-  body[style*="--side-foto"]::after { position: absolute; height: 100%; }
+  html[style*="--side-foto"] body::before,
+  html[style*="--side-foto"] body::after { position: absolute; height: 100%; }
 }
 
 /* ============================================================
