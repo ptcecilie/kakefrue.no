@@ -355,6 +355,33 @@ app.post('/api/christmas-orders', async (req, res) => {
       `INSERT INTO christmas_orders (full_name, phone, email, delivery, address, products, note, delivery_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [full_name.trim(), phone.trim(), email?.trim() || null, delivery || 'henting', address?.trim() || null, JSON.stringify(products), note?.trim() || null, parseInt(delivery_cost) || 0]
     );
+    // Ingen e-post her. Den sendes foerst naar betaling er bekreftet,
+    // via /api/christmas-orders/:id/betalt
+    res.json({ ok: true, id: result.insertId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// POST /api/christmas-orders/:id/betalt — kunden bekrefter at Vipps er betalt.
+// Foerst her gaar bekreftelsene ut, til Cecilie og til kunden.
+app.post('/api/christmas-orders/:id/betalt', async (req, res) => {
+  try {
+    const [[o]] = await pool.query(`SELECT * FROM christmas_orders WHERE id = ?`, [req.params.id]);
+    if (!o) return res.status(404).json({ error: 'Fant ikke bestillingen' });
+    if (o.paid_at) return res.json({ ok: true, alt_sendt: true });
+
+    await pool.query(`UPDATE christmas_orders SET paid_at = NOW() WHERE id = ?`, [req.params.id]);
+
+    const products = typeof o.products === 'string' ? JSON.parse(o.products) : (o.products || []);
+    const full_name = o.full_name;
+    const phone = o.phone;
+    const email = o.email;
+    const delivery = o.delivery;
+    const address = o.address;
+    const note = o.note;
+    const delivery_cost = o.delivery_cost;
 
     const transporter = createTransporter();
     const productList = products.map(p => `<li>${p.name} × ${p.qty} — ${p.price * p.qty} kr</li>`).join('');
@@ -418,10 +445,9 @@ app.post('/api/christmas-orders', async (req, res) => {
         });
       } catch (mailErr) { console.log('[Christmas customer email] Not sent:', mailErr.message); }
     }
-
-    res.json({ ok: true, id: result.insertId });
+    res.json({ ok: true });
   } catch (err) {
-    console.error(err);
+    console.error('Betalingsbekreftelse feilet:', err);
     res.status(500).json({ error: 'Serverfeil' });
   }
 });

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Julebestillinger – Kakefrue</title>
   <meta name="description" content="Bestill hjemmelagde julekaker fra Kakefrue i Porsgrunn – kling, lefse, krumkaker, pepperkaker og mer.">
-  <link rel="stylesheet" href="/css/main.css?v=4.8">
+  <link rel="stylesheet" href="/css/main.css?v=4.9">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@500;700&family=Lato:wght@300;400;700&display=swap">
@@ -765,7 +765,7 @@
   <div class="suksess" id="vippsBetalSide" style="display:none;max-width:520px;">
     <span class="suksess-ikon">🎄</span>
     <h2 style="margin-bottom:6px;">Bestilling registrert!</h2>
-    <p style="color:rgba(245,237,214,0.55);font-size:0.88rem;margin-bottom:28px;">Nå gjenstår bare betalingen – betal trygt med Vipps.</p>
+    <p style="color:rgba(245,237,214,0.55);font-size:0.88rem;margin-bottom:28px;">Nå gjenstår bare betalingen. Du får bekreftelse så snart den er registrert.</p>
 
     <div class="vipps-boks">
       <p style="font-size:0.78rem;color:#8A6858;margin:0 0 14px;text-transform:uppercase;letter-spacing:0.09em;font-weight:700;">Betal med Vipps</p>
@@ -814,6 +814,16 @@
           velg <strong style="color:#3D2420;">Send</strong>, og skriv inn nummeret og beløpet over.
         </p>
       </div>
+    </div>
+
+    <div id="betaltBoks" style="margin-top:22px;">
+      <button class="send-knapp" id="betaltKnapp" onclick="bekreftBetalt()"
+              style="background:#7A9E82;max-width:420px;margin:0 auto;display:block;">
+        Jeg har betalt ✓
+      </button>
+      <p style="font-size:0.78rem;color:rgba(245,237,214,0.4);margin:12px 0 0;">
+        Trykk her når betalingen er gjennomført, så får du bekreftelse på e-post
+      </p>
     </div>
 
     <div id="vippsEtterBetalt" style="display:none;margin-top:24px;">
@@ -1080,13 +1090,16 @@ async function sendBestilling(){
     const res=await fetch('/api/christmas-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({full_name:navn,phone:tlf,email:epost,delivery:levering,address:adresse,delivery_cost:levKost,products,note:merknad})});
     if(!res.ok){const e=await res.json();throw new Error(e.error||'Ukjent feil');}
 
+    const svar = await res.json().catch(() => ({}));
+    _bestillingId = svar.id;
+
     /* Vipps godtar ikke forhaandsutfylte betalingslenker, saa
        tallene vises til kopiering i stedet */
     document.getElementById('vippsBelopVis').textContent = total + ' kr';
     document.getElementById('vippsNavnVis').textContent = 'Julekaker ' + navn;
 
     /* Kvittering-tekst */
-    const kvTekst=epost?`Bestillingsbekreftelse er sendt til ${epost}.`:'Ta vare på denne siden som bekreftelse.';
+    const kvTekst=epost?`Bekreftelse er sendt til ${epost}.`:'Ta vare på denne siden som bekreftelse.';
     document.getElementById('kvitteringTekst').textContent=kvTekst;
 
     document.getElementById('skjemaWrap').style.display='none';
@@ -1135,6 +1148,24 @@ function tilpassVippsTilEnhet(){
     if (k) k.style.display = 'none';
     if (h) h.style.display = 'none';
     if (pc) pc.style.display = 'block';
+  }
+}
+
+let _bestillingId = null;
+
+async function bekreftBetalt(){
+  const knapp = document.getElementById('betaltKnapp');
+  knapp.disabled = true;
+  knapp.textContent = 'Registrerer...';
+  try {
+    const res = await fetch('/api/christmas-orders/' + _bestillingId + '/betalt', { method:'POST' });
+    if (!res.ok) throw new Error('Kunne ikke registrere');
+    document.getElementById('betaltBoks').style.display = 'none';
+    document.getElementById('vippsEtterBetalt').style.display = 'block';
+  } catch (e) {
+    knapp.disabled = false;
+    knapp.textContent = 'Jeg har betalt ✓';
+    alert('Noe gikk galt. Ring gjerne 900 33 039, så ordner vi det.');
   }
 }
 
