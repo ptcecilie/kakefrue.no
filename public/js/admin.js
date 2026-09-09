@@ -124,6 +124,7 @@ function loadPanel(panel) {
     case 'kunder': loadCustomers(); break;
     case 'jul': loadChristmasOrders(); break;
     case 'bilder': loadPhotos(); loadAboutImages(); break;
+    case 'etiketter': loadEtiketter(); break;
     case 'statistikk': loadStatistikk(); break;
     case 'innstillinger': loadSettings(); break;
   }
@@ -926,16 +927,49 @@ async function loadPageViews() {
         <h3 style="margin-bottom:20px;">Sidevisninger siste 30 dager</h3>
         <div id="chartPageViews" style="display:flex;align-items:flex-end;gap:4px;height:160px;padding-bottom:28px;position:relative;border-bottom:2px solid rgba(0,0,0,0.07);"></div>
       </div>
-      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;">
+      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;margin-bottom:24px;">
         <h3 style="margin-bottom:20px;">Populære sider</h3>
         <div id="chartByPage"></div>
       </div>
+
+      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 28px;">
+        <h3 style="margin-bottom:14px;">Dine egne besøk</h3>
+        <p id="sporStatus" style="font-size:0.9rem;margin-bottom:16px;"></p>
+        <p style="font-size:0.85rem;opacity:0.7;line-height:1.7;margin-bottom:16px;">
+          Nettleseren merkes automatisk når du logger inn her. På mobilen din, eller
+          en annen nettleser, åpner du denne lenken én gang:<br>
+          <a href="https://kakefrue.no/?ikkespor=1" target="_blank"
+             style="font-family:monospace;font-size:0.82rem;">kakefrue.no/?ikkespor=1</a>
+        </p>
+        <button class="btn btn-outline btn-sm" onclick="nullstillStatistikk()"
+                style="border-color:rgba(200,0,0,0.3);color:#c00;">
+          Nullstill all statistikk
+        </button>
+        <span style="font-size:0.8rem;opacity:0.6;margin-left:10px;">
+          Sletter alle tall og starter telling på nytt fra i dag.
+        </span>
+      </div>
     `;
+
+    const merket = document.cookie.split(';').some(c => c.trim() === 'kf_ikkespor=1');
+    document.getElementById('sporStatus').innerHTML = merket
+      ? '<span style="color:var(--sage);">✓ Denne nettleseren telles ikke med.</span>'
+      : '<span style="color:#C62828;">⚠ Denne nettleseren telles med i statistikken. Logg ut og inn igjen for å merke den.</span>';
 
     renderBarChart('chartPageViews', days, v => v, '#8B72BE');
     const pageTotal = pv.byPage.reduce((s, p) => s + parseInt(p.count), 0) || 1;
     renderPillList('chartByPage', Object.fromEntries(pv.byPage.map(p => [p.page, parseInt(p.count)])), pageTotal);
   } catch (e) { console.error(e); }
+}
+
+async function nullstillStatistikk() {
+  if (!confirm('Slette all statistikk og starte tellingen på nytt?\n\nDette kan ikke angres.')) return;
+  try {
+    await api('/api/admin/pageviews', { method: 'DELETE' });
+    loadPageViews();
+  } catch (e) {
+    alert('Kunne ikke nullstille: ' + e.message);
+  }
 }
 
 function renderBarChart(containerId, data, labelFn, color) {
@@ -970,7 +1004,7 @@ function renderPillList(containerId, data, total) {
 
 function initAdmin() {
   const hash = location.hash.replace('#', '');
-  const validPanels = ['oversikt','kalender','bestillinger','ufullstendige','provesmaking','kurs','anbefalinger','bilder','statistikk','innstillinger','jul'];
+  const validPanels = ['oversikt','kalender','bestillinger','ufullstendige','provesmaking','kurs','anbefalinger','bilder','etiketter','statistikk','innstillinger','jul'];
   const startPanel = validPanels.includes(hash) ? hash : 'oversikt';
   activatePanel(startPanel);
 }
@@ -1862,3 +1896,337 @@ async function saveSettings() {
     $('set-newpass2').value = '';
   } catch (e) { alert(e.message); }
 }
+
+// ============================================================
+// Etiketter – merking av ferdigpakkede produkter
+// ============================================================
+const ALLERGENER = [
+  'Gluten', 'Skalldyr', 'Egg', 'Fisk', 'Peanøtter', 'Soya', 'Melk',
+  'Nøtter', 'Selleri', 'Sennep', 'Sesamfrø', 'Sulfitt', 'Lupin', 'Bløtdyr'
+];
+
+// Avsender pa etiketten – lovpalagt: navn og adresse pa virksomheten
+const ETIKETT_AVSENDER = [
+  'Kakefrue · NIAX CONSULTING AS',
+  'Storgata 157D, 3915 Porsgrunn'
+];
+
+let etikettProdukter = [];
+
+// Gjor tekst trygg i HTML – navn og ingredienser skrives fritt inn
+function esc(t) {
+  return String(t == null ? '' : t)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+async function loadEtiketter() {
+  try {
+    const s = await api('/api/admin/settings');
+    etikettProdukter = s.etikett_produkter ? JSON.parse(s.etikett_produkter) : [];
+  } catch (e) {
+    etikettProdukter = [];
+  }
+  renderEtikettListe();
+  fyllEtikettVelger();
+  const d = $('etikDato');
+  if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
+}
+
+async function lagreEtikettProdukter() {
+  await api('/api/admin/settings', {
+    method: 'PUT',
+    body: JSON.stringify({ etikett_produkter: JSON.stringify(etikettProdukter) })
+  });
+}
+
+function fyllEtikettVelger() {
+  const sel = $('etikProdukt');
+  if (!sel) return;
+  const forrige = sel.value;
+  sel.innerHTML = etikettProdukter.length
+    ? etikettProdukter.map((p, i) => `<option value="${i}">${esc(p.navn)}</option>`).join('')
+    : '<option value="">Legg inn et produkt først</option>';
+  if (forrige && etikettProdukter[forrige]) sel.value = forrige;
+}
+
+function renderEtikettListe() {
+  const el = $('etikettListe');
+  if (!el) return;
+
+  if (!etikettProdukter.length) {
+    el.innerHTML = `
+      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);
+                  padding:40px 28px;text-align:center;">
+        <p style="opacity:0.6;margin-bottom:18px;line-height:1.7;">
+          Ingen produkter ennå.<br>
+          Legg inn ett per produkttype du pakker – lefse, krumkaker, kransekake og så videre.<br>
+          Ingredienslisten skriver du bare inn én gang.
+        </p>
+        <button class="btn btn-primary btn-sm" onclick="nyEtikettProdukt()">+ Legg inn første produkt</button>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = `<div style="display:grid;gap:12px;">` + etikettProdukter.map((p, i) => `
+    <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);
+                padding:18px 22px;display:flex;gap:18px;align-items:flex-start;">
+      <div style="flex:1;min-width:0;">
+        <h4 style="margin:0 0 6px;font-size:1.02rem;">${esc(p.navn)}</h4>
+        <p style="font-size:0.83rem;opacity:0.65;margin:0 0 8px;line-height:1.6;">${esc(p.ingredienser || '—')}</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+          ${(p.allergener || []).map(a =>
+            `<span style="background:rgba(198,40,40,0.09);color:#9B2C2C;font-size:0.72rem;
+                          font-weight:600;padding:3px 9px;border-radius:100px;">${esc(a)}</span>`).join('')
+            || '<span style="font-size:0.78rem;opacity:0.45;">Ingen allergener merket</span>'}
+          <span style="font-size:0.78rem;opacity:0.55;margin-left:4px;">
+            · Best før ${p.dager} ${p.dager == 1 ? 'dag' : 'dager'} etter pakking
+          </span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="btn btn-outline btn-sm" onclick="redigerEtikettProdukt(${i})">Rediger</button>
+        <button class="btn btn-outline btn-sm" onclick="slettEtikettProdukt(${i})"
+                style="border-color:rgba(200,0,0,0.25);color:#c00;">Slett</button>
+      </div>
+    </div>`).join('') + `</div>`;
+}
+
+function nyEtikettProdukt() { etikettSkjema(null); }
+function redigerEtikettProdukt(i) { etikettSkjema(i); }
+
+function etikettSkjema(index) {
+  const p = index === null
+    ? { navn: '', ingredienser: '', allergener: [], dager: 14, oppbevaring: '', mengde: '' }
+    : etikettProdukter[index];
+
+  openModal(`
+    <div class="modal-header">
+      <h3>${index === null ? 'Nytt produkt' : 'Rediger produkt'}</h3>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Produktnavn</label>
+        <input class="form-input" id="epNavn" value="${esc(p.navn)}" placeholder="f.eks. Lefse">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Ingredienser
+          <span style="font-weight:300;opacity:0.6;">– i rekkefølge etter mengde, mest først</span>
+        </label>
+        <textarea class="form-input" id="epIngr" rows="3"
+          placeholder="hvetemel, melk, smør, sukker, egg, hjortetakksalt">${esc(p.ingredienser)}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Allergener
+          <span style="font-weight:300;opacity:0.6;">– huk av alt som er i produktet</span>
+        </label>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:2px;">
+          ${ALLERGENER.map(a => `
+            <label style="display:flex;align-items:center;gap:8px;padding:7px 4px;
+                          font-size:0.88rem;cursor:pointer;">
+              <input type="checkbox" class="epAllergen" value="${a}"
+                     style="width:19px;height:19px;flex-shrink:0;"
+                     ${(p.allergener || []).includes(a) ? 'checked' : ''}>
+              ${a}
+            </label>`).join('')}
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label class="form-label">Holdbarhet i dager</label>
+          <input type="number" class="form-input" id="epDager" value="${p.dager}" min="1" max="365">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nettovekt <span style="font-weight:300;opacity:0.6;">– valgfritt</span></label>
+          <input class="form-input" id="epMengde" value="${esc(p.mengde || '')}" placeholder="f.eks. 250 g">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Oppbevaring</label>
+        <input class="form-input" id="epOppb" value="${esc(p.oppbevaring || '')}"
+               list="oppbForslag" placeholder="f.eks. Oppbevares tørt. Kan fryses.">
+        <datalist id="oppbForslag">
+          <option value="Oppbevares tørt i tett boks. Kan fryses.">
+          <option value="Oppbevares tørt i tett boks.">
+          <option value="Oppbevares kjølig. Kan fryses.">
+          <option value="Oppbevares i kjøleskap.">
+        </datalist>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Avbryt</button>
+      <button class="btn btn-primary" onclick="lagreEtikettSkjema(${index === null ? 'null' : index})">Lagre</button>
+    </div>
+  `);
+}
+
+async function lagreEtikettSkjema(index) {
+  const navn = $('epNavn').value.trim();
+  if (!navn) { alert('Produktet trenger et navn.'); return; }
+
+  const produkt = {
+    navn,
+    ingredienser: $('epIngr').value.trim(),
+    allergener: [...document.querySelectorAll('.epAllergen:checked')].map(c => c.value),
+    dager: parseInt($('epDager').value) || 14,
+    mengde: $('epMengde').value.trim(),
+    oppbevaring: $('epOppb').value.trim()
+  };
+
+  if (index === null) etikettProdukter.push(produkt);
+  else etikettProdukter[index] = produkt;
+
+  try {
+    await lagreEtikettProdukter();
+    closeModal();
+    renderEtikettListe();
+    fyllEtikettVelger();
+  } catch (e) {
+    alert('Kunne ikke lagre: ' + e.message);
+  }
+}
+
+async function slettEtikettProdukt(i) {
+  if (!confirm(`Slette «${etikettProdukter[i].navn}»?`)) return;
+  etikettProdukter.splice(i, 1);
+  try {
+    await lagreEtikettProdukter();
+    renderEtikettListe();
+    fyllEtikettVelger();
+  } catch (e) {
+    alert('Kunne ikke slette: ' + e.message);
+  }
+}
+
+// ── Utskrift ───────────────────────────────────────────────
+function norskDato(d) {
+  return d.toLocaleDateString('nb-NO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+// Uthever allergenene i ingredienslista, slik merkeforskriften krever
+function uthevAllergener(tekst, allergener) {
+  let ut = esc(tekst);
+  const ord = {
+    'Gluten': ['hvetemel', 'hvete', 'mel', 'bygg', 'rug', 'havre', 'spelt', 'gluten'],
+    'Melk':   ['melk', 'smør', 'fløte', 'rømme', 'ost', 'kremfløte', 'smørkrem'],
+    'Egg':    ['egg', 'eggeplomme', 'eggehvite'],
+    'Nøtter': ['mandler', 'mandel', 'hasselnøtter', 'valnøtter', 'nøtter', 'pistasj'],
+    'Peanøtter': ['peanøtter', 'peanøttsmør'],
+    'Soya':   ['soya', 'soyalecitin'],
+    'Sesamfrø': ['sesam', 'sesamfrø'],
+    'Sulfitt': ['sulfitt'],
+    'Sennep': ['sennep'],
+    'Selleri': ['selleri'],
+    'Fisk':   ['fisk'],
+    'Skalldyr': ['skalldyr'],
+    'Bløtdyr': ['bløtdyr'],
+    'Lupin':  ['lupin']
+  };
+  const treff = [];
+  (allergener || []).forEach(a => (ord[a] || []).forEach(o => treff.push(o)));
+  // Lengste ord forst, slik at "hvetemel" ikke blir delt opp av "mel"
+  treff.sort((a, b) => b.length - a.length).forEach(o => {
+    ut = ut.replace(new RegExp(`(?<!<[^>]*)\\b(${o})\\b`, 'gi'), '<b>$1</b>');
+  });
+  return ut;
+}
+
+function byggEtikettHtml(p, bestFoer, liten) {
+  const ingr = p.ingredienser
+    ? `<div class="ingr">Ingredienser: ${uthevAllergener(p.ingredienser, p.allergener)}</div>` : '';
+  const allergenLinje = (p.allergener || []).length
+    ? `<div class="alrg">Inneholder: ${p.allergener.map(a => esc(a.toUpperCase())).join(', ')}</div>` : '';
+  const mengde = p.mengde ? `<span class="mengde">${esc(p.mengde)}</span>` : '';
+  const oppb = p.oppbevaring && !liten ? `<div class="oppb">${esc(p.oppbevaring)}</div>` : '';
+
+  return `<div class="etikett">
+    <div class="navn">${esc(p.navn)} ${mengde}</div>
+    ${ingr}
+    ${allergenLinje}
+    <div class="best">Best før: ${bestFoer}</div>
+    ${oppb}
+    <div class="avs">${ETIKETT_AVSENDER.map(esc).join('<br>')}</div>
+  </div>`;
+}
+
+function skrivUtEtiketter() {
+  const idx = $('etikProdukt').value;
+  if (idx === '' || !etikettProdukter[idx]) { alert('Velg et produkt først.'); return; }
+
+  const p = etikettProdukter[idx];
+  const pakket = $('etikDato').value;
+  if (!pakket) { alert('Velg pakkedato.'); return; }
+
+  const antall = Math.min(Math.max(parseInt($('etikAntall').value) || 1, 1), 200);
+  const liten = $('etikStr').value === 'liten';
+
+  const d = new Date(pakket + 'T12:00:00');
+  d.setDate(d.getDate() + (parseInt(p.dager) || 14));
+  const bestFoer = norskDato(d);
+
+  const en = byggEtikettHtml(p, bestFoer, liten);
+
+  // Forhandsvisning i admin, sa hun ser hva som kommer ut for hun skriver ut
+  $('etikForhaandsvisning').innerHTML = `
+    <p style="font-size:0.85rem;opacity:0.6;margin-bottom:10px;">
+      Slik blir etiketten – ${antall} stk, best før ${bestFoer}:
+    </p>
+    <div class="etikett-preview">
+      <style>
+        .etikett-preview .etikett {
+          max-width:${liten ? '270px' : '350px'}; border:1px dashed #bbb;
+          padding:${liten ? '11px 13px' : '15px 17px'};
+          font-family:Helvetica,Arial,sans-serif; background:#fff; color:#000;
+          display:flex; flex-direction:column;
+        }
+        .etikett-preview .navn { font-weight:700; font-size:${liten ? '12px' : '15px'}; margin-bottom:5px; }
+        .etikett-preview .mengde { font-weight:400; font-size:${liten ? '9px' : '11px'}; opacity:0.7; }
+        .etikett-preview .ingr { font-size:${liten ? '7.5px' : '9px'}; line-height:1.4; margin-bottom:4px; }
+        .etikett-preview .alrg { font-size:${liten ? '7.5px' : '9px'}; font-weight:700; margin-bottom:4px; }
+        .etikett-preview .best { font-size:${liten ? '10px' : '12.5px'}; font-weight:700; margin-top:6px; }
+        .etikett-preview .oppb { font-size:9px; margin-top:3px; }
+        .etikett-preview .avs { font-size:${liten ? '6.5px' : '8px'}; opacity:0.75; margin-top:6px; line-height:1.35; }
+      </style>
+      ${en}
+    </div>`;
+
+  const vindu = window.open('', '_blank');
+  if (!vindu) { alert('Nettleseren blokkerte utskriftsvinduet. Tillat popup for kakefrue.no.'); return; }
+
+  vindu.document.write(`<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8">
+    <title>Etiketter – ${esc(p.navn)}</title>
+    <style>
+      @page { size: A4; margin: 8mm; }
+      * { box-sizing: border-box; }
+      body { margin:0; font-family: Helvetica, Arial, sans-serif; background:#fff; color:#000; }
+      .ark { display:grid; grid-template-columns: repeat(${liten ? 3 : 2}, 1fr); gap:0; }
+      .etikett {
+        border: 1px dashed #bbb;
+        padding: ${liten ? '3mm 3.5mm' : '4mm 5mm'};
+        height: ${liten ? '38mm' : '54mm'};
+        overflow: hidden;
+        display: flex; flex-direction: column;
+        page-break-inside: avoid;
+      }
+      .navn { font-weight:700; font-size:${liten ? '9pt' : '11.5pt'}; margin-bottom:${liten ? '1mm' : '1.6mm'}; }
+      .mengde { font-weight:400; font-size:${liten ? '7pt' : '8.5pt'}; opacity:0.7; }
+      .ingr { font-size:${liten ? '5.6pt' : '7pt'}; line-height:1.35; margin-bottom:${liten ? '0.8mm' : '1.4mm'}; }
+      .alrg { font-size:${liten ? '5.6pt' : '7pt'}; font-weight:700; margin-bottom:${liten ? '0.8mm' : '1.4mm'}; }
+      .best { font-size:${liten ? '7.5pt' : '9.5pt'}; font-weight:700; margin-top:auto; }
+      .oppb { font-size:7pt; margin-top:1mm; }
+      .avs { font-size:${liten ? '5pt' : '6.2pt'}; opacity:0.75; margin-top:${liten ? '0.8mm' : '1.6mm'}; line-height:1.3; }
+      @media screen {
+        body { background:#eee; padding:14px; }
+        .ark { background:#fff; padding:8mm; max-width:210mm; margin:0 auto; box-shadow:0 2px 14px rgba(0,0,0,0.15); }
+      }
+    </style></head><body>
+    <div class="ark">${Array(antall).fill(en).join('')}</div>
+    <script>window.onload = function(){ window.print(); };<\/script>
+    </body></html>`);
+  vindu.document.close();
+}
+

@@ -13,12 +13,14 @@ app.use(express.json({ limit: '25mb' }));
 const TRACKED_PAGES = {
   '/': 'Forside',
   '/index.html': 'Forside',
-  '/bestill.html': 'Bestilling',
+  '/jul.html': 'Julebestillinger',
+  '/book.html': 'Book din kake',
   '/meny.html': 'Meny',
   '/om-kakefrue.html': 'Om Kakefrue',
   '/kurs.html': 'Kurs',
   '/anbefalinger.html': 'Anbefalinger',
-  '/provesmaking.html': 'Prøvesmaking'
+  '/provesmaking.html': 'Prøvesmaking',
+  '/vilkar.html': 'Vilkår'
 };
 // Cecilies egne besok skal ikke telles med i statistikken.
 // Kapselen settes ved innlogging i admin, eller ved aa besoke ?ikkespor=1
@@ -66,6 +68,17 @@ async function requireAdmin(req, res, next) {
 app.post('/api/admin/ikke-spor', requireAdmin, (req, res) => {
   settIkkeSpor(res);
   res.json({ ok: true });
+});
+
+// DELETE /api/admin/pageviews — nullstill statistikken og start pa nytt
+app.delete('/api/admin/pageviews', requireAdmin, async (req, res) => {
+  try {
+    await pool.query(`DELETE FROM page_views`);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Serverfeil' });
+  }
 });
 
 // ============================================================

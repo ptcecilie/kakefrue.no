@@ -284,6 +284,7 @@
       <div class="admin-nav-item" data-panel="priser"><span class="icon">💰</span> Priser</div>
       <div class="admin-nav-item" data-panel="kunder"><span class="icon">👥</span> Kunder</div>
       <div class="admin-nav-item" data-panel="jul"><span class="icon">🎄</span> Julebakst</div>
+      <div class="admin-nav-item" data-panel="etiketter"><span class="icon">🏷️</span> Etiketter</div>
       <div class="admin-nav-item" data-panel="bilder"><span class="icon">🖼️</span> Bilder</div>
       <div class="admin-nav-item" data-panel="statistikk"><span class="icon">📈</span> Statistikk</div>
       <div class="admin-nav-item" data-panel="innstillinger"><span class="icon">⚙️</span> Innstillinger</div>
@@ -459,6 +460,48 @@
     <div class="admin-panel" id="panel-jul">
       <div class="section-header"><h2>🎄 Julebestillinger</h2><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm" onclick="loadChristmasOrders()">↻ Oppdater</button><button class="btn btn-primary btn-sm" onclick="exportJulebestillingerExcel()">⬇ Last ned Excel</button></div></div>
       <div id="christmasOrdersList"><div style="opacity:0.4;padding:32px;">Laster...</div></div>
+    </div>
+
+    <!-- Etiketter -->
+    <div class="admin-panel" id="panel-etiketter">
+      <div class="section-header">
+        <h2>🏷️ Etiketter</h2>
+        <button class="btn btn-primary btn-sm" onclick="nyEtikettProdukt()">+ Nytt produkt</button>
+      </div>
+
+      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 28px;margin-bottom:24px;">
+        <h3 style="margin-bottom:6px;">Skriv ut etiketter</h3>
+        <p style="font-size:0.85rem;opacity:0.65;margin-bottom:20px;line-height:1.6;">
+          Velg produkt, sett pakkedato, og få et A4-ark du skriver ut og klipper opp.
+          «Best før» regnes ut fra holdbarheten du har lagt inn på produktet.
+        </p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;align-items:end;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Produkt</label>
+            <select class="form-input" id="etikProdukt"></select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Pakkedato</label>
+            <input type="date" class="form-input" id="etikDato">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Antall etiketter</label>
+            <input type="number" class="form-input" id="etikAntall" value="10" min="1" max="200">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Størrelse</label>
+            <select class="form-input" id="etikStr">
+              <option value="stor">Stor – 10 per ark</option>
+              <option value="liten">Liten – 21 per ark</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="skrivUtEtiketter()" style="height:46px;">🖨️ Lag ark</button>
+        </div>
+        <div id="etikForhaandsvisning" style="margin-top:26px;"></div>
+      </div>
+
+      <div class="section-header" style="margin-bottom:12px;"><h2 style="font-size:1.15rem;">Produktene dine</h2></div>
+      <div id="etikettListe"><div style="opacity:0.4;padding:32px;">Laster...</div></div>
     </div>
 
     <!-- Bilder -->
