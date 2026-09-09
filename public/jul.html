@@ -600,10 +600,50 @@
   }
   .allergen-linje strong { font-weight: 700; color: rgba(35,13,10,0.78); }
   .allergen-mer {
-    background: none; border: none; padding: 0;
-    font: inherit; color: #8B1A1A;
-    text-decoration: underline; text-underline-offset: 2px;
+    background: none;
+    border: 1px solid rgba(139,26,26,0.22);
+    border-radius: 100px;
+    padding: 3px 11px;
+    font: inherit; font-size: 0.72rem;
+    color: #8B1A1A;
     cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background 0.15s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .allergen-mer:hover { background: rgba(139,26,26,0.06); border-color: rgba(139,26,26,0.4); }
+  .allergen-mer.apen { background: rgba(139,26,26,0.07); border-color: rgba(139,26,26,0.35); }
+  .allergen-pil { font-weight: 700; line-height: 1; opacity: 0.75; }
+
+  /* Ingredienslista glir ut under produktet i stedet for i en systemboks */
+  .ingr-panel {
+    margin: 9px 0 2px;
+    padding: 12px 15px;
+    background: rgba(196,149,106,0.10);
+    border-left: 3px solid rgba(139,26,26,0.30);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: rgba(35,13,10,0.78);
+    animation: ingrGlideUt 0.22s ease;
+  }
+  @keyframes ingrGlideUt {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .ingr-rad { display: flex; gap: 12px; align-items: baseline; }
+  .ingr-rad + .ingr-rad { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(139,26,26,0.10); }
+  .ingr-merke {
+    flex: 0 0 84px;
+    font-size: 0.63rem; font-weight: 700;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    color: rgba(139,26,26,0.62);
+    padding-top: 1px;
+  }
+  .ingr-panel b { font-weight: 700; color: rgba(35,13,10,0.95); }
+  @media (max-width: 560px) {
+    .ingr-rad { flex-direction: column; gap: 3px; }
+    .ingr-merke { flex: none; }
   }
   .allergen-fot {
     font-size: 0.8rem; line-height: 1.65;
@@ -970,7 +1010,7 @@ function visProdukter(){
       <div class="produkt-info">
         <div class="produkt-navn-liten">${p.n}${p.hit?' <span style="background:#8B1A1A;color:white;font-size:0.6rem;padding:2px 7px;border-radius:100px;letter-spacing:0.04em;font-weight:700;vertical-align:middle;margin-left:4px;">HIT</span>':''}${p.popular?' <span style="background:rgba(196,149,106,0.18);color:#C4956A;font-size:0.6rem;padding:2px 7px;border-radius:100px;letter-spacing:0.04em;font-weight:700;vertical-align:middle;margin-left:4px;border:1px solid rgba(196,149,106,0.3);">POPULÆR</span>':''}</div>
         <div class="produkt-detalj">${p.unit}${p.desc?' · '+p.desc:''}</div>
-        ${allergenLinje(p.n)}
+        ${allergenLinje(p.n, p.k)}
       </div>
       <div class="produkt-pris-liten">${visPris},-</div>
       <div class="qty-mini">
@@ -995,29 +1035,59 @@ async function hentAllergener(){
   if(fot) fot.style.display = Object.keys(allergenData).length ? 'block' : 'none';
   if(document.getElementById('produktListe')) visProdukter();
 }
-function allergenLinje(navn){
+// Hvilke produkter kunden har apnet ingredienslista pa
+const ingrApen = {};
+
+function allergenLinje(navn, noekkel){
   const d = allergenData[(navn||'').toLowerCase()];
   if(!d) return '';
   const har = (d.allergener||[]).length;
+  const apen = !!ingrApen[noekkel];
+
   return `<div class="allergen-linje">
     ${har
       ? `<strong>Allergener:</strong> ${d.allergener.join(', ')}`
       : `<strong>Ingen av de 14 merkepliktige allergenene.</strong>`}
-    ${d.ingredienser ? `<button type="button" class="allergen-mer"
-        onclick="visIngredienser('${navn.replace(/'/g,"\\'")}')">Se ingredienser</button>` : ''}
-  </div>`;
+    ${d.ingredienser ? `<button type="button" class="allergen-mer${apen?' apen':''}"
+        aria-expanded="${apen}" onclick="toggleIngredienser('${noekkel}')">
+        ${apen ? 'Skjul ingredienser' : 'Se ingredienser'}
+        <span class="allergen-pil">${apen ? '\u2013' : '+'}</span>
+      </button>` : ''}
+  </div>
+  ${apen ? `<div class="ingr-panel">
+    <div class="ingr-rad"><span class="ingr-merke">Ingredienser</span>
+      <span>${uthevIngr(d.ingredienser, d.allergener)}</span></div>
+    ${d.oppbevaring ? `<div class="ingr-rad"><span class="ingr-merke">Oppbevaring</span>
+      <span>${d.oppbevaring}</span></div>` : ''}
+  </div>` : ''}`;
 }
-function visIngredienser(navn){
-  const d = allergenData[(navn||'').toLowerCase()];
-  if(!d) return;
-  alert(
-    navn + '\n\n' +
-    'Ingredienser: ' + d.ingredienser +
-    ((d.allergener||[]).length ? '\n\nInneholder: ' + d.allergener.join(', ') : '') +
-    (d.oppbevaring ? '\n\n' + d.oppbevaring : '') +
-    '\n\nBakt i et kjøkken der nøtter, gluten, melk og egg brukes regelmessig. ' +
-    'Jeg kan derfor ikke garantere at produktene er helt fri for spor.'
-  );
+
+// Uthever allergenene i lista, slik merkeforskriften krever
+function uthevIngr(tekst, allergener){
+  const ord = {
+    'Gluten':['hvetemel','hvete','mel','bygg','rug','havre','spelt','gluten'],
+    'Melk':['melk','helmelk','meierism\u00f8r','sm\u00f8r','fl\u00f8te','r\u00f8mme','ost','melkesjokolade'],
+    'Egg':['egg','eggeplomme','eggehvite'],
+    'N\u00f8tter':['mandler','mandel','hasseln\u00f8tter','valn\u00f8tter','n\u00f8tter','pistasj'],
+    'Peanøtter':['peanøtter'],
+    'Soya':['soya','soyalecitin','melkesjokolade','sjokolade'],
+    'Sesamfrø':['sesam','sesamfrø'],
+    'Sulfitt':['sulfitt'], 'Sennep':['sennep'], 'Selleri':['selleri'],
+    'Fisk':['fisk'], 'Skalldyr':['skalldyr'], 'Bløtdyr':['bløtdyr'], 'Lupin':['lupin']
+  };
+  const treff = [];
+  (allergener||[]).forEach(a => (ord[a]||[]).forEach(o => treff.push(o)));
+  let ut = (tekst||'').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  // Lengste ord forst, slik at "hvetemel" ikke deles av "mel"
+  [...new Set(treff)].sort((a,b)=>b.length-a.length).forEach(o => {
+    ut = ut.replace(new RegExp(`(?<!<[^>]*)\\b(${o})\\b`,'gi'), '<b>$1</b>');
+  });
+  return ut;
+}
+
+function toggleIngredienser(noekkel){
+  ingrApen[noekkel] = !ingrApen[noekkel];
+  visProdukter();
 }
 function endreAntall(k,d){
   const v=(valgt[k]||0)+d;
