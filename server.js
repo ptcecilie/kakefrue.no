@@ -93,8 +93,10 @@ app.get('/api/allergener', async (req, res) => {
   try {
     const [rows] = await pool.query(`SELECT v FROM settings WHERE k = 'etikett_produkter'`);
     const alle = rows[0]?.v ? JSON.parse(rows[0].v) : [];
+    // Bare utkast holdes tilbake. Produkter uten feltet er skrevet inn
+    // manuelt av Cecilie, og det regnes som bekreftet.
     res.json(alle
-      .filter(p => p.bekreftet === true)
+      .filter(p => p.bekreftet !== false)
       .map(p => ({
         navn: p.navn,
         ingredienser: p.ingredienser || '',

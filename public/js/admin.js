@@ -2097,7 +2097,7 @@ function oppdaterEtikettStatus() {
   if (!el) return;
 
   const utkast = etikettProdukter.filter(p => p.bekreftet === false).length;
-  const ok = etikettProdukter.filter(p => p.bekreftet === true).length;
+  const ok = etikettProdukter.filter(p => p.bekreftet !== false).length;
 
   if (!etikettProdukter.length) {
     el.innerHTML = `<div style="background:#FFF9E8;border-left:4px solid #E0B84C;
@@ -2153,7 +2153,7 @@ function redigerEtikettProdukt(i) { etikettSkjema(i); }
 
 function etikettSkjema(index) {
   const p = index === null
-    ? { navn: '', ingredienser: '', allergener: [], dager: 14, oppbevaring: '', mengde: '' }
+    ? { navn: '', ingredienser: '', allergener: [], dager: 14, oppbevaring: '', mengde: '', bekreftet: true }
     : etikettProdukter[index];
 
   openModal(`
@@ -2230,7 +2230,12 @@ async function lagreEtikettSkjema(index) {
     allergener: [...document.querySelectorAll('.epAllergen:checked')].map(c => c.value),
     dager: parseInt($('epDager').value) || 14,
     mengde: $('epMengde').value.trim(),
-    oppbevaring: $('epOppb').value.trim()
+    oppbevaring: $('epOppb').value.trim(),
+    // Skriver hun det inn selv, ER det hennes bekreftelse. Redigerer hun et
+    // produkt hun alt har bekreftet, skal bekreftelsen beholdes – for var
+    // objektet bygget pa nytt, sa bekreftelsen forsvant usynlig og allergenene
+    // sluttet a vises pa julesiden.
+    bekreftet: index === null ? true : (etikettProdukter[index].bekreftet !== false)
   };
 
   if (index === null) etikettProdukter.push(produkt);
