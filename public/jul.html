@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Julebestillinger – Kakefrue</title>
   <meta name="description" content="Bestill hjemmelagde julekaker fra Kakefrue i Porsgrunn – kling, lefse, krumkaker, pepperkaker og mer.">
-  <link rel="stylesheet" href="/css/main.css?v=4.9">
+  <link rel="stylesheet" href="/css/main.css?v=5.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@500;700&family=Lato:wght@300;400;700&display=swap">
@@ -822,13 +822,13 @@
         Jeg har betalt ✓
       </button>
       <p style="font-size:0.78rem;color:rgba(245,237,214,0.4);margin:12px 0 0;">
-        Trykk her når betalingen er gjennomført, så får du bekreftelse på e-post
+        Trykk her når du har betalt, så gir jeg beskjed til Cecilie
       </p>
     </div>
 
     <div id="vippsEtterBetalt" style="display:none;margin-top:24px;">
       <p style="color:rgba(245,237,214,0.65);font-size:0.88rem;line-height:1.8;">
-        Betalingen er sendt til Kakefrue.<br>
+        Takk! Beskjeden er sendt til Cecilie.<br>
         <span id="kvitteringTekst"></span>
       </p>
     </div>
@@ -1099,7 +1099,9 @@ async function sendBestilling(){
     document.getElementById('vippsNavnVis').textContent = 'Julekaker ' + navn;
 
     /* Kvittering-tekst */
-    const kvTekst=epost?`Bekreftelse er sendt til ${epost}.`:'Ta vare på denne siden som bekreftelse.';
+    const kvTekst=epost
+      ? `Cecilie sjekker Vipps og sender bekreftelse til ${epost} så snart betalingen er registrert.`
+      : 'Cecilie tar kontakt så snart betalingen er registrert.';
     document.getElementById('kvitteringTekst').textContent=kvTekst;
 
     document.getElementById('skjemaWrap').style.display='none';

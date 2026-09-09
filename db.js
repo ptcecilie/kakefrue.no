@@ -170,6 +170,7 @@ async function initDB() {
     try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN notified_at DATETIME NULL`); } catch (e) {}
     try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN notified_via VARCHAR(20) NULL`); } catch (e) {}
     try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN paid_at DATETIME NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN payment_claimed_at DATETIME NULL`); } catch (e) {}
 
     await conn.query(`
       CREATE TABLE IF NOT EXISTS page_views (

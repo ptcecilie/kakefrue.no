@@ -370,9 +370,9 @@ app.post('/api/christmas-orders/:id/betalt', async (req, res) => {
   try {
     const [[o]] = await pool.query(`SELECT * FROM christmas_orders WHERE id = ?`, [req.params.id]);
     if (!o) return res.status(404).json({ error: 'Fant ikke bestillingen' });
-    if (o.paid_at) return res.json({ ok: true, alt_sendt: true });
+    if (o.payment_claimed_at) return res.json({ ok: true, alt_meldt: true });
 
-    await pool.query(`UPDATE christmas_orders SET paid_at = NOW() WHERE id = ?`, [req.params.id]);
+    await pool.query(`UPDATE christmas_orders SET payment_claimed_at = NOW() WHERE id = ?`, [req.params.id]);
 
     const products = typeof o.products === 'string' ? JSON.parse(o.products) : (o.products || []);
     const full_name = o.full_name;
@@ -382,19 +382,17 @@ app.post('/api/christmas-orders/:id/betalt', async (req, res) => {
     const address = o.address;
     const note = o.note;
     const delivery_cost = o.delivery_cost;
-
     const transporter = createTransporter();
     const productList = products.map(p => `<li>${p.name} × ${p.qty} — ${p.price * p.qty} kr</li>`).join('');
     const frakt = parseInt(delivery_cost) || 0;
     const varesum = products.reduce((s, p) => s + (p.price || 0) * (p.qty || 1), 0);
     const total = varesum + frakt;
-
     // Notify Cecilie
     try {
       await transporter.sendMail({
         from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
         to: 'cecilie@kakefrue.no',
-        subject: `🎄 Ny julebestilling fra ${full_name.trim()} – ${total} kr`,
+        subject: `💰 SJEKK VIPPS: ${full_name.trim()} sier hun har betalt ${total} kr`,
         html: `
           <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
             <h2 style="color:#8B1A1A;">🎄 Ny julebestilling!</h2>
@@ -417,6 +415,36 @@ app.post('/api/christmas-orders/:id/betalt', async (req, res) => {
     } catch (mailErr) { console.log('[Christmas notify] Email not sent:', mailErr.message); }
 
     // Send confirmation to customer
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Betalingsmelding feilet:', err);
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// POST /api/admin/christmas-orders/:id/bekreft-betaling
+// Cecilie har sett pengene i Vipps. Foerst her faar kunden sin bekreftelse.
+app.post('/api/admin/christmas-orders/:id/bekreft-betaling', requireAdmin, async (req, res) => {
+  try {
+    const [[o]] = await pool.query(`SELECT * FROM christmas_orders WHERE id = ?`, [req.params.id]);
+    if (!o) return res.status(404).json({ error: 'Fant ikke bestillingen' });
+    if (o.paid_at) return res.json({ ok: true, alt_bekreftet: true });
+
+    await pool.query(`UPDATE christmas_orders SET paid_at = NOW() WHERE id = ?`, [req.params.id]);
+
+    const products = typeof o.products === 'string' ? JSON.parse(o.products) : (o.products || []);
+    const full_name = o.full_name;
+    const phone = o.phone;
+    const email = o.email;
+    const delivery = o.delivery;
+    const address = o.address;
+    const note = o.note;
+    const delivery_cost = o.delivery_cost;
+    const transporter = createTransporter();
+    const productList = products.map(p => `<li>${p.name} × ${p.qty} — ${p.price * p.qty} kr</li>`).join('');
+    const frakt = parseInt(delivery_cost) || 0;
+    const varesum = products.reduce((s, p) => s + (p.price || 0) * (p.qty || 1), 0);
+    const total = varesum + frakt;
     if (email) {
       try {
         await transporter.sendMail({
@@ -445,9 +473,9 @@ app.post('/api/christmas-orders/:id/betalt', async (req, res) => {
         });
       } catch (mailErr) { console.log('[Christmas customer email] Not sent:', mailErr.message); }
     }
-    res.json({ ok: true });
+    res.json({ ok: true, sendt_til: email || null });
   } catch (err) {
-    console.error('Betalingsbekreftelse feilet:', err);
+    console.error('Bekreftelse feilet:', err);
     res.status(500).json({ error: 'Serverfeil' });
   }
 });

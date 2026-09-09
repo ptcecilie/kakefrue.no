@@ -387,6 +387,17 @@ async function sendHentemelding(id, epost, navn) {
   }
 }
 
+async function bekreftBetaling(id) {
+  if (!confirm('Har du sjekket Vipps og sett at pengene er kommet?\n\nKunden får bekreftelse på e-post når du trykker OK.')) return;
+  try {
+    const r = await api('/api/admin/christmas-orders/' + id + '/bekreft-betaling', { method: 'POST' });
+    loadChristmasOrders();
+    showAlert(r.sendt_til ? 'Bekreftelse sendt til ' + r.sendt_til : 'Markert som betalt (kunden har ingen e-post)', 'success');
+  } catch (e) {
+    alert('Kunne ikke bekrefte: ' + e.message);
+  }
+}
+
 async function slettJulebestilling(id, btn) {
   if (!confirm('Slette denne julebestillingen? Dette kan ikke angres.')) return;
   btn.disabled = true;
@@ -423,6 +434,9 @@ async function loadChristmasOrders() {
             <strong>${igjen}</strong> gjenstår</span>` : ''}
           ${lev ? `<span style="background:rgba(196,149,106,.2);border-radius:100px;padding:7px 16px;font-size:0.85rem;">
             🚗 <strong>${lev}</strong> skal leveres</span>` : ''}
+          ${(() => { const v = orders.filter(x => x.payment_claimed_at && !x.paid_at).length;
+            return v ? `<span style="background:rgba(139,26,26,.14);border-radius:100px;padding:7px 16px;font-size:0.85rem;">
+              💰 <strong>${v}</strong> venter på betalingssjekk</span>` : ''; })()}
         </div>`;
       })()}
       ${orders.map(o => `
@@ -438,6 +452,11 @@ async function loadChristmasOrders() {
             <div style="display:flex;gap:8px;">
               <a href="tel:${o.phone}" class="btn btn-outline btn-sm">📞 ${o.phone}</a>
               ${o.email ? `<button class="btn btn-outline btn-sm" data-email="${o.email}" data-name="${o.full_name.replace(/"/g,'&quot;')}" onclick="openEmailModal(this.dataset.email,this.dataset.name)">✉️</button>` : ''}
+              ${o.paid_at
+                ? `<span style="align-self:center;background:rgba(122,158,130,.2);color:#4A7A5A;border-radius:100px;padding:6px 13px;font-size:0.78rem;font-weight:700;">💰 Betalt</span>`
+                : o.payment_claimed_at
+                  ? `<button class="btn btn-primary btn-sm" style="background:#7A9E82;color:#fff;border-color:#7A9E82;" onclick="bekreftBetaling(${o.id})">💰 Bekreft betaling</button>`
+                  : `<span style="align-self:center;font-size:0.78rem;opacity:0.5;">Ikke betalt</span>`}
               <button class="btn btn-primary btn-sm" onclick='aapneHentemelding(${JSON.stringify(o).replace(/'/g, "&apos;")})'>${o.delivery === 'levering' ? '🚗 Varsle om levering' : '📦 Klar til henting'}</button>
               <button class="photo-delete-btn" style="padding:7px 12px;" title="Slett bestilling" onclick="slettJulebestilling(${o.id}, this)">🗑</button>
             </div>
