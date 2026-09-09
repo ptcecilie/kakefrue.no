@@ -758,8 +758,8 @@ body[style*="--side-foto"]::before {
   background-image: var(--side-foto);
   background-size: cover;
   background-position: center 40%;
-  opacity: 0.16;
-  filter: saturate(0.85);
+  opacity: 0.42;
+  filter: saturate(0.92);
   pointer-events: none;
 }
 /* Varmt slor over fotoet, sa teksten alltid er lesbar */
@@ -770,17 +770,25 @@ body[style*="--side-foto"]::after {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(255,252,248,0.55) 0%, transparent 70%),
-    linear-gradient(180deg, rgba(250,247,244,0.86) 0%, rgba(250,247,244,0.93) 100%);
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(255,252,248,0.30) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(250,247,244,0.52) 0%, rgba(250,247,244,0.62) 100%);
 }
 
 /* Innholdsseksjonene blir gjennomskinnelige, sa bakgrunnen synes */
-body[style*="--side-foto"] section { background: transparent; }
-
-/* Vekselvis lysere band, sa siden far rytme i stedet for en lang flate */
+/* Seksjonene er satt hvite inline pa sidene, sa dette ma vinne over det */
+body[style*="--side-foto"] section {
+  background: rgba(255,255,255,0.30) !important;
+}
+/* Vekselvis tettere band, sa siden far rytme i stedet for en lang flate */
 body[style*="--side-foto"] section:nth-of-type(even) {
-  background: rgba(255,255,255,0.55);
-  box-shadow: inset 0 1px 0 rgba(196,149,106,0.09), inset 0 -1px 0 rgba(196,149,106,0.09);
+  background: rgba(255,255,255,0.72) !important;
+  box-shadow: inset 0 1px 0 rgba(196,149,106,0.10), inset 0 -1px 0 rgba(196,149,106,0.10);
+}
+/* Den morke bunnseksjonen skal fortsatt vaere mork */
+body[style*="--side-foto"] section.mork,
+body[style*="--side-foto"] section[style*="--brown"],
+body[style*="--side-foto"] section[style*="3D2420"] {
+  background: var(--brown) !important;
 }
 
 /* Kort og bokser loftes litt, siden de na star pa et toneflate og ikke hvitt */
