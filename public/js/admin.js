@@ -1964,6 +1964,7 @@ function fyllEtikettVelger() {
 }
 
 function renderEtikettListe() {
+  oppdaterEtikettStatus();
   const el = $('etikettListe');
   if (!el) return;
 
@@ -2081,6 +2082,64 @@ async function leggInnJulebakst() {
 
 async function bekreftEtikettProdukt(i) {
   etikettProdukter[i].bekreftet = true;
+  try {
+    await lagreEtikettProdukter();
+    renderEtikettListe();
+  } catch (e) {
+    alert('Kunne ikke lagre: ' + e.message);
+  }
+}
+
+
+// Forteller rett ut hvorfor allergenene ikke vises pa julesiden enna
+function oppdaterEtikettStatus() {
+  const el = $('etikettStatus');
+  if (!el) return;
+
+  const utkast = etikettProdukter.filter(p => p.bekreftet === false).length;
+  const ok = etikettProdukter.filter(p => p.bekreftet === true).length;
+
+  if (!etikettProdukter.length) {
+    el.innerHTML = `<div style="background:#FFF9E8;border-left:4px solid #E0B84C;
+      border-radius:8px;padding:16px 20px;line-height:1.65;">
+      <strong>Ingen produkter lagt inn.</strong><br>
+      Allergenene vises ikke på julesiden før produktene ligger her og er bekreftet.
+      <button class="btn btn-primary btn-sm" style="margin-left:10px;"
+              onclick="leggInnJulebakst()">Legg inn julebaksten min</button>
+    </div>`;
+    return;
+  }
+
+  if (utkast) {
+    el.innerHTML = `<div style="background:#FFF9E8;border-left:4px solid #E0B84C;
+      border-radius:8px;padding:16px 20px;line-height:1.65;">
+      <strong>${utkast} ${utkast === 1 ? 'produkt' : 'produkter'} er ikke bekreftet.</strong><br>
+      Allergenene på julesiden viser bare bekreftede produkter
+      (${ok} av ${etikettProdukter.length} nå). Les gjennom ingredienslisten på hvert
+      produkt nedenfor og trykk «Bekreft».
+      <button class="btn btn-primary btn-sm" style="margin-left:10px;"
+              onclick="bekreftAlleEtiketter()">Jeg har lest alle – bekreft</button>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = `<div style="background:rgba(122,158,130,0.12);border-left:4px solid #7A9E82;
+    border-radius:8px;padding:16px 20px;line-height:1.65;">
+    <strong>Alle ${ok} produkter er bekreftet.</strong>
+    Allergenene vises nå under hvert produkt på julesiden.
+    <a href="/jul.html" target="_blank" style="margin-left:6px;">Se julesiden ↗</a>
+  </div>`;
+}
+
+async function bekreftAlleEtiketter() {
+  const utkast = etikettProdukter.filter(p => p.bekreftet === false);
+  if (!confirm(
+    `Bekrefte alle ${utkast.length} produkter?\n\n` +
+    'Bare gjør dette hvis du har lest gjennom ingredienslistene. ' +
+    'De blir publisert som allergeninformasjon på julesiden.'
+  )) return;
+
+  etikettProdukter.forEach(p => { p.bekreftet = true; });
   try {
     await lagreEtikettProdukter();
     renderEtikettListe();
