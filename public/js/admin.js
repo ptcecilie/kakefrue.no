@@ -2046,7 +2046,7 @@ const JULEBAKST_UTKAST = [
     allergener: ['Gluten', 'Melk', 'Egg'],
     oppbevaring: 'Oppbevares tørt i tett boks.', bekreftet: false },
 
-  { navn: 'Cookies', dager: 7, mengde: '5 stk',
+  { navn: 'Cookies', dager: 7, mengde: '4 stk',
     ingredienser: 'hvetemel, smør, sukker, brunt sukker, egg, sjokolade, bakepulver, vanilje',
     allergener: ['Gluten', 'Melk', 'Egg', 'Soya'],
     oppbevaring: 'Oppbevares tørt i tett boks. Kan fryses.', bekreftet: false },
