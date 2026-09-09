@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Julebestillinger – Kakefrue</title>
   <meta name="description" content="Bestill hjemmelagde julekaker fra Kakefrue i Porsgrunn – kling, lefse, krumkaker, pepperkaker og mer.">
-  <link rel="stylesheet" href="/css/main.css?v=4.7">
+  <link rel="stylesheet" href="/css/main.css?v=4.8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@500;700&family=Lato:wght@300;400;700&display=swap">
@@ -799,13 +799,21 @@
         Åpne Vipps, velg «Send», og fyll inn nummer og beløp.
       </p>
 
-      <a href="vipps://" class="vipps-betal-knapp" onclick="vippsKlikket()">
+      <a href="vipps://" class="vipps-betal-knapp" id="vippsKnapp" onclick="vippsKlikket()">
         <svg width="22" height="22" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="white"/><text x="24" y="34" text-anchor="middle" font-size="26" font-family="Arial Black,sans-serif" fill="#FF5B24" font-weight="900">V</text></svg>
         Åpne Vipps
       </a>
       <p style="font-size:0.73rem;color:#B0A090;margin:14px 0 0;" id="vippsHint">
-        Er du på PC? Åpne Vipps på mobilen og bruk tallene over.
+        Vipps-appen åpnes. Lim inn nummer og beløp.
       </p>
+
+      <div id="vippsPc" style="display:none;background:#FDF5F0;border:1.5px solid #E8D2C0;border-radius:12px;padding:16px 18px;text-align:left;">
+        <p style="margin:0 0 8px;font-size:0.9rem;font-weight:700;color:#3D2420;">Du sitter på PC</p>
+        <p style="margin:0;font-size:0.85rem;color:#8A6858;line-height:1.75;">
+          Vipps finnes bare som app på mobil. Ta fram telefonen, åpne Vipps,
+          velg <strong style="color:#3D2420;">Send</strong>, og skriv inn nummeret og beløpet over.
+        </p>
+      </div>
     </div>
 
     <div id="vippsEtterBetalt" style="display:none;margin-top:24px;">
@@ -1084,6 +1092,7 @@ async function sendBestilling(){
     document.getElementById('skjemaWrap').style.display='none';
     const betalSide=document.getElementById('vippsBetalSide');
     betalSide.style.display='block';
+    tilpassVippsTilEnhet();
     betalSide.scrollIntoView({behavior:'smooth'});
   }catch(e){
     feil.textContent='Feil: '+e.message; feil.style.display='block';
@@ -1112,6 +1121,21 @@ function reserveKopi(verdi, ferdig){
   f.select();
   try { document.execCommand('copy'); ferdig(); } catch(e) { alert('Kopier manuelt: ' + verdi); }
   f.remove();
+}
+
+/* Vipps finnes bare som mobilapp. Paa PC skjuler vi knappen
+   og viser en forklaring i stedet, saa ingenting ser oedelagt ut. */
+function tilpassVippsTilEnhet(){
+  const mobil = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+             || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (!mobil) {
+    const k = document.getElementById('vippsKnapp');
+    const h = document.getElementById('vippsHint');
+    const pc = document.getElementById('vippsPc');
+    if (k) k.style.display = 'none';
+    if (h) h.style.display = 'none';
+    if (pc) pc.style.display = 'block';
+  }
 }
 
 function vippsKlikket(){
