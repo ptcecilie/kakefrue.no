@@ -359,9 +359,22 @@ function aapneHentemelding(o) {
              <input class="form-input" id="hentSted" value="${HENTEADRESSE}" oninput="byggHentetekst()">
            </div>`}
 
+      <div class="form-group">
+        <label class="form-label">Holdbarhet <span style="font-weight:300;opacity:0.55;">– valgfritt, legges inn i meldingen</span></label>
+        <input class="form-input" id="hentHoldbar" list="holdbarForslag" placeholder="Velg eller skriv fritt" oninput="byggHentetekst()">
+        <datalist id="holdbarForslag">
+          <option value="Lefsene er best de første dagene, men de fryser fint – da kan du ta opp en og en etter behov.">
+          <option value="Krumkakene holder seg sprø i en tett boks, gjerne litt kjølig.">
+          <option value="Kransekaken oppbevares tørt i tett boks, og kan også fryses.">
+          <option value="Pepperkakene holder seg fine i en tett boks i flere uker.">
+          <option value="Cookies er best de første dagene – de kan også fryses.">
+          <option value="Denne inneholder krem og må stå kjølig. Spises innen to dager.">
+        </datalist>
+      </div>
+
       <div class="form-group" style="margin-bottom:6px;">
         <label class="form-label">Meldingen – rediger fritt</label>
-        <textarea class="form-input" id="hentTekst" rows="10" style="line-height:1.65;"></textarea>
+        <textarea class="form-input" id="hentTekst" rows="13" style="line-height:1.65;"></textarea>
       </div>
       <p style="font-size:0.78rem;opacity:0.6;margin:0;">
         📞 ${o.phone} · ${varer || '—'}
@@ -388,6 +401,8 @@ function byggHentetekst() {
   const sted = ($('hentSted')?.value || '').trim();
   const fornavn = (o.full_name || '').split(' ')[0];
   const naarDel = [naar, tid].filter(Boolean).join(' ') || '[fyll inn tidspunkt]';
+  const holdbar = ($('hentHoldbar')?.value || '').trim();
+  const holdbarLinje = holdbar ? `\n${holdbar}\n` : '';
 
   $('hentTekst').value = levering
 ? `Hei ${fornavn}!
@@ -395,7 +410,7 @@ function byggHentetekst() {
 Julebestillingen din er ferdig, og jeg kommer med den ${naarDel}.
 
 Adresse: ${sted || '[adresse mangler]'}
-
+${holdbarLinje}
 Si fra hvis tidspunktet ikke passer, så finner vi noe annet.
 
 Med vennlig hilsen
@@ -408,7 +423,9 @@ Julebestillingen din er ferdig og klar til henting.
 Du kan hente den ${naarDel}.
 Adresse: ${sted || HENTEADRESSE}
 
-Si fra hvis tidspunktet ikke passer, så finner vi noe annet.
+Bestillingen holdes ut hentedagen. Passer ikke tidspunktet, si fra før da, så finner vi en løsning.
+${holdbarLinje}
+Ser frem til å se deg!
 
 Med vennlig hilsen
 Cecilie – Kakefrue
