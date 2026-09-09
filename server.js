@@ -614,9 +614,82 @@ app.get('/api/reviews', async (req, res) => {
 // POST /api/special-request
 app.post('/api/special-request', async (req, res) => {
   const { customer_name, phone, email, message } = req.body;
-  console.log('[Special Request]', { customer_name, phone, email, message });
-  // TODO: Send email notification to admin
-  res.json({ success: true, message: 'Din spesialbestilling er mottatt! Vi tar kontakt snart.' });
+
+  // Kunden far beskjed om at forespoerselen er mottatt, sa den MA lagres.
+  // Tidligere ble den bare skrevet til konsollen og forsvant.
+  if (!customer_name || !phone) {
+    return res.status(400).json({ error: 'Navn og telefonnummer må fylles ut' });
+  }
+
+  try {
+    const [r] = await pool.query(
+      `INSERT INTO special_requests (customer_name, phone, email, message)
+       VALUES (?, ?, ?, ?)`,
+      [customer_name, phone, email || '', message || '']
+    );
+
+    // Varsle Cecilie. Feiler e-posten, star forespoerselen fortsatt i basen.
+    try {
+      const t = createTransporter();
+      if (t) {
+        await t.sendMail({
+          from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
+          to: 'cecilie@kakefrue.no',
+          subject: `Ny spesialbestilling – ${customer_name}`,
+          text: [
+            'Ny spesialbestilling fra bookingskjemaet:',
+            '',
+            `Navn:     ${customer_name}`,
+            `Telefon:  ${phone}`,
+            `E-post:   ${email || '(ikke oppgitt)'}`,
+            '',
+            message || '(ingen melding)',
+            '',
+            'Kunden har fått beskjed om at du tar kontakt innen 1–2 virkedager.'
+          ].join('\n')
+        });
+      }
+    } catch (e) {
+      console.error('[Special Request] e-post feilet:', e.message);
+    }
+
+    res.json({ success: true, id: r.insertId,
+               message: 'Din spesialbestilling er mottatt! Vi tar kontakt snart.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// GET /api/admin/special-requests
+app.get('/api/admin/special-requests', requireAdmin, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT * FROM special_requests ORDER BY handled ASC, created_at DESC`);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+app.put('/api/admin/special-requests/:id', requireAdmin, async (req, res) => {
+  try {
+    await pool.query(`UPDATE special_requests SET handled = ? WHERE id = ?`,
+      [req.body.handled ? 1 : 0, req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+app.delete('/api/admin/special-requests/:id', requireAdmin, async (req, res) => {
+  try {
+    await pool.query(`DELETE FROM special_requests WHERE id = ?`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
 });
 
 // GET /api/pricing

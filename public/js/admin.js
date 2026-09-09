@@ -124,6 +124,7 @@ function loadPanel(panel) {
     case 'kunder': loadCustomers(); break;
     case 'jul': loadChristmasOrders(); break;
     case 'bilder': loadPhotos(); loadAboutImages(); break;
+    case 'spesial': loadSpesial(); break;
     case 'etiketter': loadEtiketter(); break;
     case 'statistikk': loadStatistikk(); break;
     case 'innstillinger': loadSettings(); break;
@@ -1016,7 +1017,7 @@ function renderPillList(containerId, data, total) {
 
 function initAdmin() {
   const hash = location.hash.replace('#', '');
-  const validPanels = ['oversikt','kalender','bestillinger','ufullstendige','provesmaking','kurs','anbefalinger','bilder','etiketter','statistikk','innstillinger','jul'];
+  const validPanels = ['oversikt','kalender','bestillinger','ufullstendige','provesmaking','kurs','anbefalinger','bilder','spesial','etiketter','statistikk','innstillinger','jul'];
   const startPanel = validPanels.includes(hash) ? hash : 'oversikt';
   activatePanel(startPanel);
 }
@@ -2331,3 +2332,77 @@ function skrivUtEtiketter() {
   vindu.document.close();
 }
 
+
+// ============================================================
+// Spesialbestillinger
+// ============================================================
+async function loadSpesial() {
+  const el = $('spesialListe');
+  try {
+    const liste = await api('/api/admin/special-requests');
+    const ubehandlet = liste.filter(r => !r.handled).length;
+    const badge = $('badge-spesial');
+    if (badge) {
+      badge.textContent = ubehandlet;
+      badge.style.display = ubehandlet ? 'inline-block' : 'none';
+    }
+
+    if (!liste.length) {
+      el.innerHTML = `<div style="background:var(--white);border-radius:var(--radius);
+        box-shadow:var(--shadow);padding:40px 28px;text-align:center;opacity:0.6;">
+        Ingen spesialbestillinger ennå.</div>`;
+      return;
+    }
+
+    el.innerHTML = '<div style="display:grid;gap:12px;">' + liste.map(r => {
+      const dato = new Date(r.created_at).toLocaleString('nb-NO',
+        { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+      return `<div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);
+                  padding:20px 24px;${r.handled ? 'opacity:0.55;' : ''}">
+        <div style="display:flex;gap:16px;align-items:flex-start;">
+          <div style="flex:1;min-width:0;">
+            <h4 style="margin:0 0 4px;font-size:1.02rem;">
+              ${esc(r.customer_name)}
+              ${r.handled ? '<span style="background:rgba(122,158,130,0.16);color:#4E7256;font-size:0.68rem;font-weight:700;padding:3px 9px;border-radius:100px;margin-left:6px;vertical-align:middle;">TATT KONTAKT</span>' : ''}
+            </h4>
+            <p style="font-size:0.82rem;opacity:0.55;margin:0 0 10px;">${dato}</p>
+            <p style="font-size:0.9rem;margin:0 0 10px;">
+              <a href="tel:${esc(r.phone)}">${esc(r.phone)}</a>
+              ${r.email ? ` · <a href="mailto:${esc(r.email)}">${esc(r.email)}</a>` : ''}
+            </p>
+            ${r.message ? `<pre style="font-size:0.85rem;line-height:1.6;white-space:pre-wrap;
+              font-family:inherit;background:rgba(196,149,106,0.07);border-radius:8px;
+              padding:12px 14px;margin:0;">${esc(r.message)}</pre>` : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
+            <button class="btn ${r.handled ? 'btn-outline' : 'btn-primary'} btn-sm"
+                    onclick="settSpesialBehandlet(${r.id}, ${r.handled ? 'false' : 'true'})">
+              ${r.handled ? 'Angre' : 'Tatt kontakt ✓'}
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="slettSpesial(${r.id})"
+                    style="border-color:rgba(200,0,0,0.25);color:#c00;">Slett</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+  } catch (e) {
+    el.innerHTML = `<div style="padding:24px;color:#c00;">Kunne ikke laste: ${esc(e.message)}</div>`;
+  }
+}
+
+async function settSpesialBehandlet(id, verdi) {
+  try {
+    await api('/api/admin/special-requests/' + id, {
+      method: 'PUT', body: JSON.stringify({ handled: verdi })
+    });
+    loadSpesial();
+  } catch (e) { alert('Kunne ikke lagre: ' + e.message); }
+}
+
+async function slettSpesial(id) {
+  if (!confirm('Slette denne forespørselen?')) return;
+  try {
+    await api('/api/admin/special-requests/' + id, { method: 'DELETE' });
+    loadSpesial();
+  } catch (e) { alert('Kunne ikke slette: ' + e.message); }
+}

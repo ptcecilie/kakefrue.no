@@ -363,7 +363,21 @@ async function sendSpecialRequest() {
     await fetch('/api/special-request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customer_name: state.fullName, phone: state.phone, email: state.email, message: 'Spesialbestilling via bookingskjema' })
+      // Ta med det kunden faktisk har valgt, ellers ma Cecilie ringe
+      // for a finne ut hva forespørselen handler om
+      body: JSON.stringify({
+        customer_name: state.fullName,
+        phone: state.phone,
+        email: state.email,
+        message: [
+          'Spesialbestilling via bookingskjemaet.',
+          state.selectedDate ? `Ønsket dato: ${state.selectedDate}` : null,
+          state.occasion ? `Anledning: ${state.occasion}${state.occasionCustom ? ' – ' + state.occasionCustom : ''}` : null,
+          state.guestCount ? `Antall gjester: ${state.guestCount}` : null,
+          state.categories?.length ? `Ønsker: ${state.categories.join(', ')}` : null,
+          state.allergens?.length ? `Allergier: ${state.allergens.join(', ')}` : null
+        ].filter(Boolean).join('\n')
+      })
     });
     document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
     $('stepSpecial').classList.add('active');

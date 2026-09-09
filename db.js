@@ -202,6 +202,18 @@ async function initDB() {
     `);
 
     await conn.query(`
+      CREATE TABLE IF NOT EXISTS special_requests (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        customer_name VARCHAR(255) NOT NULL,
+        phone VARCHAR(40) NOT NULL,
+        email VARCHAR(255) DEFAULT '',
+        message TEXT,
+        handled BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    await conn.query(`
       CREATE TABLE IF NOT EXISTS course_interests (
         id INT PRIMARY KEY AUTO_INCREMENT,
         course_id INT NOT NULL,

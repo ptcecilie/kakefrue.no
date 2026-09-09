@@ -284,6 +284,7 @@
       <div class="admin-nav-item" data-panel="priser"><span class="icon">💰</span> Priser</div>
       <div class="admin-nav-item" data-panel="kunder"><span class="icon">👥</span> Kunder</div>
       <div class="admin-nav-item" data-panel="jul"><span class="icon">🎄</span> Julebakst</div>
+      <div class="admin-nav-item" data-panel="spesial"><span class="icon">💌</span> Spesialbestillinger <span class="admin-nav-badge" id="badge-spesial" style="display:none;"></span></div>
       <div class="admin-nav-item" data-panel="etiketter"><span class="icon">🏷️</span> Etiketter</div>
       <div class="admin-nav-item" data-panel="bilder"><span class="icon">🖼️</span> Bilder</div>
       <div class="admin-nav-item" data-panel="statistikk"><span class="icon">📈</span> Statistikk</div>
@@ -460,6 +461,19 @@
     <div class="admin-panel" id="panel-jul">
       <div class="section-header"><h2>🎄 Julebestillinger</h2><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm" onclick="loadChristmasOrders()">↻ Oppdater</button><button class="btn btn-primary btn-sm" onclick="exportJulebestillingerExcel()">⬇ Last ned Excel</button></div></div>
       <div id="christmasOrdersList"><div style="opacity:0.4;padding:32px;">Laster...</div></div>
+    </div>
+
+    <!-- Spesialbestillinger -->
+    <div class="admin-panel" id="panel-spesial">
+      <div class="section-header">
+        <h2>💌 Spesialbestillinger</h2>
+        <button class="btn btn-outline btn-sm" onclick="loadSpesial()">↻ Oppdater</button>
+      </div>
+      <p style="font-size:0.85rem;opacity:0.65;margin:-8px 0 20px;line-height:1.6;">
+        Forespørsler fra kunder som valgte «noe helt eget» i bookingskjemaet.
+        Du får e-post når det kommer en ny.
+      </p>
+      <div id="spesialListe"><div style="opacity:0.4;padding:32px;">Laster...</div></div>
     </div>
 
     <!-- Etiketter -->
@@ -726,6 +740,6 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="/js/admin.js?v=5.4"></script>
+<script src="/js/admin.js?v=5.5"></script>
 </body>
 </html>
