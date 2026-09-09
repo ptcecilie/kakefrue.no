@@ -1001,7 +1001,7 @@ function allergenLinje(navn){
   const har = (d.allergener||[]).length;
   return `<div class="allergen-linje">
     ${har
-      ? `<strong>Inneholder:</strong> ${d.allergener.join(', ')}`
+      ? `<strong>Allergener:</strong> ${d.allergener.join(', ')}`
       : `<strong>Ingen av de 14 merkepliktige allergenene.</strong>`}
     ${d.ingredienser ? `<button type="button" class="allergen-mer"
         onclick="visIngredienser('${navn.replace(/'/g,"\\'")}')">Se ingredienser</button>` : ''}
