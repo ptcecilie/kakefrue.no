@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kurs – Kakefrue</title>
   <meta name="description" content="Lær å lage vakre kaker med Kakefrue. Se kommende kurs og meld deg på.">
-  <link rel="stylesheet" href="/css/main.css?v=5.1">
+  <link rel="stylesheet" href="/css/main.css?v=5.4">
   <style>
     @media (max-width: 600px) { .btn-sm { min-height: 44px; padding: 12px 20px; } }
     .course-card {
@@ -69,7 +69,7 @@
     @media (max-width: 480px) { .steg-rad { grid-template-columns: 1fr; gap: 28px; } }
   </style>
 </head>
-<body>
+<body style="--side-foto:url('/assets/kurs-hero.jpg');">
 
 <nav class="nav">
   <a href="/" class="nav-logo">Kake<span>frue</span></a>
@@ -210,7 +210,6 @@ fetch('/api/courses')
         <div class="course-header">
           <div>
             <h3 style="margin-bottom:8px;">${c.title}</h3>
-            ${c.interest_count > 0 ? `<div style="font-size:0.85rem; color:var(--sage); font-weight:600; margin-top:4px;">👥 ${c.interest_count} person${c.interest_count !== 1 ? 'er' : ''} har meldt interesse</div>` : ''}
           </div>
           <button class="btn btn-primary btn-sm" style="flex-shrink:0;" onclick="toggleInterest(${c.id}, this)">Meld interesse</button>
         </div>

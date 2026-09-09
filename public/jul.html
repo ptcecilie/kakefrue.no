@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Julebestillinger – Kakefrue</title>
   <meta name="description" content="Bestill hjemmelagde julekaker fra Kakefrue i Porsgrunn – kling, lefse, krumkaker, pepperkaker og mer.">
-  <link rel="stylesheet" href="/css/main.css?v=5.1">
+  <link rel="stylesheet" href="/css/main.css?v=5.4">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@500;700&family=Lato:wght@300;400;700&display=swap">
@@ -591,6 +591,29 @@
       .lev-valg { padding: 15px 14px; }
       .adresse-forslag li { padding: 14px 15px; font-size: 0.9rem; }
     }
+  .allergen-linje {
+    font-size: 0.76rem;
+    line-height: 1.5;
+    margin-top: 5px;
+    color: rgba(35,13,10,0.62);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px;
+  }
+  .allergen-linje strong { font-weight: 700; color: rgba(35,13,10,0.78); }
+  .allergen-mer {
+    background: none; border: none; padding: 0;
+    font: inherit; color: #8B1A1A;
+    text-decoration: underline; text-underline-offset: 2px;
+    cursor: pointer;
+  }
+  .allergen-fot {
+    font-size: 0.8rem; line-height: 1.65;
+    background: rgba(255,255,255,0.07);
+    border-left: 3px solid rgba(196,149,106,0.5);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-top: 20px;
+    color: rgba(251,246,236,0.8);
+  }
   </style>
 </head>
 <body>
@@ -741,6 +764,13 @@
         <div class="kolonne-tittel">Velg hva du vil ha</div>
         <div class="frist-banner">Bestillingsfrist: 1. desember 2026</div>
         <ul class="produkt-liste" id="produktListe"></ul>
+
+        <div class="allergen-fot" id="allergenFot" style="display:none;">
+          Alt bakes i mitt eget kjøkken, der nøtter, gluten, melk og egg brukes
+          regelmessig. Jeg kan derfor ikke garantere at produktene er helt fri for spor.
+          Har du en allergi jeg bør vite om, skriv det i meldingsfeltet nedenfor
+          eller ring meg på 900 33 039.
+        </div>
 
         <!-- Handlekurv -->
         <div id="handlekurvWrap" style="display:none;margin-top:14px;border-top:2px solid #E8D9BE;padding-top:12px;">
@@ -940,6 +970,7 @@ function visProdukter(){
       <div class="produkt-info">
         <div class="produkt-navn-liten">${p.n}${p.hit?' <span style="background:#8B1A1A;color:white;font-size:0.6rem;padding:2px 7px;border-radius:100px;letter-spacing:0.04em;font-weight:700;vertical-align:middle;margin-left:4px;">HIT</span>':''}${p.popular?' <span style="background:rgba(196,149,106,0.18);color:#C4956A;font-size:0.6rem;padding:2px 7px;border-radius:100px;letter-spacing:0.04em;font-weight:700;vertical-align:middle;margin-left:4px;border:1px solid rgba(196,149,106,0.3);">POPULÆR</span>':''}</div>
         <div class="produkt-detalj">${p.unit}${p.desc?' · '+p.desc:''}</div>
+        ${allergenLinje(p.n)}
       </div>
       <div class="produkt-pris-liten">${visPris},-</div>
       <div class="qty-mini">
@@ -951,6 +982,42 @@ function visProdukter(){
     </li>`;
   }).join('');
   oppdaterTotal();
+}
+// Allergeninformasjonen kommer fra etikett-produktene i admin, samme kilde som
+// etikettene pa pakkene. Ma vaere tilgjengelig for kunden bestiller.
+let allergenData = {};
+async function hentAllergener(){
+  try{
+    const liste = await fetch('/api/allergener').then(r=>r.json());
+    liste.forEach(x => { allergenData[x.navn.toLowerCase()] = x; });
+  }catch(e){ /* siden skal virke selv om kallet feiler */ }
+  const fot = document.getElementById('allergenFot');
+  if(fot) fot.style.display = Object.keys(allergenData).length ? 'block' : 'none';
+  if(document.getElementById('produktListe')) visProdukter();
+}
+function allergenLinje(navn){
+  const d = allergenData[(navn||'').toLowerCase()];
+  if(!d) return '';
+  const har = (d.allergener||[]).length;
+  return `<div class="allergen-linje">
+    ${har
+      ? `<strong>Inneholder:</strong> ${d.allergener.join(', ')}`
+      : `<strong>Ingen av de 14 merkepliktige allergenene.</strong>`}
+    ${d.ingredienser ? `<button type="button" class="allergen-mer"
+        onclick="visIngredienser('${navn.replace(/'/g,"\\'")}')">Se ingredienser</button>` : ''}
+  </div>`;
+}
+function visIngredienser(navn){
+  const d = allergenData[(navn||'').toLowerCase()];
+  if(!d) return;
+  alert(
+    navn + '\n\n' +
+    'Ingredienser: ' + d.ingredienser +
+    ((d.allergener||[]).length ? '\n\nInneholder: ' + d.allergener.join(', ') : '') +
+    (d.oppbevaring ? '\n\n' + d.oppbevaring : '') +
+    '\n\nBakt i et kjøkken der nøtter, gluten, melk og egg brukes regelmessig. ' +
+    'Jeg kan derfor ikke garantere at produktene er helt fri for spor.'
+  );
 }
 function endreAntall(k,d){
   const v=(valgt[k]||0)+d;
@@ -1196,6 +1263,7 @@ function vippsKlikket(){
 }
 document.getElementById('hamburger').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('open'));
 visProdukter();
+hentAllergener();
 </script>
 </body>
 </html>

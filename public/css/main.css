@@ -740,3 +740,66 @@ section { padding: var(--section-padding); }
   /* Knapper skal fylle bredden så de er lette å treffe */
   .btn { min-height: 46px; }
 }
+
+/* ============================================================
+   Sidebakgrunn – bildet fra toppen folger med nedover siden
+   Hver side setter --side-foto pa <body>, sa arver alt herfra.
+   ============================================================ */
+body[style*="--side-foto"] {
+  position: relative;
+  background: var(--cream);
+}
+/* Fotoet ligger fast bak innholdet, kraftig dempet */
+body[style*="--side-foto"]::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image: var(--side-foto);
+  background-size: cover;
+  background-position: center 40%;
+  opacity: 0.16;
+  filter: saturate(0.85);
+  pointer-events: none;
+}
+/* Varmt slor over fotoet, sa teksten alltid er lesbar */
+body[style*="--side-foto"]::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(255,252,248,0.55) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(250,247,244,0.86) 0%, rgba(250,247,244,0.93) 100%);
+}
+
+/* Innholdsseksjonene blir gjennomskinnelige, sa bakgrunnen synes */
+body[style*="--side-foto"] section { background: transparent; }
+
+/* Vekselvis lysere band, sa siden far rytme i stedet for en lang flate */
+body[style*="--side-foto"] section:nth-of-type(even) {
+  background: rgba(255,255,255,0.55);
+  box-shadow: inset 0 1px 0 rgba(196,149,106,0.09), inset 0 -1px 0 rgba(196,149,106,0.09);
+}
+
+/* Kort og bokser loftes litt, siden de na star pa et toneflate og ikke hvitt */
+body[style*="--side-foto"] .card,
+body[style*="--side-foto"] .review-card,
+body[style*="--side-foto"] .steg-boks,
+body[style*="--side-foto"] .info-boks {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(2px);
+}
+
+/* Kompakt sidetopp – for sider der innholdet, ikke bildet, er hovedsaken */
+.page-hero.med-foto.kompakt {
+  min-height: 300px;
+  padding: 56px 24px 48px;
+}
+@media (max-width: 768px) {
+  .page-hero.med-foto.kompakt { min-height: 240px; padding: 44px 20px 36px; }
+  /* Fast bakgrunn koster for mye pa mobil – ruller i stedet */
+  body[style*="--side-foto"]::before,
+  body[style*="--side-foto"]::after { position: absolute; height: 100%; }
+}

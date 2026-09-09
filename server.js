@@ -85,6 +85,28 @@ app.delete('/api/admin/pageviews', requireAdmin, async (req, res) => {
 // Public API
 // ============================================================
 
+// GET /api/allergener
+// Allergeninformasjon skal vaere tilgjengelig FOR kunden kjoper, jf. merkeforskriften.
+// Samme kilde som etikettene i admin, sa de to aldri kan sprike.
+// Kun produkter Cecilie har bekreftet slippes ut – utkast skal ikke vises offentlig.
+app.get('/api/allergener', async (req, res) => {
+  try {
+    const [rows] = await pool.query(`SELECT v FROM settings WHERE k = 'etikett_produkter'`);
+    const alle = rows[0]?.v ? JSON.parse(rows[0].v) : [];
+    res.json(alle
+      .filter(p => p.bekreftet === true)
+      .map(p => ({
+        navn: p.navn,
+        ingredienser: p.ingredienser || '',
+        allergener: p.allergener || [],
+        oppbevaring: p.oppbevaring || ''
+      })));
+  } catch (err) {
+    console.error(err);
+    res.json([]);
+  }
+});
+
 // GET /api/available-dates
 app.get('/api/available-dates', async (req, res) => {
   try {
