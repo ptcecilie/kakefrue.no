@@ -803,3 +803,20 @@ body[style*="--side-foto"] .info-boks {
   body[style*="--side-foto"]::before,
   body[style*="--side-foto"]::after { position: absolute; height: 100%; }
 }
+
+/* ============================================================
+   Torkolonner som ma falle sammen pa mobil
+   Var tidligere satt inline med "1fr 1fr" og kollapset aldri,
+   sa overskrifter ble klemt til ett ord per linje.
+   ============================================================ */
+.to-kolonner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+}
+.to-kolonner.tett { gap: 16px; }
+@media (max-width: 820px) {
+  .to-kolonner { grid-template-columns: 1fr; gap: 32px; }
+  .to-kolonner.tett { gap: 14px; }
+}
