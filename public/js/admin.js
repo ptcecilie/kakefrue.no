@@ -977,13 +977,25 @@ function renderBarChart(containerId, data, labelFn, color) {
   const values = Object.values(data);
   const max = Math.max(...values, 1);
   const el = document.getElementById(containerId);
+  // Sokylene ma ha en kolonne med full hoyde a vokse i, ellers kollapser
+  // prosenthoyden til ingenting og diagrammet blir en tynn strek.
+  const maaned = keys.length && keys[0].length === 7;
   el.innerHTML = keys.map((k, i) => {
-    const pct = Math.round((values[i] / max) * 100);
-    const shortKey = k.length === 7 ? new Date(k + '-01').toLocaleDateString('nb-NO', { month:'short', year:'2-digit' }) : k;
-    return `<div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; position:relative;">
-      <div style="font-size:0.65rem; opacity:0.6; position:absolute; top:-18px;">${values[i] > 0 ? labelFn(values[i]) : ''}</div>
-      <div style="width:100%; background:${color}; border-radius:4px 4px 0 0; height:${pct}%; min-height:${values[i] > 0 ? 3 : 0}px; transition:height 0.3s;"></div>
-      <div style="font-size:0.6rem; opacity:0.55; white-space:nowrap; position:absolute; bottom:-22px;">${shortKey}</div>
+    const pct = (values[i] / max) * 100;
+    const kort = maaned
+      ? new Date(k + '-01').toLocaleDateString('nb-NO', { month:'short', year:'2-digit' })
+      : new Date(k).toLocaleDateString('nb-NO', { day:'numeric', month:'short' });
+    // Med 30 dager blir det for trangt til a merke hver stolpe
+    const visMerke = maaned || keys.length <= 12 || i % 5 === 0 || i === keys.length - 1;
+    return `<div style="flex:1; min-width:0; height:100%; display:flex; flex-direction:column;
+                        justify-content:flex-end; align-items:center; position:relative;">
+      <div style="font-size:0.62rem; opacity:0.65; margin-bottom:3px; white-space:nowrap;
+                  font-variant-numeric:tabular-nums;">${values[i] > 0 ? labelFn(values[i]) : ''}</div>
+      <div title="${kort}: ${values[i]}"
+           style="width:100%; max-width:34px; background:${color}; border-radius:4px 4px 0 0;
+                  height:${pct}%; min-height:${values[i] > 0 ? 3 : 0}px; transition:height 0.3s;"></div>
+      <div style="font-size:0.6rem; opacity:0.5; white-space:nowrap; position:absolute;
+                  bottom:-20px;">${visMerke ? kort : ''}</div>
     </div>`;
   }).join('');
 }
@@ -2010,7 +2022,7 @@ function renderEtikettListe() {
 // IKKE Cecilies egne – derfor markeres de som ubekreftet til hun har lest gjennom.
 const JULEBAKST_UTKAST = [
   { navn: 'Kling', dager: 4, mengde: '2 stk',
-    ingredienser: 'potet, hvetemel, melk, smør, sukker, kanel',
+    ingredienser: 'meierismør, hvetemel, melis, helmelk',
     allergener: ['Gluten', 'Melk'],
     oppbevaring: 'Best de første dagene. Kan fryses.', bekreftet: false },
 
