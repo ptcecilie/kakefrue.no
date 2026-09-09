@@ -242,6 +242,85 @@ async function exportJulebestillingerExcel() {
 
 const HENTEADRESSE = 'Snarvegen 8, 3925 Porsgrunn';
 
+function aapnePurring(o) {
+  const varer = (o.products || []).map(p => `${p.name} x${p.qty}`).join(', ');
+  const vare = (o.products || []).reduce((s2,p) => s2 + (p.price||0)*(p.qty||1), 0);
+  const total = vare + (parseInt(o.delivery_cost) || 0);
+  const bestilt = o.created_at ? new Date(o.created_at).toLocaleDateString('nb-NO',{day:'numeric',month:'long'}) : '';
+
+  openModal(`
+    <div class="modal-header">
+      <h3>⚠️ Mangler betaling – ${o.full_name}</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:rgba(196,120,138,.12);border:1px solid rgba(155,58,82,.3);border-radius:8px;padding:12px 15px;margin-bottom:16px;font-size:0.85rem;line-height:1.65;">
+        Bestilt <strong>${bestilt}</strong> · <strong>${total} kr</strong> · ${varer || '—'}<br>
+        <span style="opacity:0.7;">${o.payment_claimed_at ? 'Kunden har trykket «Jeg har betalt», men du har ikke bekreftet.' : 'Kunden har ikke meldt om betaling.'}</span>
+      </div>
+
+      <div class="form-group" style="margin-bottom:6px;">
+        <label class="form-label">Meldingen – rediger fritt</label>
+        <textarea class="form-input" id="purreTekst" rows="10" style="line-height:1.65;"></textarea>
+      </div>
+      <p style="font-size:0.78rem;opacity:0.6;margin:0;">📞 ${o.phone}${o.email ? ' · ' + o.email : ' · ingen e-post oppgitt'}</p>
+      <div id="purreStatus" style="font-size:0.85rem;margin-top:10px;"></div>
+    </div>
+    <div class="modal-footer" style="flex-wrap:wrap;gap:8px;">
+      <button class="btn btn-outline" onclick="closeModal()">Lukk</button>
+      <button class="btn btn-outline" onclick="kopierPurring()">📋 Kopier til SMS</button>
+      ${o.email
+        ? `<button class="btn btn-primary" id="purreSendBtn" onclick="sendPurring(${o.id}, '${o.email}', '${(o.full_name||'').replace(/'/g,"&apos;")}')">✉️ Send e-post</button>`
+        : `<span style="font-size:0.8rem;opacity:0.6;align-self:center;">Ingen e-post – bruk SMS</span>`}
+    </div>
+  `);
+
+  const fornavn = (o.full_name || '').split(' ')[0];
+  document.getElementById('purreTekst').value =
+`Hei ${fornavn}!
+
+Jeg har ikke registrert betaling for julebestillingen din p\u00e5 ${total} kr.
+
+En bestilling er f\u00f8rst gyldig n\u00e5r den er betalt, s\u00e5 den er dessverre ikke satt opp i produksjonen min enn\u00e5.
+
+Vipps ${total} kr til 90 03 30 39, og merk med navnet ditt. Da ordner det seg.
+
+Har du allerede betalt? Si fra, s\u00e5 sjekker jeg p\u00e5 nytt.
+
+Med vennlig hilsen
+Cecilie \u2013 Kakefrue
+900 33 039`;
+}
+
+function kopierPurring() {
+  const t = document.getElementById('purreTekst').value;
+  const ok = () => { document.getElementById('purreStatus').innerHTML =
+    '<span style="color:var(--sage);">\u2713 Kopiert \u2013 lim inn i meldingsappen</span>'; };
+  navigator.clipboard.writeText(t).then(ok, () => { document.getElementById('purreTekst').select(); ok(); });
+}
+
+async function sendPurring(id, epost, navn) {
+  const btn = document.getElementById('purreSendBtn');
+  btn.disabled = true; btn.textContent = 'Sender...';
+  try {
+    const r = await api('/api/admin/send-email', {
+      method: 'POST',
+      body: JSON.stringify({
+        to: epost, name: navn,
+        subject: 'Manglende betaling – julebestillingen din',
+        message: document.getElementById('purreTekst').value
+      })
+    });
+    if (r.mailto_fallback) throw new Error('E-post ikke satt opp');
+    document.getElementById('purreStatus').innerHTML =
+      '<span style="color:var(--sage);">\u2713 Sendt til ' + epost + '</span>';
+    btn.textContent = '\u2713 Sendt';
+  } catch (e) {
+    document.getElementById('purreStatus').innerHTML = '<span style="color:#C62828;">Feil: ' + e.message + '</span>';
+    btn.disabled = false; btn.textContent = '\u2709\ufe0f Send e-post';
+  }
+}
+
 function aapneHentemelding(o) {
   const levering = o.delivery === 'levering';
   const varer = (o.products || []).map(p => `${p.name} x${p.qty}`).join(', ');
@@ -457,6 +536,9 @@ async function loadChristmasOrders() {
                 : o.payment_claimed_at
                   ? `<button class="btn btn-primary btn-sm" style="background:#7A9E82;color:#fff;border-color:#7A9E82;" onclick="bekreftBetaling(${o.id})">💰 Bekreft betaling</button>`
                   : `<span style="align-self:center;font-size:0.78rem;opacity:0.5;">Ikke betalt</span>`}
+              ${!o.paid_at
+                ? `<button class="btn btn-outline btn-sm" style="color:#9B3A52;border-color:rgba(155,58,82,.45);" onclick='aapnePurring(${JSON.stringify(o).replace(/'/g, "&apos;")})'>⚠️ Mangler betaling</button>`
+                : ''}
               <button class="btn btn-primary btn-sm" onclick='aapneHentemelding(${JSON.stringify(o).replace(/'/g, "&apos;")})'>${o.delivery === 'levering' ? '🚗 Varsle om levering' : '📦 Klar til henting'}</button>
               <button class="photo-delete-btn" style="padding:7px 12px;" title="Slett bestilling" onclick="slettJulebestilling(${o.id}, this)">🗑</button>
             </div>
