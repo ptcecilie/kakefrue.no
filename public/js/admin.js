@@ -1963,7 +1963,8 @@ function renderEtikettListe() {
           Legg inn ett per produkttype du pakker – lefse, krumkaker, kransekake og så videre.<br>
           Ingredienslisten skriver du bare inn én gang.
         </p>
-        <button class="btn btn-primary btn-sm" onclick="nyEtikettProdukt()">+ Legg inn første produkt</button>
+        <button class="btn btn-primary btn-sm" onclick="leggInnJulebakst()">Legg inn julebaksten min</button>
+        <button class="btn btn-outline btn-sm" onclick="nyEtikettProdukt()" style="margin-left:8px;">+ Tomt produkt</button>
       </div>`;
     return;
   }
@@ -1972,7 +1973,19 @@ function renderEtikettListe() {
     <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);
                 padding:18px 22px;display:flex;gap:18px;align-items:flex-start;">
       <div style="flex:1;min-width:0;">
-        <h4 style="margin:0 0 6px;font-size:1.02rem;">${esc(p.navn)}</h4>
+        <h4 style="margin:0 0 6px;font-size:1.02rem;">
+          ${esc(p.navn)}
+          ${p.bekreftet === false ? `<span style="background:#FFF3CD;color:#8A6100;font-size:0.68rem;
+            font-weight:700;padding:3px 9px;border-radius:100px;margin-left:6px;
+            vertical-align:middle;letter-spacing:0.03em;">UTKAST</span>` : ''}
+        </h4>
+        ${p.bekreftet === false ? `<p style="font-size:0.8rem;color:#8A6100;background:#FFF9E8;
+          border-radius:8px;padding:9px 12px;margin:0 0 10px;line-height:1.55;">
+          Ingredienslisten er et forslag, ikke din oppskrift. Les gjennom, rett opp,
+          og trykk «Bekreft» – da forsvinner denne meldingen.
+          <button class="btn btn-primary btn-sm" style="margin-left:8px;padding:4px 14px;"
+                  onclick="bekreftEtikettProdukt(${i})">Bekreft</button>
+        </p>` : ''}
         <p style="font-size:0.83rem;opacity:0.65;margin:0 0 8px;line-height:1.6;">${esc(p.ingredienser || '—')}</p>
         <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
           ${(p.allergener || []).map(a =>
@@ -1990,6 +2003,77 @@ function renderEtikettListe() {
                 style="border-color:rgba(200,0,0,0.25);color:#c00;">Slett</button>
       </div>
     </div>`).join('') + `</div>`;
+}
+
+
+// Utkast til julebakst-produktene. Ingrediensene er vanlige oppskrifter,
+// IKKE Cecilies egne – derfor markeres de som ubekreftet til hun har lest gjennom.
+const JULEBAKST_UTKAST = [
+  { navn: 'Kling', dager: 4, mengde: '2 stk',
+    ingredienser: 'potet, hvetemel, melk, smør, sukker, kanel',
+    allergener: ['Gluten', 'Melk'],
+    oppbevaring: 'Best de første dagene. Kan fryses.', bekreftet: false },
+
+  { navn: 'Nordlandslefse', dager: 4, mengde: '3 stk',
+    ingredienser: 'hvetemel, melk, smør, sukker, sirup, hjortetakksalt, kanel',
+    allergener: ['Gluten', 'Melk'],
+    oppbevaring: 'Best de første dagene. Kan fryses.', bekreftet: false },
+
+  { navn: 'Pepperkakedrøm', dager: 5, mengde: '6 stk',
+    ingredienser: 'mandler, sukker, eggehvite, smør, melis, pepperkakekrydder',
+    allergener: ['Nøtter', 'Egg', 'Melk'],
+    oppbevaring: 'Oppbevares kjølig.', bekreftet: false },
+
+  { navn: 'Gule bomber', dager: 5, mengde: '6 stk',
+    ingredienser: 'mandler, sukker, eggehvite, melk, eggeplomme, smør, maisenna, vanilje',
+    allergener: ['Nøtter', 'Egg', 'Melk'],
+    oppbevaring: 'Oppbevares kjølig.', bekreftet: false },
+
+  { navn: 'Krumkaker', dager: 21, mengde: '6 stk',
+    ingredienser: 'hvetemel, sukker, smør, egg, fløte, kardemomme',
+    allergener: ['Gluten', 'Melk', 'Egg'],
+    oppbevaring: 'Oppbevares tørt i tett boks.', bekreftet: false },
+
+  { navn: 'Cookies', dager: 7, mengde: '5 stk',
+    ingredienser: 'hvetemel, smør, sukker, brunt sukker, egg, sjokolade, bakepulver, vanilje',
+    allergener: ['Gluten', 'Melk', 'Egg', 'Soya'],
+    oppbevaring: 'Oppbevares tørt i tett boks. Kan fryses.', bekreftet: false },
+
+  { navn: 'Kransekake', dager: 14, mengde: '18 ringer',
+    ingredienser: 'mandler, melis, eggehvite',
+    allergener: ['Nøtter', 'Egg'],
+    oppbevaring: 'Oppbevares tørt i tett boks. Kan fryses.', bekreftet: false }
+];
+
+async function leggInnJulebakst() {
+  const finnes = etikettProdukter.map(p => p.navn.toLowerCase());
+  const nye = JULEBAKST_UTKAST.filter(p => !finnes.includes(p.navn.toLowerCase()));
+  if (!nye.length) { alert('Alle julebakst-produktene ligger inne allerede.'); return; }
+
+  if (!confirm(
+    `Legge inn ${nye.length} produkter som utkast?\n\n` +
+    'Ingredienslistene er vanlige oppskrifter, ikke dine egne. ' +
+    'Du må lese gjennom hvert produkt og bekrefte det før du skriver ut etiketter.'
+  )) return;
+
+  etikettProdukter.push(...nye.map(p => ({ ...p })));
+  try {
+    await lagreEtikettProdukter();
+    renderEtikettListe();
+    fyllEtikettVelger();
+  } catch (e) {
+    alert('Kunne ikke lagre: ' + e.message);
+  }
+}
+
+async function bekreftEtikettProdukt(i) {
+  etikettProdukter[i].bekreftet = true;
+  try {
+    await lagreEtikettProdukter();
+    renderEtikettListe();
+  } catch (e) {
+    alert('Kunne ikke lagre: ' + e.message);
+  }
 }
 
 function nyEtikettProdukt() { etikettSkjema(null); }
@@ -2160,6 +2244,11 @@ function skrivUtEtiketter() {
   const p = etikettProdukter[idx];
   const pakket = $('etikDato').value;
   if (!pakket) { alert('Velg pakkedato.'); return; }
+
+  if (p.bekreftet === false && !confirm(
+    `«${p.navn}» er fortsatt merket som utkast.\n\n` +
+    'Ingredienslisten er ikke bekreftet av deg. Skrive ut likevel?'
+  )) return;
 
   const antall = Math.min(Math.max(parseInt($('etikAntall').value) || 1, 1), 200);
   const liten = $('etikStr').value === 'liten';
