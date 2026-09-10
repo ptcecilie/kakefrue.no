@@ -387,10 +387,42 @@
     /* ══ NY FORM-LAYOUT ══ */
     .bestilling-layout {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 28px;
-      max-width: 900px;
+      /* Produktlista er den lange, sa den far den brede spalten */
+      grid-template-columns: minmax(0, 1.32fr) minmax(300px, 1fr);
+      gap: 24px;
+      max-width: 980px;
       margin: 0 auto;
+      align-items: start;
+    }
+    /* Hoyre spalte folger med nedover mens kunden blar i baksten */
+    .bestilling-hoyre {
+      position: sticky;
+      top: 84px;
+      display: grid;
+      gap: 16px;
+      max-height: calc(100vh - 104px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(196,149,106,0.45) transparent;
+      padding-right: 3px;
+    }
+    .bestilling-hoyre::-webkit-scrollbar { width: 7px; }
+    .bestilling-hoyre::-webkit-scrollbar-thumb {
+      background: rgba(196,149,106,0.4); border-radius: 100px;
+    }
+    /* Kurven er tom for kunden har valgt noe – da skal den ikke skrike */
+    .kurv-tom {
+      font-size: 0.82rem; color: var(--muted); text-align: center;
+      padding: 14px 8px; line-height: 1.6;
+    }
+    .kurv-tom span { display: block; font-size: 1.5rem; margin-bottom: 6px; opacity: 0.45; }
+
+    @media (max-width: 900px) {
+      .bestilling-layout { grid-template-columns: 1fr; gap: 18px; }
+      .bestilling-hoyre {
+        position: static; max-height: none; overflow: visible; padding-right: 0;
+      }
     }
     .bestilling-kolonne {
       background: var(--cream);
@@ -744,9 +776,48 @@
     </div>
 
     <div class="bestilling-layout">
-      <!-- VENSTRE: Kundeinformasjon -->
+
+      <!-- VENSTRE: Produktmenyen, den lange lista -->
       <div class="bestilling-kolonne">
-        <div class="kolonne-tittel">Din informasjon</div>
+        <div class="kolonne-tittel">Velg hva du vil ha</div>
+        <div class="frist-banner">Bestillingsfrist: 1. desember 2026</div>
+        <ul class="produkt-liste" id="produktListe"></ul>
+
+        <div class="allergen-fot" id="allergenFot" style="display:none;">
+          Alt bakes i mitt eget kjøkken, der nøtter, gluten, melk og egg brukes
+          regelmessig. Jeg kan derfor ikke garantere at produktene er helt fri for spor.
+          Har du en allergi jeg bør vite om, skriv det i meldingsfeltet nedenfor
+          eller ring meg på 900 33 039.
+        </div>
+      </div>
+
+      <!-- HØYRE: Handlekurv og opplysninger, festet -->
+      <div class="bestilling-hoyre">
+
+        <div class="bestilling-kolonne">
+          <div class="kolonne-tittel">Din handlekurv</div>
+          <div id="kurvTom" class="kurv-tom">
+            <span>🎄</span>
+            Ingenting valgt ennå.<br>Trykk <strong>+</strong> ved baksten du vil ha.
+          </div>
+          <div id="handlekurvWrap" style="display:none;">
+            <div id="handlekurvListe"></div>
+            <div id="leveringLinje" style="display:none;padding:5px 0;border-top:1px solid #F0E8DA;margin-top:4px;">
+              <div style="display:flex;justify-content:space-between;font-size:0.82rem;">
+                <span style="color:var(--muted)">Levering</span>
+                <span style="font-weight:700;color:var(--body)" id="leveringPris">–</span>
+              </div>
+            </div>
+            <div class="total-rad" id="totalRad">
+              <span id="totalLabel">Totalt</span>
+              <span class="total-sum" id="totalSum">0 kr</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bestilling-kolonne">
+          <div class="kolonne-tittel">Din informasjon</div>
+
 
         <div class="felt-rad">
           <label class="felt-label">Navn *</label>
@@ -797,43 +868,15 @@
           <label class="felt-label">Kommentar / ønsket hentetidspunkt</label>
           <textarea class="felt-input" id="merknad" placeholder="Skriv gjerne her om det er noe jeg bør vite..." style="min-height:72px;"></textarea>
         </div>
-      </div>
-
-      <!-- HØYRE: Produktmeny -->
-      <div class="bestilling-kolonne">
-        <div class="kolonne-tittel">Velg hva du vil ha</div>
-        <div class="frist-banner">Bestillingsfrist: 1. desember 2026</div>
-        <ul class="produkt-liste" id="produktListe"></ul>
-
-        <div class="allergen-fot" id="allergenFot" style="display:none;">
-          Alt bakes i mitt eget kjøkken, der nøtter, gluten, melk og egg brukes
-          regelmessig. Jeg kan derfor ikke garantere at produktene er helt fri for spor.
-          Har du en allergi jeg bør vite om, skriv det i meldingsfeltet nedenfor
-          eller ring meg på 900 33 039.
         </div>
 
-        <!-- Handlekurv -->
-        <div id="handlekurvWrap" style="display:none;margin-top:14px;border-top:2px solid #E8D9BE;padding-top:12px;">
-          <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;">Din handlekurv</div>
-          <div id="handlekurvListe"></div>
-          <div id="leveringLinje" style="display:none;padding:5px 0;border-top:1px solid #F0E8DA;margin-top:4px;">
-            <div style="display:flex;justify-content:space-between;font-size:0.82rem;">
-              <span style="color:var(--muted)">Levering</span>
-              <span style="font-weight:700;color:var(--body)" id="leveringPris">–</span>
-            </div>
-          </div>
-          <div class="total-rad" id="totalRad">
-            <span id="totalLabel">Totalt</span>
-            <span class="total-sum" id="totalSum">0 kr</span>
-          </div>
+        <div>
+          <div class="skjema-feil" id="skjemaFeil"></div>
+          <button class="send-knapp" onclick="sendBestilling()" id="sendKnapp">Ser alt riktig ut? Send bestilling →</button>
+          <p style="text-align:center;font-size:0.75rem;color:rgba(245,237,214,0.34);margin-top:9px;">Bestillingen lagres og du betaler trygt via Vipps</p>
         </div>
-      </div>
-    </div>
 
-    <div style="max-width:900px;margin:0 auto;">
-      <div class="skjema-feil" id="skjemaFeil"></div>
-      <button class="send-knapp" onclick="sendBestilling()" id="sendKnapp">Ser alt riktig ut? Send bestilling →</button>
-      <p style="text-align:center;font-size:0.75rem;color:rgba(245,237,214,0.3);margin-top:10px;">Bestillingen lagres og du betaler trygt via Vipps</p>
+      </div>
     </div>
 
     <div class="kontakt-linje">
@@ -1109,8 +1152,10 @@ function oppdaterTotal(){
   const levKost=levering==='levering'&&leveringKostnad>0?leveringKostnad:0;
   const total=produktTotal+levKost;
   const wrap=document.getElementById('handlekurvWrap');
+  const tom=document.getElementById('kurvTom');
   if(produktTotal>0){
     wrap.style.display='block';
+    if(tom) tom.style.display='none';
     document.getElementById('handlekurvListe').innerHTML=keys.map(k=>{
       const p=PRODUKTER.find(x=>x.k===k);
       if(!p)return'';
@@ -1124,7 +1169,10 @@ function oppdaterTotal(){
     } else levLinje.style.display='none';
     document.getElementById('totalLabel').textContent=levKost>0?'Totalt inkl. levering':'Totalt';
     document.getElementById('totalSum').textContent=total+' kr';
-  } else wrap.style.display='none';
+  } else {
+    wrap.style.display='none';
+    if(tom) tom.style.display='block';
+  }
 }
 function settLevering(v){
   levering=v;
