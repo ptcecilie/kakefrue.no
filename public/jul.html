@@ -461,7 +461,22 @@
     }
     .produkt-rad:last-child { border-bottom: none; }
     .produkt-info { flex: 1; min-width: 0; }
-    .produkt-navn-liten { font-size: 0.87rem; font-weight: 700; color: var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .produkt-navn-liten {
+      font-size: 0.87rem; font-weight: 700; color: var(--body);
+      display: flex; flex-wrap: wrap; align-items: center;
+      gap: 5px; row-gap: 4px; min-width: 0;
+    }
+    /* Merkene skal aldri klippes – de faller heller ned pa neste linje */
+    .merke-liten {
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 0.05em;
+      padding: 2px 8px; border-radius: 100px; line-height: 1.5;
+      flex-shrink: 0; white-space: nowrap;
+    }
+    .merke-hit { background: #8B1A1A; color: #fff; }
+    .merke-pop {
+      background: rgba(196,149,106,0.18); color: #A87844;
+      border: 1px solid rgba(196,149,106,0.4);
+    }
     .produkt-detalj { font-size: 0.72rem; color: var(--muted); }
     .produkt-pris-liten { font-size: 0.82rem; font-weight: 700; color: var(--red); white-space: nowrap; }
     .qty-mini {
@@ -1051,7 +1066,7 @@ function visProdukter(){
     const visPris=p.gfEkstra&&gf?p.pris+p.gfEkstra:p.pris;
     return`<li class="produkt-rad" style="flex-wrap:wrap;">
       <div class="produkt-info">
-        <div class="produkt-navn-liten">${p.n}${p.hit?' <span style="background:#8B1A1A;color:white;font-size:0.6rem;padding:2px 7px;border-radius:100px;letter-spacing:0.04em;font-weight:700;vertical-align:middle;margin-left:4px;">HIT</span>':''}${p.popular?' <span style="background:rgba(196,149,106,0.18);color:#C4956A;font-size:0.6rem;padding:2px 7px;border-radius:100px;letter-spacing:0.04em;font-weight:700;vertical-align:middle;margin-left:4px;border:1px solid rgba(196,149,106,0.3);">POPULÆR</span>':''}</div>
+        <div class="produkt-navn-liten"><span>${p.n}</span>${p.hit?'<span class="merke-liten merke-hit">HIT</span>':''}${p.popular?'<span class="merke-liten merke-pop">POPULÆR</span>':''}</div>
         <div class="produkt-detalj">${p.unit}${p.desc?' · '+p.desc:''}</div>
         ${allergenLinje(p.n, p.k)}
       </div>
