@@ -261,7 +261,7 @@ async function initDB() {
     // sa overgangen til admin-styring ikke endrer noe kundene ser.
     // INSERT IGNORE - rorer ikke raden hvis Cecilie allerede har redigert den.
     const JUL_PRODUKTER_DEFAULT = [
-      { k: 'kling', n: 'Kling', unit: '2 stk', pris: 189,
+      { k: 'kling', n: 'Kling', unit: '2 stk', pris: 169,
         desc: 'Kakefrues ny og forbedrede oppskrift – 2 ferdigsmurte lefser med Kakefrues eget fyll', popular: true },
       { k: 'nordlandslefse', n: 'Nordlandslefse', unit: '3 stk', pris: 250,
         desc: 'Tykklefse med smør, kanel og sukker' },
