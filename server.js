@@ -104,6 +104,86 @@ app.get('/api/jul-produkter', async (req, res) => {
   }
 });
 
+// ── Eventer ─────────────────────────────────────────────────
+// Dagens dato i norsk tid som YYYY-MM-DD (sv-SE gir akkurat det formatet)
+const osloIdag = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Oslo' });
+const eventBestillbar = e => !!e.henting && (!e.frist || Date.now() < Date.parse(e.frist)) && e.dato >= osloIdag();
+function eventDatoTekst(e) {
+  return new Date(e.dato + 'T12:00:00Z').toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Oslo' });
+}
+const eventTekst = e => `${e.tittel}, ${eventDatoTekst(e)}${e.fra ? ` kl. ${e.fra}–${e.til || ''}` : ''}${e.adresse ? ` (${e.adresse})` : ''}`;
+const visEvent = e => ({
+  id: e.id, tittel: e.tittel, dato: e.dato, fra: e.fra, til: e.til, sted: e.sted, adresse: e.adresse,
+  beskrivelse: e.beskrivelse, vis_forside: !!e.vis_forside, henting: !!e.henting, frist: e.frist,
+  bestillbar: eventBestillbar(e)
+});
+
+// GET /api/eventer – kommende eventer (i dag og framover)
+app.get('/api/eventer', async (req, res) => {
+  try {
+    const [rows] = await pool.query(`SELECT * FROM eventer WHERE dato >= ? ORDER BY dato, fra`, [osloIdag()]);
+    res.json(rows.map(visEvent));
+  } catch (err) {
+    console.error(err);
+    res.json([]);
+  }
+});
+
+app.get('/api/admin/eventer', requireAdmin, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`SELECT * FROM eventer ORDER BY dato DESC, fra`);
+    res.json(rows.map(visEvent));
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+function eventFraSkjema(b) {
+  const tittel = String(b.tittel || '').trim();
+  if (!tittel) throw { status: 400, message: 'Skriv inn navn på eventet' };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(b.dato || '')) throw { status: 400, message: 'Velg dato' };
+  const tid = t => (/^\d{2}:\d{2}$/.test(t || '') ? t : null);
+  const frist = b.frist && !isNaN(Date.parse(b.frist)) ? b.frist : null;
+  return [tittel, b.dato, tid(b.fra), tid(b.til), String(b.sted || '').trim() || null,
+    String(b.adresse || '').trim() || null, String(b.beskrivelse || '').trim() || null,
+    b.vis_forside ? 1 : 0, b.henting ? 1 : 0, frist];
+}
+
+app.post('/api/admin/eventer', requireAdmin, async (req, res) => {
+  try {
+    const [r] = await pool.query(
+      `INSERT INTO eventer (tittel, dato, fra, til, sted, adresse, beskrivelse, vis_forside, henting, frist) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      eventFraSkjema(req.body));
+    res.json({ ok: true, id: r.insertId });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+app.put('/api/admin/eventer/:id', requireAdmin, async (req, res) => {
+  try {
+    await pool.query(
+      `UPDATE eventer SET tittel=?, dato=?, fra=?, til=?, sted=?, adresse=?, beskrivelse=?, vis_forside=?, henting=?, frist=? WHERE id=?`,
+      [...eventFraSkjema(req.body), req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+app.delete('/api/admin/eventer/:id', requireAdmin, async (req, res) => {
+  try {
+    const [[{ antall }]] = await pool.query(`SELECT COUNT(*) AS antall FROM christmas_orders WHERE event_id = ?`, [req.params.id]);
+    if (antall) return res.status(409).json({ error: `${antall} bestilling(er) skal hentes på dette eventet. Flytt eller slett dem først.` });
+    await pool.query(`DELETE FROM eventer WHERE id = ?`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
 // GET /api/allergener
 // Allergeninformasjon skal vaere tilgjengelig FOR kunden kjoper, jf. merkeforskriften.
 // Samme kilde som etikettene i admin, sa de to aldri kan sprike.
@@ -415,6 +495,9 @@ async function prisBestilling(products, delivery, delivery_cost) {
     const p = katalog.find(x => x.k === valgt.key);
     const qty = parseInt(valgt.qty, 10);
     if (!p || !(qty > 0) || qty > 50) throw { status: 400, message: 'Et produkt i handlekurven finnes ikke lenger. Last siden på nytt.' };
+    if (delivery === 'marked' && (p.ikkeMarked || p.k === 'kransekake')) {
+      throw { status: 400, message: `${p.n} kan ikke hentes på julemarkedet. Den bestilles til henting eller levering før jul.` };
+    }
     // Eldre sider sender ikke gf, bare «(glutenfri)» i navnet
     const gf = !!p.gfEkstra && (valgt.gf === true || /glutenfri/i.test(valgt.name || ''));
     linjer.push({ key: p.k, name: p.n + (gf ? ' (glutenfri)' : ''), unit: p.unit, price: p.pris + (gf ? p.gfEkstra : 0), qty, gf });
@@ -475,7 +558,9 @@ async function sendVippsEposter(o) {
   const products = typeof o.products === 'string' ? JSON.parse(o.products) : (o.products || []);
   const total = o.total_kr ?? products.reduce((s, p) => s + p.price * p.qty, 0) + (o.delivery_cost || 0);
   const liste = products.map(p => `<li>${escHtml(p.name)} × ${p.qty} — ${p.price * p.qty} kr</li>`).join('');
-  const levering = o.delivery === 'levering' ? 'Leveres til ' + escHtml(o.address || '—') : 'Hentes i Porsgrunn';
+  const levering = o.delivery === 'levering' ? 'Leveres til ' + escHtml(o.address || '—')
+    : o.delivery === 'marked' ? 'Hentes på ' + escHtml(o.address || 'julemarkedet')
+    : 'Hentes i Porsgrunn';
   const transporter = createTransporter();
   const fra = `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`;
 
@@ -508,7 +593,7 @@ async function sendVippsEposter(o) {
             <ul style="margin:0;padding-left:20px;color:#3D2420;">${liste}</ul>
             <div style="margin-top:14px;padding-top:14px;border-top:1px solid #EEE;font-size:1.1rem;font-weight:700;color:#8B1A1A;">Totalt: ${total} kr</div>
           </div>
-          <p style="color:#8A6858;font-size:0.85rem;">${levering}. Du får en melding når bestillingen er klar.</p>
+          <p style="color:#8A6858;font-size:0.85rem;">${levering}. ${o.delivery === 'marked' ? 'Kom innom standen til Kakefrue, så står posen klar med navnet ditt.' : 'Du får en melding når bestillingen er klar.'}</p>
           <p style="color:#B0A090;font-size:0.75rem;margin-top:24px;">Spørsmål? Ring 900 33 039 eller skriv på <a href="https://m.me/kakefrue" style="color:#C4956A;">Messenger</a>.</p>
         </div>`
       });
@@ -518,7 +603,7 @@ async function sendVippsEposter(o) {
 
 // POST /api/christmas-orders
 app.post('/api/christmas-orders', async (req, res) => {
-  const { full_name, phone, email, delivery, address, products, note, delivery_cost } = req.body;
+  const { full_name, phone, email, delivery, address, products, note, delivery_cost, event_id } = req.body;
   // Bestillingsfrist 2. desember kl. 00:00 norsk tid – også om noen har siden åpen fra før
   if (Date.now() >= Date.parse('2026-12-01T23:00:00Z')) {
     return res.status(403).json({ error: 'Bestillingsfristen er ute. Har du et spesielt ønske, ring 900 33 039.' });
@@ -526,10 +611,24 @@ app.post('/api/christmas-orders', async (req, res) => {
   if (!full_name || !phone) return res.status(400).json({ error: 'Navn og telefon er påkrevd' });
   if (!Array.isArray(products) || !products.length) return res.status(400).json({ error: 'Velg minst ett produkt' });
   try {
+    // Henting på julemarked: markedet må finnes, ta imot henting og ikke ha passert fristen
+    let hentested = null, eventId = null;
+    if (delivery === 'marked') {
+      const [[e]] = await pool.query(`SELECT * FROM eventer WHERE id = ?`, [parseInt(event_id, 10) || 0]);
+      if (!e || !e.henting) return res.status(400).json({ error: 'Velg hvilket julemarked du vil hente på.' });
+      if (!eventBestillbar(e)) {
+        return res.status(403).json({ error: `Fristen for å bestille til ${e.tittel} er ute. Velg et annet marked, henting eller levering.` });
+      }
+      hentested = eventTekst(e);
+      eventId = e.id;
+    }
     const { linjer, frakt, total } = await prisBestilling(products, delivery, delivery_cost);
+    const leveringsmate = ['levering', 'marked'].includes(delivery) ? delivery : 'henting';
     const [result] = await pool.query(
-      `INSERT INTO christmas_orders (full_name, phone, email, delivery, address, products, note, delivery_cost, total_kr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [full_name.trim(), phone.trim(), email?.trim() || null, delivery === 'levering' ? 'levering' : 'henting', address?.trim() || null, JSON.stringify(linjer), note?.trim() || null, frakt, total]
+      `INSERT INTO christmas_orders (full_name, phone, email, delivery, address, products, note, delivery_cost, total_kr, event_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [full_name.trim(), phone.trim(), email?.trim() || null, leveringsmate,
+       leveringsmate === 'marked' ? hentested : (leveringsmate === 'levering' ? address?.trim() || null : null),
+       JSON.stringify(linjer), note?.trim() || null, frakt, total, eventId]
     );
     const o = { id: result.insertId, phone: phone.trim() };
 

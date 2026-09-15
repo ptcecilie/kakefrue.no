@@ -177,6 +177,40 @@ async function initDB() {
     try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN vipps_captured_at DATETIME NULL`); } catch (e) {}
     try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN vipps_refunded_at DATETIME NULL`); } catch (e) {}
     try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN total_kr INT NULL`); } catch (e) {}
+    // Henting på julemarked: hvilket event bestillingen skal hentes på
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN event_id INT NULL`); } catch (e) {}
+
+    // Eventer (julemarkeder, kurs o.l.) – vises i «Kommende eventer» på forsiden.
+    // Dato og tid lagres som tekst i norsk tid, fristen som ISO-tidspunkt med sone,
+    // så serverens tidssone aldri kan flytte noe.
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS eventer (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        nokkel VARCHAR(50) NULL UNIQUE,
+        tittel VARCHAR(255) NOT NULL,
+        dato VARCHAR(10) NOT NULL,
+        fra VARCHAR(5) NULL,
+        til VARCHAR(5) NULL,
+        sted VARCHAR(255) NULL,
+        adresse VARCHAR(255) NULL,
+        beskrivelse TEXT NULL,
+        vis_forside TINYINT(1) DEFAULT 1,
+        henting TINYINT(1) DEFAULT 0,
+        frist VARCHAR(40) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    // Julemarkedene 2026. INSERT IGNORE på nokkel: rører ikke det Cecilie har redigert.
+    // Frist for henting: tirsdag kl. 23:59 før markedet.
+    await conn.query(`
+      INSERT IGNORE INTO eventer (nokkel, tittel, dato, fra, til, sted, adresse, beskrivelse, vis_forside, henting, frist) VALUES
+      ('jul26-brekka', 'Julemarked på Brekka Gård', '2026-11-21', '11:00', '17:00', 'Brekka Gård', 'Elsetvegen 4, 3731 Skien',
+       'Kakefrue har stand med julebakst. Bestill på forhånd og hent på standen.', 1, 1, '2026-11-17T23:59:00+01:00'),
+      ('jul26-langesund', 'Langesund Julemarked', '2026-11-28', '10:00', '16:00', 'Langesund sentrum', 'Storgata, 3970 Langesund',
+       'Kakefrue har stand med julebakst. Bestill på forhånd og hent på standen.', 1, 1, '2026-11-24T23:59:00+01:00'),
+      ('jul26-brekkeparken', 'Julemarked i Brekkeparken', '2026-11-29', '11:00', '16:00', 'Brekkeparken, Telemark Museum', 'Øvregate 32, 3715 Skien',
+       'Kakefrue har stand med julebakst. Bestill på forhånd og hent på standen.', 1, 1, '2026-11-24T23:59:00+01:00')
+    `);
 
     await conn.query(`
       CREATE TABLE IF NOT EXISTS page_views (

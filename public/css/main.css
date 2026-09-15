@@ -822,3 +822,49 @@ html[style*="--side-foto"] body .info-boks {
   .to-kolonner { grid-template-columns: 1fr; gap: 32px; }
   .to-kolonner.tett { gap: 14px; }
 }
+
+/* ============================================================
+   Kommende eventer (forsiden) – innhold fra admin -> Eventer
+   ============================================================ */
+.eventer-liste {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 20px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.event-kort {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+.event-dato {
+  flex-shrink: 0;
+  width: 62px;
+  padding: 10px 0 9px;
+  border-radius: 10px;
+  background: #7A2A3E;
+  color: #fff;
+  text-align: center;
+  line-height: 1;
+}
+.event-dag { display: block; font-family: var(--font-heading); font-size: 1.7rem; font-weight: 700; }
+.event-mnd { display: block; margin-top: 5px; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; }
+.event-info { min-width: 0; }
+.event-info h3 { font-size: 1.15rem; margin-bottom: 4px; text-wrap: balance; }
+.event-info p { margin-bottom: 3px; font-size: 0.9rem; }
+.event-tid { font-weight: 700; }
+.event-sted { color: rgba(61, 36, 32, 0.72); }
+.event-sted a { color: #9B3A52; font-weight: 700; }
+.event-tekst { margin-top: 8px !important; }
+.event-knapp { margin-top: 12px; }
+.event-frist { display: block; margin-top: 8px; font-size: 0.78rem; color: rgba(61, 36, 32, 0.62); }
+@media (max-width: 480px) {
+  .eventer-liste { grid-template-columns: 1fr; }
+  .event-kort { padding: 18px; gap: 14px; }
+  .event-dato { width: 54px; }
+}

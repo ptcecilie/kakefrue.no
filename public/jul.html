@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Julebestillinger – Kakefrue</title>
   <meta name="description" content="Bestill hjemmelagde julekaker fra Kakefrue i Porsgrunn – kling, lefse, krumkaker, pepperkaker og mer.">
-  <link rel="stylesheet" href="/css/main.css?v=5.9">
+  <link rel="stylesheet" href="/css/main.css?v=6.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@500;700&family=Lato:wght@300;400;700&display=swap">
@@ -356,6 +356,20 @@
     .lev-valg.aktiv { border-color: var(--red); background: #FDF5F3; }
     .lev-valg strong { display: block; font-size: 0.87rem; color: var(--body); margin-bottom: 2px; }
     .lev-valg span { font-size: 0.74rem; color: var(--muted); }
+    /* Hent på julemarked */
+    .marked-valg-liste { display: grid; gap: 8px; }
+    .marked-kort {
+      border: 1.5px solid #E8D9BE; border-radius: 12px; padding: 12px 14px;
+      cursor: pointer; background: #fff; color: var(--body); transition: 0.15s;
+    }
+    .marked-kort:hover { border-color: rgba(139,26,26,0.35); }
+    .marked-kort:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+    .marked-kort.aktiv { border-color: var(--red); background: #FDF5F3; }
+    .marked-kort strong { display: block; font-size: 0.9rem; margin-bottom: 2px; }
+    .marked-kort .mk-linje { display: block; font-size: 0.78rem; color: var(--muted); line-height: 1.6; }
+    .marked-kort a { color: var(--red); font-weight: 700; }
+    .marked-merknad { font-size: 0.78rem; color: var(--muted); margin: 10px 0 0; line-height: 1.6; }
+    .ikke-marked { font-size: 0.72rem; color: var(--muted); text-align: right; line-height: 1.4; max-width: 130px; }
 
     .send-knapp {
       width: 100%; padding: 16px; border: none; border-radius: 12px;
@@ -854,7 +868,7 @@
         </div>
 
         <div class="felt-rad">
-          <label class="felt-label">Henting eller levering?</label>
+          <label class="felt-label">Hvordan vil du få bestillingen?</label>
           <div class="levering-rad">
             <div class="lev-valg aktiv" data-val="henting" onclick="settLevering('henting')">
               <strong>Henting</strong><span>Hos meg i Porsgrunn</span>
@@ -862,6 +876,13 @@
             <div class="lev-valg" data-val="levering" onclick="settLevering('levering')">
               <strong>Levering</strong><span>Innen 10 km: 150 kr · 10–20 km: 250 kr</span>
             </div>
+            <div class="lev-valg" data-val="marked" id="levValgMarked" style="display:none;" onclick="settLevering('marked')">
+              <strong>Hent på julemarked</strong><span>Hent posen på standen min</span>
+            </div>
+          </div>
+          <div id="markedRad" style="display:none; margin-top:10px;">
+            <div class="marked-valg-liste" id="markedValg"></div>
+            <p class="marked-merknad">Kransekake kan ikke hentes på julemarkedet. Den bestilles til henting hos meg eller levering før jul.</p>
           </div>
           <div id="adresseRad" style="display:none; margin-top:10px;">
             <div class="felt-rad adresse-wrap" style="margin-bottom:10px;">
@@ -1081,6 +1102,40 @@ fetch('/api/photos?category=jul').then(r=>r.json()).then(p=>{
 /* Bestillingsfrist: stenger 2. desember kl. 00:00 norsk tid.
    ?stengt i adressen viser hvordan siden ser ut etter fristen. */
 const BESTILLINGSFRIST = new Date('2026-12-01T23:00:00Z');
+
+/* ══ HENT PÅ JULEMARKED ══
+   Markedene styres fra admin -> Eventer. Bare de som tar imot henting og
+   ikke har passert fristen, vises. ?marked=<id> kommer fra forsiden. */
+const ikkeMarked = p => !!(p.ikkeMarked || p.k === 'kransekake');
+let MARKEDER = [], valgtMarked = null;
+const escT = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const markedDato = e => new Date(e.dato + 'T12:00:00').toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long' });
+const markedFrist = e => new Date(e.frist).toLocaleString('nb-NO', { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Oslo' });
+const kartUrl = e => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([e.sted, e.adresse].filter(Boolean).join(', '));
+function visMarkeder(){
+  document.getElementById('markedValg').innerHTML = MARKEDER.map(e => `
+    <div class="marked-kort${valgtMarked === e.id ? ' aktiv' : ''}" role="button" tabindex="0" aria-pressed="${valgtMarked === e.id}"
+         onclick="velgMarked(${e.id})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();velgMarked(${e.id})}">
+      <strong>${escT(e.tittel)}</strong>
+      <span class="mk-linje">${markedDato(e)}${e.fra ? ` kl. ${e.fra}–${e.til || ''}` : ''}</span>
+      <span class="mk-linje">${escT(e.adresse || e.sted || '')} · <a href="${kartUrl(e)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Vis i kart</a></span>
+      ${e.frist ? `<span class="mk-linje">Bestill innen ${markedFrist(e)}</span>` : ''}
+    </div>`).join('');
+}
+function velgMarked(id){ valgtMarked = id; visMarkeder(); }
+async function hentMarkeder(){
+  try { MARKEDER = (await fetch('/api/eventer').then(r => r.json())).filter(e => e.bestillbar); }
+  catch (e) { MARKEDER = []; }
+  if (!MARKEDER.length || fristUte()) return;
+  document.getElementById('levValgMarked').style.display = '';
+  visMarkeder();
+  const onsket = parseInt(new URLSearchParams(location.search).get('marked'), 10);
+  if (MARKEDER.some(e => e.id === onsket)) {
+    valgtMarked = onsket;
+    settLevering('marked');
+    visMarkeder();
+  }
+}
 function fristUte(){
   return Date.now() >= BESTILLINGSFRIST.getTime() || new URLSearchParams(location.search).has('stengt');
 }
@@ -1120,7 +1175,7 @@ function visProdukter(){
         ${allergenLinje(p.n, p.k)}
       </div>
       <div class="produkt-pris-liten">${visPris},-</div>
-      ${fristUte()?'':`<div class="qty-mini">
+      ${fristUte()?'':(levering==='marked'&&ikkeMarked(p))?`<div class="ikke-marked">Bestilles til henting eller levering</div>`:`<div class="qty-mini">
         <button class="qty-mini-knapp${qty>0?' aktiv':''}" onclick="endreAntall('${p.k}',-1)">−</button>
         <span class="qty-mini-tall${qty>0?' har-antall':''}" id="qv-${p.k}">${qty}</span>
         <button class="qty-mini-knapp aktiv" onclick="endreAntall('${p.k}',1)">+</button>
@@ -1242,8 +1297,13 @@ function settLevering(v){
   levering=v;
   document.querySelectorAll('.lev-valg').forEach(el=>el.classList.toggle('aktiv',el.dataset.val===v));
   document.getElementById('adresseRad').style.display=v==='levering'?'block':'none';
-  if(v==='henting'){leveringKostnad=0;leveringKm=0;}
-  oppdaterTotal();
+  document.getElementById('markedRad').style.display=v==='marked'?'block':'none';
+  if(v!=='levering'){leveringKostnad=0;leveringKm=0;}
+  /* Tilbake til levering: regn ut frakten på nytt hvis postnummeret står der */
+  if(v==='levering'&&(document.getElementById('postnr').value||'').trim().length===4) sjekkLevering();
+  /* Kransekake kan ikke hentes på marked – tas ut av kurven */
+  if(v==='marked') PRODUKTER.filter(ikkeMarked).forEach(p=>{delete valgt[p.k];delete valgtGF[p.k];});
+  visProdukter();
 }
 /* ══ ADRESSE-AUTOCOMPLETE (Kartverket) ══ */
 let _adrTimer=null, _adrTreff=[], _adrValgt=-1;
@@ -1343,6 +1403,7 @@ async function sendBestilling(){
   if(!tlf){feil.textContent='Skriv inn telefonnummer.';feil.style.display='block';return;}
   const ingenEpost=document.getElementById('ingenEpost').checked;
   if(!ingenEpost&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(epost)){feil.textContent='Skriv inn e-postadressen din, eller huk av for «Jeg har ikke e-post».';feil.style.display='block';return;}
+  if(levering==='marked'&&!valgtMarked){feil.textContent='Velg hvilket julemarked du vil hente på.';feil.style.display='block';return;}
   if(levering==='levering'){
     if(!gate){feil.textContent='Skriv inn gateadresse for levering.';feil.style.display='block';return;}
     if(!postnr||postnr.length!==4){feil.textContent='Skriv inn gyldig postnummer (4 siffer).';feil.style.display='block';return;}
@@ -1361,7 +1422,7 @@ async function sendBestilling(){
   const knapp=document.getElementById('sendKnapp');
   knapp.disabled=true; knapp.textContent='Registrerer bestilling...';
   try{
-    const res=await fetch('/api/christmas-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({full_name:navn,phone:tlf,email:epost,delivery:levering,address:adresse,delivery_cost:levKost,products,note:merknad})});
+    const res=await fetch('/api/christmas-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({full_name:navn,phone:tlf,email:epost,delivery:levering,address:adresse,delivery_cost:levKost,products,note:merknad,event_id:levering==='marked'?valgtMarked:null})});
     if(!res.ok){const e=await res.json();throw new Error(e.error||'Ukjent feil');}
 
     const svar = await res.json().catch(() => ({}));
@@ -1509,6 +1570,7 @@ document.getElementById('hamburger').addEventListener('click',()=>document.getEl
 stengBestilling();
 visProdukter();
 hentAllergener();
+hentMarkeder();
 if (_vippsRef) visVippsRetur();
 </script>
 </body>

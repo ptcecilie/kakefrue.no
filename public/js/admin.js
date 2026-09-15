@@ -123,6 +123,7 @@ function loadPanel(panel) {
     case 'priser': loadPricing(); break;
     case 'kunder': loadCustomers(); break;
     case 'jul': loadJulProdukter(); loadChristmasOrders(); break;
+    case 'eventer': loadEventer(); break;
     case 'bilder': loadPhotos(); loadAboutImages(); break;
     case 'spesial': loadSpesial(); break;
     case 'etiketter': loadEtiketter(); break;
@@ -358,7 +359,7 @@ function aapneHentemelding(o) {
            </div>`
         : `<div class="form-group">
              <label class="form-label">Hentested</label>
-             <input class="form-input" id="hentSted" value="${HENTEADRESSE}" oninput="byggHentetekst()">
+             <input class="form-input" id="hentSted" value="${o.delivery === 'marked' ? (o.address || '').replace(/"/g, '&quot;') : HENTEADRESSE}" oninput="byggHentetekst()">
            </div>`}
 
       <div class="form-group">
@@ -556,12 +557,23 @@ async function slettJulebestilling(id, btn) {
 async function loadChristmasOrders() {
   const container = $('christmasOrdersList');
   try {
-    const orders = await api('/api/admin/christmas-orders');
-    if (!orders.length) {
+    const [alleOrders, eventer] = await Promise.all([
+      api('/api/admin/christmas-orders'),
+      api('/api/admin/eventer').catch(() => [])
+    ]);
+    _julOrders = alleOrders;
+    _julEventer = eventer;
+    const markeder = eventer.filter(e => alleOrders.some(o => o.event_id === e.id)).sort((a, b) => a.dato.localeCompare(b.dato));
+    const orders = alleOrders.filter(o => _julFilter === 'alle' ? true
+      : _julFilter === 'henting' ? o.delivery === 'henting'
+      : _julFilter === 'levering' ? o.delivery === 'levering'
+      : o.event_id === _julFilter);
+    if (!alleOrders.length) {
       container.innerHTML = '<div style="text-align:center;padding:48px;opacity:0.4;">Ingen julebestillinger ennå</div>';
       return;
     }
-    container.innerHTML = `
+    container.innerHTML = julFilterRad(alleOrders, markeder) +
+      (orders.length ? '' : '<div style="text-align:center;padding:32px;opacity:0.45;">Ingen bestillinger her</div>') + `
       ${(() => {
         const varslet = orders.filter(x => x.notified_at).length;
         const igjen = orders.length - varslet;
@@ -613,7 +625,7 @@ async function loadChristmasOrders() {
             ${(o.products || []).map(p => `<span class="tag tag-sage">${p.name} × ${p.qty}${p.price ? ' · ' + (p.price * p.qty) + ' kr' : ''}</span>`).join('')}
           </div>
           <div style="font-size:0.85rem;opacity:0.6;display:flex;gap:16px;flex-wrap:wrap;">
-            <span>${o.delivery === 'levering' ? `🚗 Levering: ${o.address || '—'}` : '🏠 Henting'}</span>
+            <span>${o.delivery === 'levering' ? `🚗 Levering: ${o.address || '—'}` : o.delivery === 'marked' ? `🎪 Hentes på: ${o.address || '—'}` : '🏠 Henting'}</span>
             ${(() => {
               const vare = (o.products||[]).reduce((s,p)=>s+(p.price||0)*(p.qty||1),0);
               const frakt = parseInt(o.delivery_cost) || 0;
@@ -626,6 +638,207 @@ async function loadChristmasOrders() {
       `).join('')}
     `;
   } catch (e) { container.innerHTML = '<div style="padding:32px;opacity:0.5;">Kunne ikke laste bestillinger</div>'; }
+}
+
+// ── Julebestillinger per marked: filter og utskrift ────────
+let _julFilter = 'alle', _julOrders = [], _julEventer = [];
+const escA = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const eventDato = e => new Date(e.dato + 'T12:00:00').toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const erBetalt = o => !!(o.paid_at || o.vipps_captured_at);
+
+function settJulFilter(f) { _julFilter = f; loadChristmasOrders(); }
+
+function julFilterRad(alle, markeder) {
+  const chip = (f, tekst, antall) =>
+    `<button class="btn btn-sm ${_julFilter === f ? 'btn-primary' : 'btn-outline'}" onclick='settJulFilter(${JSON.stringify(f)})'>${tekst} <span style="opacity:0.6;">${antall}</span></button>`;
+  const valgt = markeder.find(e => e.id === _julFilter);
+  return `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      ${chip('alle', 'Alle', alle.length)}
+      ${chip('henting', '🏠 Henting', alle.filter(o => o.delivery === 'henting').length)}
+      ${chip('levering', '🚗 Levering', alle.filter(o => o.delivery === 'levering').length)}
+      ${markeder.map(e => chip(e.id, '🎪 ' + escA(e.sted || e.tittel), alle.filter(o => o.event_id === e.id).length)).join('')}
+    </div>
+    ${valgt ? `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px;padding:12px 14px;background:rgba(196,149,106,.12);border-radius:10px;">
+      <span style="font-size:0.88rem;flex:1;min-width:200px;"><strong>${escA(valgt.tittel)}</strong> · ${eventDato(valgt)}</span>
+      <button class="btn btn-outline btn-sm" onclick="skrivUtMarkedListe(${valgt.id})">🖨 Skriv ut liste</button>
+      <button class="btn btn-outline btn-sm" onclick="skrivUtNavnelapper(${valgt.id})">🏷 Skriv ut navnelapper</button>
+    </div>` : ''}`;
+}
+
+function markedBestillinger(id) {
+  return _julOrders.filter(o => o.event_id === id && !o.vipps_refunded_at)
+    .sort((a, b) => a.full_name.localeCompare(b.full_name, 'nb'));
+}
+
+function skrivUt(tittel, innhold, css) {
+  const w = window.open('', '_blank');
+  if (!w) { alert('Nettleseren stoppet utskriftsvinduet. Tillat popup-vinduer for kakefrue.no og prøv igjen.'); return; }
+  w.document.write(`<!doctype html><html lang="nb"><head><meta charset="utf-8"><title>${escA(tittel)}</title><style>
+    body{font-family:Helvetica,Arial,sans-serif;color:#222;margin:24px;}
+    h1{font-size:20px;margin:0 0 4px;} .under{color:#666;font-size:13px;margin:0 0 18px;}
+    ${css}</style></head><body>${innhold}<script>window.onload=function(){window.print();};<\/script></body></html>`);
+  w.document.close();
+}
+
+function skrivUtMarkedListe(id) {
+  const e = _julEventer.find(x => x.id === id);
+  const liste = markedBestillinger(id);
+  const sum = {};
+  liste.forEach(o => (o.products || []).forEach(p => { sum[p.name] = (sum[p.name] || 0) + p.qty; }));
+  skrivUt('Hentinger – ' + e.tittel, `
+    <h1>Hentinger: ${escA(e.tittel)}</h1>
+    <p class="under">${eventDato(e)}${e.fra ? ` kl. ${e.fra}–${e.til || ''}` : ''} · ${liste.length} bestillinger</p>
+    <table><thead><tr><th class="k">✓</th><th>Navn</th><th>Telefon</th><th>Varer</th><th>Betalt</th></tr></thead><tbody>
+    ${liste.map(o => `<tr><td class="k"><span class="boks"></span></td><td><strong>${escA(o.full_name)}</strong></td><td>${escA(o.phone)}</td>
+      <td>${(o.products || []).map(p => `${escA(p.name)} × ${p.qty}`).join('<br>')}</td>
+      <td>${erBetalt(o) ? 'Ja' : '<strong>NEI</strong>'}</td></tr>`).join('')}
+    </tbody></table>
+    <h2>Totalt å pakke</h2>
+    <ul>${Object.entries(sum).map(([n, q]) => `<li>${escA(n)}: <strong>${q}</strong></li>`).join('')}</ul>`,
+    `table{width:100%;border-collapse:collapse;font-size:13px;}
+     th,td{border-bottom:1px solid #ccc;padding:8px 6px;text-align:left;vertical-align:top;}
+     th{font-size:11px;text-transform:uppercase;color:#666;} .k{width:28px;}
+     .boks{display:inline-block;width:16px;height:16px;border:1.5px solid #333;border-radius:3px;}
+     h2{font-size:15px;margin:22px 0 6px;} ul{margin:0;padding-left:18px;font-size:13px;} tr{page-break-inside:avoid;}`);
+}
+
+function skrivUtNavnelapper(id) {
+  const e = _julEventer.find(x => x.id === id);
+  const dag = new Date(e.dato + 'T12:00:00').toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' });
+  skrivUt('Navnelapper – ' + e.tittel, `<div class="ark">${markedBestillinger(id).map(o => `
+    <div class="lapp">
+      <div class="merke">KAKEFRUE</div>
+      <div class="navn">${escA(o.full_name)}</div>
+      <div class="tlf">${escA(o.phone)}</div>
+      <div class="varer">${(o.products || []).map(p => `${escA(p.name)} × ${p.qty}`).join('<br>')}</div>
+      <div class="sted">${escA(e.sted || e.tittel)} · ${dag}${erBetalt(o) ? '' : ' · <strong>IKKE BETALT</strong>'}</div>
+    </div>`).join('')}</div>`,
+    `body{margin:10mm;} .ark{display:grid;grid-template-columns:1fr 1fr;gap:6mm;}
+     .lapp{border:1.5px dashed #999;border-radius:6px;padding:5mm 6mm;page-break-inside:avoid;}
+     .merke{font-size:10px;letter-spacing:.18em;color:#7A2A3E;font-weight:700;}
+     .navn{font-size:22px;font-weight:700;margin:3px 0 1px;} .tlf{font-size:13px;color:#555;}
+     .varer{font-size:13px;margin-top:8px;line-height:1.5;} .sted{font-size:11px;color:#777;margin-top:8px;}`);
+}
+
+// ── Eventer (forsiden «Kommende eventer» og henting på marked) ──
+let _eventer = [];
+
+function tilLokalTid(iso) {
+  if (!iso) return '';
+  const d = new Date(iso), p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+// Tirsdag kl. 23:59 før eventet
+function standardFrist(dato) {
+  const d = new Date(dato + 'T12:00:00');
+  d.setDate(d.getDate() - (((d.getDay() - 2 + 7) % 7) || 7));
+  d.setHours(23, 59, 0, 0);
+  return d;
+}
+
+async function loadEventer() {
+  const c = $('eventerListe');
+  try {
+    _eventer = await api('/api/admin/eventer');
+    if (!_eventer.length) { c.innerHTML = '<div style="text-align:center;padding:48px;opacity:0.4;">Ingen eventer ennå</div>'; return; }
+    const idag = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Oslo' });
+    const kommende = _eventer.filter(e => e.dato >= idag).reverse();
+    const tidligere = _eventer.filter(e => e.dato < idag);
+    const kort = e => `<div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;margin-bottom:12px;${e.dato < idag ? 'opacity:0.55;' : ''}">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start;">
+        <div>
+          <strong style="font-size:1.05rem;">${escA(e.tittel)}</strong>
+          <div style="font-size:0.88rem;margin-top:4px;">${eventDato(e)}${e.fra ? ` · kl. ${e.fra}–${e.til || ''}` : ''}</div>
+          <div style="font-size:0.85rem;opacity:0.65;">${escA([e.sted, e.adresse].filter(Boolean).join(', '))}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+            ${e.vis_forside ? '<span class="tag tag-sage">Vises på forsiden</span>' : '<span class="tag">Skjult fra forsiden</span>'}
+            ${e.henting ? `<span class="tag tag-gold">Henting av bestillinger${e.frist ? ' · frist ' + new Date(e.frist).toLocaleString('nb-NO', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Oslo' }) : ''}</span>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-outline btn-sm" onclick="eventSkjema(${e.id})">Rediger</button>
+          <button class="photo-delete-btn" style="padding:7px 12px;" title="Slett event" onclick="slettEvent(${e.id}, this)">🗑</button>
+        </div>
+      </div>
+    </div>`;
+    c.innerHTML = (kommende.length ? kommende.map(kort).join('') : '<p style="opacity:0.5;">Ingen kommende eventer.</p>') +
+      (tidligere.length ? `<h3 style="font-size:1rem;margin:28px 0 12px;opacity:0.6;">Tidligere</h3>${tidligere.map(kort).join('')}` : '');
+  } catch (e) {
+    c.innerHTML = '<div style="padding:32px;opacity:0.5;">Kunne ikke laste eventer</div>';
+  }
+}
+
+function eventSkjema(id) {
+  const e = _eventer.find(x => x.id === id) || { vis_forside: true, henting: false };
+  openModal(`
+    <div class="modal-header">
+      <h3>${id ? 'Rediger event' : 'Nytt event'}</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label" for="evTittel">Navn *</label>
+        <input class="form-input" id="evTittel" value="${escA(e.tittel || '')}" placeholder="Julemarked på Brekka Gård"></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;">
+        <div class="form-group"><label class="form-label" for="evDato">Dato *</label><input class="form-input" type="date" id="evDato" value="${e.dato || ''}"></div>
+        <div class="form-group"><label class="form-label" for="evFra">Fra kl.</label><input class="form-input" type="time" id="evFra" value="${e.fra || ''}"></div>
+        <div class="form-group"><label class="form-label" for="evTil">Til kl.</label><input class="form-input" type="time" id="evTil" value="${e.til || ''}"></div>
+      </div>
+      <div class="form-group"><label class="form-label" for="evSted">Sted</label>
+        <input class="form-input" id="evSted" value="${escA(e.sted || '')}" placeholder="Brekka Gård"></div>
+      <div class="form-group"><label class="form-label" for="evAdresse">Adresse (brukes til kartlenken)</label>
+        <input class="form-input" id="evAdresse" value="${escA(e.adresse || '')}" placeholder="Elsetvegen 4, 3731 Skien"></div>
+      <div class="form-group"><label class="form-label" for="evTekst">Kort tekst</label>
+        <textarea class="form-input" id="evTekst" rows="3">${escA(e.beskrivelse || '')}</textarea></div>
+      <label style="display:flex;gap:10px;align-items:center;margin:6px 0;cursor:pointer;">
+        <input type="checkbox" id="evForside" ${e.vis_forside ? 'checked' : ''}> Vis på forsiden under «Kommende eventer»</label>
+      <label style="display:flex;gap:10px;align-items:center;margin:6px 0;cursor:pointer;">
+        <input type="checkbox" id="evHenting" ${e.henting ? 'checked' : ''} onchange="$('evFristRad').style.display=this.checked?'block':'none'"> Kunder kan bestille julebakst og hente her</label>
+      <div class="form-group" id="evFristRad" style="display:${e.henting ? 'block' : 'none'};margin-top:10px;">
+        <label class="form-label" for="evFrist">Bestillingsfrist for henting</label>
+        <input class="form-input" type="datetime-local" id="evFrist" value="${tilLokalTid(e.frist)}">
+        <p style="font-size:0.78rem;opacity:0.6;margin:6px 0 0;">Står den tom, blir fristen tirsdag kl. 23.59 før eventet.</p>
+      </div>
+      <div id="evFeil" style="color:#C62828;font-size:0.85rem;margin-top:8px;"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+        <button class="btn btn-outline" onclick="closeModal()">Avbryt</button>
+        <button class="btn btn-primary" id="evLagre" onclick="lagreEvent(${id || 0})">Lagre</button>
+      </div>
+    </div>`);
+}
+
+async function lagreEvent(id) {
+  const dato = $('evDato').value;
+  const henting = $('evHenting').checked;
+  const frist = henting && dato
+    ? ($('evFrist').value ? new Date($('evFrist').value) : standardFrist(dato)).toISOString()
+    : null;
+  const data = {
+    tittel: $('evTittel').value, dato, fra: $('evFra').value, til: $('evTil').value,
+    sted: $('evSted').value, adresse: $('evAdresse').value, beskrivelse: $('evTekst').value,
+    vis_forside: $('evForside').checked, henting, frist
+  };
+  $('evLagre').disabled = true;
+  try {
+    await api('/api/admin/eventer' + (id ? '/' + id : ''), { method: id ? 'PUT' : 'POST', body: JSON.stringify(data) });
+    closeModal();
+    showAlert('Eventet er lagret', 'success');
+    loadEventer();
+  } catch (e) {
+    $('evFeil').textContent = e.message;
+    $('evLagre').disabled = false;
+  }
+}
+
+async function slettEvent(id, btn) {
+  if (!confirm('Slette dette eventet?')) return;
+  btn.disabled = true;
+  try {
+    await api('/api/admin/eventer/' + id, { method: 'DELETE' });
+    loadEventer();
+  } catch (e) {
+    alert(e.message);
+    btn.disabled = false;
+  }
 }
 
 // ── About image ────────────────────────────────────────────
