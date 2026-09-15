@@ -1919,9 +1919,12 @@ const ALLERGENER = [
 ];
 
 // Avsender pa etiketten – lovpalagt: navn og adresse pa virksomheten
+// avs[0] vises stort som merkevarenavnet. Resten (juridisk enhet + adresse - lovpalagt
+// for sporbarhet) vises som diskre finskrift under. Bytt til bare "Kakefrue" i avs[0]
+// og fjern Niax-linjen naar det formelle navnebyttet er gjennomfort.
 const ETIKETT_AVSENDER = [
-  'Kakefrue · NIAX CONSULTING AS',
-  'Storgata 157D, 3915 Porsgrunn'
+  'Kakefrue',
+  'Niax Consulting AS · Storgata 157D, 3915 Porsgrunn'
 ];
 
 let etikettProdukter = [];
@@ -2366,8 +2369,8 @@ function etikettSkjema(index) {
           <input type="number" class="form-input" id="epDager" value="${p.dager}" min="1" max="365">
         </div>
         <div class="form-group">
-          <label class="form-label">Nettovekt <span style="font-weight:300;opacity:0.6;">– valgfritt</span></label>
-          <input class="form-input" id="epMengde" value="${esc(p.mengde || '')}" placeholder="f.eks. 250 g">
+          <label class="form-label">Nettoinnhold <span style="font-weight:300;opacity:0.6;">– lovpålagt, f.eks. "2 stk" eller "2 stk, ca. 180 g"</span></label>
+          <input class="form-input" id="epMengde" value="${esc(p.mengde || '')}" placeholder="f.eks. 2 stk, ca. 180 g">
         </div>
       </div>
 
@@ -2461,10 +2464,14 @@ function uthevAllergener(tekst, allergener) {
   (allergener || []).forEach(a => (ord[a] || []).forEach(o => treff.push(o)));
   // Lengste ord forst, slik at "hvetemel" ikke blir delt opp av "mel"
   treff.sort((a, b) => b.length - a.length).forEach(o => {
-    ut = ut.replace(new RegExp(`(?<!<[^>]*)\\b(${o})\\b`, 'gi'), '<b>$1</b>');
+    ut = ut.replace(new RegExp(`(?<!<[^>]*)\\b(${o})\\b`, 'gi'), '<b class="ag">$1</b>');
   });
   return ut;
 }
+
+// Ikke lovpalagt, men anbefalt nar kjokkenet jevnlig handterer flere allergener -
+// samme poeng som star i prosetekst pa julesiden, bare kortet ned til etikettformat.
+const SPOR_AV_LINJE = 'Kan inneholde spor av nøtter, gluten, melk og egg.';
 
 function byggEtikettHtml(p, bestFoer, liten) {
   const ingr = p.ingredienser
@@ -2473,14 +2480,22 @@ function byggEtikettHtml(p, bestFoer, liten) {
     ? `<div class="alrg">Inneholder: ${p.allergener.map(a => esc(a.toUpperCase())).join(', ')}</div>` : '';
   const mengde = p.mengde ? `<span class="mengde">${esc(p.mengde)}</span>` : '';
   const oppb = p.oppbevaring && !liten ? `<div class="oppb">${esc(p.oppbevaring)}</div>` : '';
+  const spor = !liten ? `<div class="spor">${SPOR_AV_LINJE}</div>` : '';
 
+  // Navn/adresse pa driftsansvarlig er lovpalagt (sporbarhet), men holdes bevisst
+  // diskre - liten skrift, egen linje under en tynn strek, ikke et dominerende element.
   return `<div class="etikett">
-    <div class="navn">${esc(p.navn)} ${mengde}</div>
+    <div class="topprad">
+      <div class="navn">${esc(p.navn)} ${mengde}</div>
+      <img class="logo" src="/assets/kakefrue-logo.png" alt="">
+    </div>
+    <div class="rule"></div>
     ${ingr}
     ${allergenLinje}
+    ${spor}
     <div class="best">Best før: ${bestFoer}</div>
     ${oppb}
-    <div class="avs">${ETIKETT_AVSENDER.map(esc).join('<br>')}</div>
+    <div class="avs"><span class="avs-navn">${esc(ETIKETT_AVSENDER[0])}</span>${ETIKETT_AVSENDER.slice(1).map(esc).join('<br>')}</div>
   </div>`;
 }
 
@@ -2514,18 +2529,27 @@ function skrivUtEtiketter() {
     <div class="etikett-preview">
       <style>
         .etikett-preview .etikett {
-          max-width:${liten ? '270px' : '350px'}; border:1px dashed #bbb;
-          padding:${liten ? '11px 13px' : '15px 17px'};
-          font-family:Helvetica,Arial,sans-serif; background:#fff; color:#000;
-          display:flex; flex-direction:column;
+          max-width:${liten ? '270px' : '350px'}; border:1.4px solid var(--gold);
+          border-radius:10px;
+          padding:${liten ? '13px 15px' : '17px 19px'};
+          font-family:'Lato',Helvetica,Arial,sans-serif; background:#fff; color:var(--brown);
+          display:flex; flex-direction:column; justify-content:flex-start;
         }
-        .etikett-preview .navn { font-weight:700; font-size:${liten ? '12px' : '15px'}; margin-bottom:5px; }
-        .etikett-preview .mengde { font-weight:400; font-size:${liten ? '9px' : '11px'}; opacity:0.7; }
-        .etikett-preview .ingr { font-size:${liten ? '7.5px' : '9px'}; line-height:1.4; margin-bottom:4px; }
-        .etikett-preview .alrg { font-size:${liten ? '7.5px' : '9px'}; font-weight:700; margin-bottom:4px; }
-        .etikett-preview .best { font-size:${liten ? '10px' : '12.5px'}; font-weight:700; margin-top:6px; }
-        .etikett-preview .oppb { font-size:9px; margin-top:3px; }
-        .etikett-preview .avs { font-size:${liten ? '6.5px' : '8px'}; opacity:0.75; margin-top:6px; line-height:1.35; }
+        .etikett-preview .topprad { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+        .etikett-preview .navn { font-family:'Playfair Display',serif; font-weight:700; font-size:${liten ? '14px' : '18px'}; margin-bottom:0; color:var(--brown); }
+        .etikett-preview .mengde { font-weight:400; font-size:${liten ? '9px' : '11px'}; color:var(--gold-dark); opacity:0.85; }
+        .etikett-preview .logo { width:${liten ? '30px' : '40px'}; height:${liten ? '30px' : '40px'}; flex-shrink:0; object-fit:contain; }
+        .etikett-preview .rule { height:1px; background:var(--gold); opacity:0.5; margin:${liten ? '4px 0' : '5px 0'}; }
+        .etikett-preview .ingr { font-size:${liten ? '7.5px' : '9px'}; line-height:1.4; margin-bottom:3px; }
+        .etikett-preview .ingr b.ag { color:var(--gold-dark); }
+        .etikett-preview .alrg { font-size:${liten ? '7.5px' : '9px'}; font-weight:700; color:var(--gold-dark); margin-bottom:3px; }
+        .etikett-preview .spor { font-size:${liten ? '6.5px' : '7.8px'}; font-style:italic; opacity:0.6; margin-bottom:3px; }
+        .etikett-preview .best { font-size:${liten ? '10px' : '13px'}; font-weight:700; margin-top:4px; color:var(--brown); }
+        .etikett-preview .oppb { font-size:9px; opacity:0.65; margin-top:2px; }
+        .etikett-preview .avs { font-size:${liten ? '6px' : '7px'}; color:var(--gold-dark); opacity:0.65; margin-top:5px;
+          padding-top:4px; border-top:0.75px solid var(--gold); line-height:1.4; }
+        .etikett-preview .avs-navn { font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
+          font-size:${liten ? '8px' : '10px'}; opacity:1; display:block; margin-bottom:1px; }
       </style>
       ${en}
     </div>`;
@@ -2535,26 +2559,37 @@ function skrivUtEtiketter() {
 
   vindu.document.write(`<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8">
     <title>Etiketter – ${esc(p.navn)}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
     <style>
       @page { size: A4; margin: 8mm; }
       * { box-sizing: border-box; }
-      body { margin:0; font-family: Helvetica, Arial, sans-serif; background:#fff; color:#000; }
-      .ark { display:grid; grid-template-columns: repeat(${liten ? 3 : 2}, 1fr); gap:0; }
+      body { margin:0; font-family: 'Lato', Helvetica, Arial, sans-serif; background:#fff; color:#3D2420; }
+      .ark { display:grid; grid-template-columns: repeat(${liten ? 3 : 2}, 1fr); gap:2mm; }
       .etikett {
-        border: 1px dashed #bbb;
+        border: 1.1px solid #C4956A;
+        border-radius: ${liten ? '2.2mm' : '3mm'};
         padding: ${liten ? '3mm 3.5mm' : '4mm 5mm'};
-        height: ${liten ? '38mm' : '54mm'};
+        max-height: ${liten ? '38mm' : '54mm'};
         overflow: hidden;
-        display: flex; flex-direction: column;
+        display: flex; flex-direction: column; justify-content: flex-start;
         page-break-inside: avoid;
       }
-      .navn { font-weight:700; font-size:${liten ? '9pt' : '11.5pt'}; margin-bottom:${liten ? '1mm' : '1.6mm'}; }
-      .mengde { font-weight:400; font-size:${liten ? '7pt' : '8.5pt'}; opacity:0.7; }
-      .ingr { font-size:${liten ? '5.6pt' : '7pt'}; line-height:1.35; margin-bottom:${liten ? '0.8mm' : '1.4mm'}; }
-      .alrg { font-size:${liten ? '5.6pt' : '7pt'}; font-weight:700; margin-bottom:${liten ? '0.8mm' : '1.4mm'}; }
-      .best { font-size:${liten ? '7.5pt' : '9.5pt'}; font-weight:700; margin-top:auto; }
-      .oppb { font-size:7pt; margin-top:1mm; }
-      .avs { font-size:${liten ? '5pt' : '6.2pt'}; opacity:0.75; margin-top:${liten ? '0.8mm' : '1.6mm'}; line-height:1.3; }
+      .topprad { display:flex; align-items:center; justify-content:space-between; gap:2mm; }
+      .navn { font-family:'Playfair Display',serif; font-weight:700; color:#3D2420; font-size:${liten ? '10pt' : '13pt'}; margin-bottom:0; }
+      .mengde { font-weight:400; font-size:${liten ? '7pt' : '8.5pt'}; color:#7A5230; opacity:0.85; }
+      .logo { width:${liten ? '8mm' : '11mm'}; height:${liten ? '8mm' : '11mm'}; flex-shrink:0; object-fit:contain; }
+      .rule { height:0.6pt; background:#C4956A; opacity:0.55; margin:${liten ? '0.8mm 0' : '1.2mm 0'}; }
+      .ingr { font-size:${liten ? '5.6pt' : '7pt'}; line-height:1.35; margin-bottom:${liten ? '0.6mm' : '1mm'}; }
+      .ingr b.ag { color:#7A5230; }
+      .alrg { font-size:${liten ? '5.6pt' : '7pt'}; font-weight:700; color:#7A5230; margin-bottom:${liten ? '0.6mm' : '1mm'}; }
+      .spor { font-size:${liten ? '5pt' : '6.2pt'}; font-style:italic; color:#3D2420; opacity:0.6; margin-bottom:${liten ? '0.6mm' : '1mm'}; }
+      .best { font-size:${liten ? '7.5pt' : '9.5pt'}; font-weight:700; color:#3D2420; margin-top:${liten ? '0.8mm' : '1.2mm'}; }
+      .oppb { font-size:6.5pt; color:#3D2420; opacity:0.65; margin-top:0.8mm; }
+      .avs { font-size:${liten ? '4.4pt' : '5.4pt'}; color:#7A5230; opacity:0.65; margin-top:${liten ? '0.8mm' : '1.2mm'};
+        padding-top:${liten ? '0.8mm' : '1.2mm'}; border-top:0.5pt solid #C4956A; line-height:1.35; }
+      .avs-navn { font-weight:700; letter-spacing:0.05em; text-transform:uppercase; display:block;
+        font-size:${liten ? '5.6pt' : '7pt'}; opacity:1; margin-bottom:0.5mm; }
       @media screen {
         body { background:#eee; padding:14px; }
         .ark { background:#fff; padding:8mm; max-width:210mm; margin:0 auto; box-shadow:0 2px 14px rgba(0,0,0,0.15); }
