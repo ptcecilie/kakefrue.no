@@ -637,7 +637,10 @@ async function loadChristmasOrders() {
         </div>
       `).join('')}
     `;
-  } catch (e) { container.innerHTML = '<div style="padding:32px;opacity:0.5;">Kunne ikke laste bestillinger</div>'; }
+  } catch (e) {
+    console.error('Julebestillinger:', e);
+    container.innerHTML = `<div style="padding:32px;opacity:0.7;">Kunne ikke laste bestillinger.<br><small style="opacity:0.7;">Feil: ${escA(e.message)}</small></div>`;
+  }
 }
 
 // ── Julebestillinger per marked: filter og utskrift ────────
