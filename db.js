@@ -257,6 +257,30 @@ async function initDB() {
       ('site_open', '1')
     `);
 
+    // Seed julebestilling-produktene med det som til na sto hardkodet i jul.html,
+    // sa overgangen til admin-styring ikke endrer noe kundene ser.
+    // INSERT IGNORE - rorer ikke raden hvis Cecilie allerede har redigert den.
+    const JUL_PRODUKTER_DEFAULT = [
+      { k: 'kling', n: 'Kling', unit: '2 stk', pris: 189,
+        desc: 'Kakefrues ny og forbedrede oppskrift – 2 ferdigsmurte lefser med Kakefrues eget fyll', popular: true },
+      { k: 'nordlandslefse', n: 'Nordlandslefse', unit: '3 stk', pris: 250,
+        desc: 'Tykklefse med smør, kanel og sukker' },
+      { k: 'pepperkakdrom', n: 'Pepperkakedrøm', unit: '6 stk', pris: 159,
+        desc: 'Kakefrues spesial – silkemyk pepperkakekrem i mandelskall', hit: true, popular: true },
+      { k: 'gulebomber', n: 'Gule bomber', unit: '6 stk', pris: 129,
+        desc: 'Mandelskall fylt med silkemyk krem – en norsk juleklassiker' },
+      { k: 'krumkaker', n: 'Krumkaker', unit: '6 stk', pris: 129,
+        desc: 'Sprø og delikate – perfekt til julebordet' },
+      { k: 'cookies', n: 'Cookies', unit: '4 stk', pris: 99,
+        desc: 'Store og seige hjemmelagde cookies', gfEkstra: 20 },
+      { k: 'kransekake', n: 'Kransekake', unit: '18 ringer', pris: 700,
+        desc: 'En imponerende juleklassiker – bestilles på forhånd' }
+    ];
+    await conn.query(
+      `INSERT IGNORE INTO settings (k, v) VALUES ('jul_produkter', ?)`,
+      [JSON.stringify(JUL_PRODUKTER_DEFAULT)]
+    );
+
     // Seed default pricing
     await conn.query(`
       INSERT IGNORE INTO pricing (category, item_key, label, price, description) VALUES

@@ -85,6 +85,20 @@ app.delete('/api/admin/pageviews', requireAdmin, async (req, res) => {
 // Public API
 // ============================================================
 
+// GET /api/jul-produkter
+// Produktene som vises pa /jul.html. Cecilie administrerer disse selv fra
+// admin -> Julebestillinger (legg til / rediger / slett), ikke hardkodet lenger.
+app.get('/api/jul-produkter', async (req, res) => {
+  try {
+    const [rows] = await pool.query(`SELECT v FROM settings WHERE k = 'jul_produkter'`);
+    const produkter = rows[0]?.v ? JSON.parse(rows[0].v) : [];
+    res.json(produkter);
+  } catch (err) {
+    console.error(err);
+    res.json([]);
+  }
+});
+
 // GET /api/allergener
 // Allergeninformasjon skal vaere tilgjengelig FOR kunden kjoper, jf. merkeforskriften.
 // Samme kilde som etikettene i admin, sa de to aldri kan sprike.

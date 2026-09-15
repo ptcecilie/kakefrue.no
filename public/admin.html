@@ -459,7 +459,22 @@
 
     <!-- Julebakst -->
     <div class="admin-panel" id="panel-jul">
-      <div class="section-header"><h2>🎄 Julebestillinger</h2><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm" onclick="loadChristmasOrders()">↻ Oppdater</button><button class="btn btn-primary btn-sm" onclick="exportJulebestillingerExcel()">⬇ Last ned Excel</button></div></div>
+      <div class="section-header"><h2>🎄 Julebestillinger</h2></div>
+
+      <div class="section-header" style="margin-bottom:8px;">
+        <h3 style="margin:0;font-size:1.1rem;">Produkter til salgs</h3>
+        <button class="btn btn-primary btn-sm" onclick="nyttJulProdukt()">+ Nytt produkt</button>
+      </div>
+      <p style="font-size:0.85rem;opacity:0.65;margin:0 0 16px;line-height:1.6;">
+        Dette er produktene kundene ser og kan bestille på <a href="/jul.html" target="_blank">julesiden ↗</a>.
+        Legg til, rediger eller slett — endringene vises der med én gang.
+      </p>
+      <div id="julProduktListe" style="margin-bottom:36px;"><div style="opacity:0.4;padding:32px;">Laster...</div></div>
+
+      <div class="section-header">
+        <h3 style="margin:0;font-size:1.1rem;">Innkomne bestillinger</h3>
+        <div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm" onclick="loadChristmasOrders()">↻ Oppdater</button><button class="btn btn-primary btn-sm" onclick="exportJulebestillingerExcel()">⬇ Last ned Excel</button></div>
+      </div>
       <div id="christmasOrdersList"><div style="opacity:0.4;padding:32px;">Laster...</div></div>
     </div>
 

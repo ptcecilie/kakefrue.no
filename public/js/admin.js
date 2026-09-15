@@ -122,7 +122,7 @@ function loadPanel(panel) {
     case 'anbefalinger': loadReviews(); break;
     case 'priser': loadPricing(); break;
     case 'kunder': loadCustomers(); break;
-    case 'jul': loadChristmasOrders(); break;
+    case 'jul': loadJulProdukter(); loadChristmasOrders(); break;
     case 'bilder': loadPhotos(); loadAboutImages(); break;
     case 'spesial': loadSpesial(); break;
     case 'etiketter': loadEtiketter(); break;
@@ -1931,6 +1931,176 @@ function esc(t) {
   return String(t == null ? '' : t)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ── Julebestilling-produkter (produktene pa jul.html) ───────
+let julProdukter = [];
+
+// Lager en intern nokkel av produktnavnet, unik blant de andre produktene.
+// Vises aldri for kunden - brukes bare til a holde styr pa handlekurv/bestilling.
+function julSlug(navn, unngaaListe) {
+  const base = String(navn).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '') || 'produkt';
+  let k = base, i = 2;
+  while (unngaaListe.includes(k)) { k = base + i; i++; }
+  return k;
+}
+
+async function loadJulProdukter() {
+  try {
+    const s = await api('/api/admin/settings');
+    julProdukter = s.jul_produkter ? JSON.parse(s.jul_produkter) : [];
+  } catch (e) {
+    julProdukter = [];
+  }
+  renderJulProduktListe();
+}
+
+async function lagreJulProdukter() {
+  await api('/api/admin/settings', {
+    method: 'PUT',
+    body: JSON.stringify({ jul_produkter: JSON.stringify(julProdukter) })
+  });
+}
+
+function renderJulProduktListe() {
+  const el = $('julProduktListe');
+  if (!el) return;
+
+  if (!julProdukter.length) {
+    el.innerHTML = `
+      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);
+                  padding:40px 28px;text-align:center;">
+        <p style="opacity:0.6;margin-bottom:18px;">Ingen produkter ennå. Julesiden viser ingenting å bestille før du legger inn minst ett.</p>
+        <button class="btn btn-primary btn-sm" onclick="nyttJulProdukt()">+ Nytt produkt</button>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = `<div style="display:grid;gap:12px;">` + julProdukter.map((p, i) => `
+    <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);
+                padding:18px 22px;display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="flex:1;min-width:220px;">
+        <h4 style="margin:0 0 6px;font-size:1.02rem;">
+          ${esc(p.n)}
+          ${p.hit ? `<span style="background:#8B1A1A;color:#fff;font-size:0.68rem;font-weight:700;
+            padding:3px 9px;border-radius:100px;margin-left:6px;vertical-align:middle;letter-spacing:0.03em;">HIT</span>` : ''}
+          ${p.popular ? `<span style="background:rgba(122,158,130,0.18);color:#3D6B48;font-size:0.68rem;
+            font-weight:700;padding:3px 9px;border-radius:100px;margin-left:6px;vertical-align:middle;letter-spacing:0.03em;">POPULÆR</span>` : ''}
+        </h4>
+        <p style="font-size:0.83rem;opacity:0.65;margin:0 0 8px;line-height:1.55;">
+          ${esc(p.unit || '—')}${p.desc ? ' · ' + esc(p.desc) : ''}
+        </p>
+        <div style="font-size:0.95rem;font-weight:700;color:#8B1A1A;">
+          ${p.pris},-${p.gfEkstra ? ` <span style="font-size:0.78rem;font-weight:500;opacity:0.65;">(+${p.gfEkstra} kr glutenfri)</span>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="btn btn-outline btn-sm" onclick="redigerJulProdukt(${i})">Rediger</button>
+        <button class="btn btn-outline btn-sm" onclick="slettJulProdukt(${i})"
+                style="border-color:rgba(200,0,0,0.25);color:#c00;">Slett</button>
+      </div>
+    </div>`).join('') + `</div>`;
+}
+
+function nyttJulProdukt() { julProduktSkjema(null); }
+function redigerJulProdukt(i) { julProduktSkjema(i); }
+
+function julProduktSkjema(index) {
+  const p = index === null
+    ? { k: '', n: '', unit: '', pris: '', desc: '', hit: false, popular: false, gfEkstra: '' }
+    : julProdukter[index];
+
+  openModal(`
+    <div class="modal-header">
+      <h3>${index === null ? 'Nytt produkt' : 'Rediger produkt'}</h3>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Produktnavn</label>
+        <input class="form-input" id="jpNavn" value="${esc(p.n)}" placeholder="f.eks. Kling">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label class="form-label">Mengde / enhet</label>
+          <input class="form-input" id="jpUnit" value="${esc(p.unit || '')}" placeholder="f.eks. 2 stk">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pris (kr)</label>
+          <input type="number" class="form-input" id="jpPris" value="${p.pris}" min="0" step="1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Beskrivelse</label>
+        <textarea class="form-input" id="jpDesc" rows="2"
+          placeholder="Kort tekst kunden ser under produktet">${esc(p.desc || '')}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Glutenfritt tillegg (kr)
+          <span style="font-weight:300;opacity:0.6;">– valgfritt, la stå tomt hvis ikke aktuelt</span>
+        </label>
+        <input type="number" class="form-input" id="jpGfEkstra" value="${p.gfEkstra || ''}" min="0" step="1" placeholder="f.eks. 20">
+      </div>
+      <div style="display:flex;gap:20px;margin-top:4px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer;">
+          <input type="checkbox" id="jpHit" ${p.hit ? 'checked' : ''} style="width:18px;height:18px;"> Merk som «HIT»
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer;">
+          <input type="checkbox" id="jpPopular" ${p.popular ? 'checked' : ''} style="width:18px;height:18px;"> Merk som «POPULÆR»
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Avbryt</button>
+      <button class="btn btn-primary" onclick="lagreJulProduktSkjema(${index === null ? 'null' : index})">Lagre</button>
+    </div>
+  `);
+}
+
+async function lagreJulProduktSkjema(index) {
+  const navn = $('jpNavn').value.trim();
+  if (!navn) { alert('Produktet trenger et navn.'); return; }
+  const pris = parseInt($('jpPris').value);
+  if (isNaN(pris) || pris < 0) { alert('Skriv inn en gyldig pris.'); return; }
+  const gfRaw = $('jpGfEkstra').value.trim();
+
+  const eksisterendeNokler = julProdukter.filter((_, i) => i !== index).map(p => p.k);
+  const k = index === null ? julSlug(navn, eksisterendeNokler) : julProdukter[index].k;
+
+  const produkt = {
+    k, n: navn,
+    unit: $('jpUnit').value.trim(),
+    pris,
+    desc: $('jpDesc').value.trim(),
+    hit: $('jpHit').checked,
+    popular: $('jpPopular').checked
+  };
+  if (gfRaw !== '') produkt.gfEkstra = parseInt(gfRaw) || 0;
+
+  if (index === null) julProdukter.push(produkt);
+  else julProdukter[index] = produkt;
+
+  try {
+    await lagreJulProdukter();
+    closeModal();
+    renderJulProduktListe();
+    showAlert('Lagret! ✓', 'success');
+  } catch (e) {
+    showAlert(e.message || 'Kunne ikke lagre', 'error');
+  }
+}
+
+async function slettJulProdukt(i) {
+  if (!confirm(`Slette «${julProdukter[i].n}»? Den forsvinner fra julesiden med én gang.`)) return;
+  julProdukter.splice(i, 1);
+  try {
+    await lagreJulProdukter();
+    renderJulProduktListe();
+    showAlert('Slettet', 'success');
+  } catch (e) {
+    showAlert(e.message || 'Kunne ikke slette', 'error');
+  }
 }
 
 async function loadEtiketter() {
