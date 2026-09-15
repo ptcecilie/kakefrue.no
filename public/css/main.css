@@ -776,11 +776,13 @@ html[style*="--side-foto"]::after {
 html[style*="--side-foto"] body > * { position: relative; z-index: 2; }
 
 /* Seksjonene er satt hvite inline pa sidene, sa dette ma vinne over det */
-html[style*="--side-foto"] body section {
+/* .farget-band (f.eks. «Klar for å bestille?») beholder sin egen farge –
+   ellers star den hvite teksten pa en nesten hvit flate */
+html[style*="--side-foto"] body section:not(.farget-band) {
   background: rgba(255,255,255,0.32) !important;
 }
 /* Vekselvis tettere band, sa siden far rytme i stedet for en lang flate */
-html[style*="--side-foto"] body section:nth-of-type(even) {
+html[style*="--side-foto"] body section:not(.farget-band):nth-of-type(even) {
   background: rgba(255,255,255,0.74) !important;
   box-shadow: inset 0 1px 0 rgba(196,149,106,0.10), inset 0 -1px 0 rgba(196,149,106,0.10);
 }
