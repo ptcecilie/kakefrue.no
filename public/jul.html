@@ -1435,8 +1435,7 @@ async function visVippsRetur(forsok = 0){
       $v('vippsReturIkon').textContent = '🎄';
       $v('vippsReturTittel').textContent = `Tusen takk, ${d.fornavn}!`;
       $v('vippsReturTekst').innerHTML = `Betalingen på <strong>${d.total} kr</strong> er godkjent, og bestillingen er bekreftet.` +
-        (d.epost ? `<br>Bekreftelse er sendt til ${d.epost}.` : '') +
-        '<br>Beløpet trekkes først når bestillingen er klar.';
+        (d.epost ? `<br>Bekreftelse er sendt til ${d.epost}.` : '');
       $v('vippsProvIgjen').style.display = 'none';
     } else if (d.state === 'CREATED' && forsok < 5) {
       /* Vipps kan bruke noen sekunder på å registrere godkjenningen */

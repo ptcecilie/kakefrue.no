@@ -43,7 +43,7 @@ async function hentToken() {
   return token;
 }
 
-async function kall(metode, sti, body) {
+async function kall(metode, sti, body, idemNokkel) {
   const { data } = await axios({
     method: metode,
     url: `${BASE}/epayment/v1/payments${sti}`,
@@ -52,7 +52,7 @@ async function kall(metode, sti, body) {
       ...fellesHoder(),
       Authorization: `Bearer ${await hentToken()}`,
       'Content-Type': 'application/json',
-      'Idempotency-Key': crypto.randomUUID()
+      'Idempotency-Key': idemNokkel || crypto.randomUUID()
     }
   });
   return data;
@@ -83,8 +83,9 @@ async function opprettBetaling({ reference, belopKr, beskrivelse, returnUrl, tel
 // state: CREATED | AUTHORIZED | ABORTED | EXPIRED | TERMINATED
 const hentBetaling = (ref) => kall('get', `/${encodeURIComponent(ref)}`);
 
+// Fast nøkkel per betaling: sjekker returside og admin samtidig, trekkes beløpet likevel bare én gang
 const trekkBetaling = (ref, belopOre) =>
-  kall('post', `/${encodeURIComponent(ref)}/capture`, { modificationAmount: { currency: 'NOK', value: belopOre } });
+  kall('post', `/${encodeURIComponent(ref)}/capture`, { modificationAmount: { currency: 'NOK', value: belopOre } }, `trekk-${ref}`);
 
 const kansellerBetaling = (ref) => kall('post', `/${encodeURIComponent(ref)}/cancel`, {});
 

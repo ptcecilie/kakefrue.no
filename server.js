@@ -443,8 +443,19 @@ async function startVippsBetaling(o, total) {
 // er godkjent, markeres den som betalt og e-postene sendes.
 async function synkVipps(o) {
   const b = await hentBetaling(o.vipps_reference);
-  const trukket = (b.aggregate?.capturedAmount?.value || 0) > 0;
+  let trukket = (b.aggregate?.capturedAmount?.value || 0) > 0;
   const refundert = (b.aggregate?.refundedAmount?.value || 0) > 0;
+  // Cecilie vil ha pengene med en gang kunden har godkjent, ikke ved levering
+  if (b.state === 'AUTHORIZED' && !trukket && !refundert && !o.vipps_refunded_at &&
+      !((b.aggregate?.cancelledAmount?.value || 0) > 0)) {
+    try {
+      await trekkBetaling(o.vipps_reference, b.amount.value);
+      trukket = true;
+    } catch (e) {
+      // Blir stående som reservert; admin viser «Trekk beløpet»
+      console.log('[Vipps] Automatisk trekk feilet:', vippsFeiltekst(e));
+    }
+  }
   await pool.query(
     `UPDATE christmas_orders SET vipps_state = ?,
        vipps_captured_at = IF(? AND vipps_captured_at IS NULL, NOW(), vipps_captured_at),
@@ -478,7 +489,7 @@ async function sendVippsEposter(o) {
         <ul>${liste}</ul>
         <p><strong>Totalt ${total} kr</strong> · ${levering}</p>
         ${o.note ? `<p><strong>Kommentar:</strong> ${escHtml(o.note)}</p>` : ''}
-        <p style="font-size:0.85rem;color:#8A6858;">Beløpet er reservert hos kunden og trekkes når du varsler om henting eller levering.</p>
+        <p style="font-size:0.85rem;color:#8A6858;">Betalingen er gjennomført i Vipps.</p>
         <p><a href="${nettstedUrl()}/admin.html" style="color:#8B1A1A;">Se i adminpanelet →</a></p>
       </div>`
     });
@@ -498,7 +509,6 @@ async function sendVippsEposter(o) {
             <div style="margin-top:14px;padding-top:14px;border-top:1px solid #EEE;font-size:1.1rem;font-weight:700;color:#8B1A1A;">Totalt: ${total} kr</div>
           </div>
           <p style="color:#8A6858;font-size:0.85rem;">${levering}. Du får en melding når bestillingen er klar.</p>
-          <p style="color:#8A6858;font-size:0.82rem;">Beløpet er reservert i Vipps og trekkes først når bestillingen er klar til henting eller levering.</p>
           <p style="color:#B0A090;font-size:0.75rem;margin-top:24px;">Spørsmål? Ring 900 33 039 eller skriv på <a href="https://m.me/kakefrue" style="color:#C4956A;">Messenger</a>.</p>
         </div>`
       });
