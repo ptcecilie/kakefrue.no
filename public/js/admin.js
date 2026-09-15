@@ -436,12 +436,14 @@ Cecilie – Kakefrue
 
 async function settVarslet(id, varslet, via) {
   try {
-    await api('/api/admin/christmas-orders/' + id, {
+    const r = await api('/api/admin/christmas-orders/' + id, {
       method: 'PUT',
       body: JSON.stringify({ notified: varslet, via })
     });
     loadChristmasOrders();
     if (!varslet) closeModal();
+    if (r.vipps_trukket) showAlert('Vipps-beløpet er trukket fra kunden', 'success');
+    if (r.vipps_feil) alert('Varslet, men Vipps-beløpet ble ikke trukket:\n' + r.vipps_feil + '\n\nPrøv «Trekk beløpet» på bestillingen.');
   } catch (e) {
     alert('Kunne ikke lagre status: ' + e.message);
   }
@@ -494,6 +496,49 @@ async function bekreftBetaling(id) {
   } catch (e) {
     alert('Kunne ikke bekrefte: ' + e.message);
   }
+}
+
+async function vippsTrekk(id, btn) {
+  if (!confirm('Trekke beløpet fra kunden nå?\n\nGjør dette når bestillingen er klar til henting eller levering.')) return;
+  btn.disabled = true;
+  try {
+    const r = await api('/api/admin/christmas-orders/' + id + '/vipps-trekk', { method: 'POST' });
+    showAlert(r.trukket ? 'Beløpet er trukket' : 'Ingenting å trekke – betalingen er ikke godkjent eller allerede trukket', r.trukket ? 'success' : 'info');
+    loadChristmasOrders();
+  } catch (e) {
+    alert('Kunne ikke trekke beløpet: ' + e.message);
+    btn.disabled = false;
+  }
+}
+
+async function vippsRefunder(id, belop, trukket, btn) {
+  const tekst = trukket
+    ? `Refundere ${belop} kr til kunden i Vipps?\n\nPengene går tilbake til kunden. Dette kan ikke angres.`
+    : `Frigjøre reservasjonen på ${belop} kr?\n\nKunden blir ikke belastet. Dette kan ikke angres.`;
+  if (!confirm(tekst)) return;
+  btn.disabled = true;
+  try {
+    await api('/api/admin/christmas-orders/' + id + '/vipps-refunder', { method: 'POST' });
+    showAlert(trukket ? 'Refundert i Vipps' : 'Reservasjonen er frigjort', 'success');
+    loadChristmasOrders();
+  } catch (e) {
+    alert('Vipps sa nei: ' + e.message);
+    btn.disabled = false;
+  }
+}
+
+function vippsMerke(o) {
+  const pille = (bg, farge, tekst) =>
+    `<span style="align-self:center;background:${bg};color:${farge};border-radius:100px;padding:6px 13px;font-size:0.78rem;font-weight:700;">${tekst}</span>`;
+  const belop = o.total_kr || 0;
+  if (o.vipps_refunded_at) return pille('rgba(0,0,0,.06)', '#6B5040', '↩️ Refundert');
+  if (o.vipps_captured_at) return pille('rgba(122,158,130,.2)', '#4A7A5A', '💰 Betalt (Vipps)') +
+    `<button class="btn btn-outline btn-sm" onclick="vippsRefunder(${o.id}, ${belop}, true, this)">Refunder</button>`;
+  if (o.paid_at) return pille('rgba(255,91,36,.12)', '#C2410C', '🔒 Reservert i Vipps') +
+    `<button class="btn btn-primary btn-sm" style="background:#FF5B24;border-color:#FF5B24;color:#fff;" onclick="vippsTrekk(${o.id}, this)">Trekk beløpet</button>` +
+    `<button class="btn btn-outline btn-sm" onclick="vippsRefunder(${o.id}, ${belop}, false, this)">Frigjør</button>`;
+  if (['ABORTED', 'EXPIRED', 'TERMINATED'].includes(o.vipps_state)) return pille('rgba(196,120,138,.16)', '#9B3A52', 'Vipps avbrutt – ikke betalt');
+  return pille('rgba(0,0,0,.05)', '#8A6858', 'Venter på Vipps');
 }
 
 async function slettJulebestilling(id, btn) {
@@ -550,15 +595,17 @@ async function loadChristmasOrders() {
             <div style="display:flex;gap:8px;">
               <a href="tel:${o.phone}" class="btn btn-outline btn-sm">📞 ${o.phone}</a>
               ${o.email ? `<button class="btn btn-outline btn-sm" data-email="${o.email}" data-name="${o.full_name.replace(/"/g,'&quot;')}" onclick="openEmailModal(this.dataset.email,this.dataset.name)">✉️</button>` : ''}
-              ${o.paid_at
+              ${o.vipps_reference ? vippsMerke(o) : o.paid_at
                 ? `<span style="align-self:center;background:rgba(122,158,130,.2);color:#4A7A5A;border-radius:100px;padding:6px 13px;font-size:0.78rem;font-weight:700;">💰 Betalt</span>`
                 : o.payment_claimed_at
                   ? `<button class="btn btn-primary btn-sm" style="background:#7A9E82;color:#fff;border-color:#7A9E82;" onclick="bekreftBetaling(${o.id})">💰 Bekreft betaling</button>`
                   : `<span style="align-self:center;font-size:0.78rem;opacity:0.5;">Ikke betalt</span>`}
-              ${!o.paid_at
+              ${!o.paid_at && !o.vipps_refunded_at
                 ? `<button class="btn btn-outline btn-sm" style="color:#9B3A52;border-color:rgba(155,58,82,.45);" onclick='aapnePurring(${JSON.stringify(o).replace(/'/g, "&apos;")})'>⚠️ Mangler betaling</button>`
                 : ''}
-              <button class="btn btn-primary btn-sm" onclick='aapneHentemelding(${JSON.stringify(o).replace(/'/g, "&apos;")})'>${o.delivery === 'levering' ? '🚗 Varsle om levering' : '📦 Klar til henting'}</button>
+              ${o.notified_at
+                ? `<button class="btn btn-sm" style="background:#7A9E82;color:#fff;border-color:#7A9E82;" title="Allerede sendt – trykk for å se eller angre" onclick='aapneHentemelding(${JSON.stringify(o).replace(/'/g, "&apos;")})'>✓ ${o.delivery === 'levering' ? 'Levering varslet' : 'Henting varslet'} ${new Date(o.notified_at).toLocaleDateString('nb-NO',{day:'numeric',month:'short'})}</button>`
+                : `<button class="btn btn-primary btn-sm" onclick='aapneHentemelding(${JSON.stringify(o).replace(/'/g, "&apos;")})'>${o.delivery === 'levering' ? '🚗 Varsle om levering' : '📦 Klar til henting'}</button>`}
               <button class="photo-delete-btn" style="padding:7px 12px;" title="Slett bestilling" onclick="slettJulebestilling(${o.id}, this)">🗑</button>
             </div>
           </div>

@@ -694,12 +694,12 @@
   }
   .allergen-fot {
     font-size: 0.8rem; line-height: 1.65;
-    background: rgba(255,255,255,0.07);
-    border-left: 3px solid rgba(196,149,106,0.5);
+    background: #F5EDE0;
+    border-left: 3px solid rgba(196,149,106,0.6);
     border-radius: 6px;
     padding: 12px 16px;
     margin-top: 20px;
-    color: rgba(251,246,236,0.8);
+    color: var(--muted);
   }
   </style>
 </head>
@@ -845,8 +845,12 @@
         </div>
 
         <div class="felt-rad">
-          <label class="felt-label">E-post <span style="font-weight:300;opacity:0.6;">(valgfritt)</span></label>
+          <label class="felt-label" for="epost">E-post *</label>
           <input class="felt-input" id="epost" type="email" placeholder="navn@epost.no">
+          <label style="display:flex;align-items:center;gap:8px;margin-top:9px;font-size:0.82rem;color:var(--muted);cursor:pointer;">
+            <input type="checkbox" id="ingenEpost" onchange="settIngenEpost(this.checked)" style="width:16px;height:16px;accent-color:var(--red);margin:0;">
+            Jeg har ikke e-post
+          </label>
         </div>
 
         <div class="felt-rad">
@@ -980,6 +984,15 @@
 
     <a href="/" style="display:inline-block;margin-top:24px;padding:10px 24px;border:1px solid rgba(245,237,214,0.2);color:rgba(245,237,214,0.5);border-radius:100px;text-decoration:none;font-size:0.82rem;">Tilbake til forsiden</a>
   </div>
+
+  <!-- TILBAKE FRA VIPPS -->
+  <div class="suksess" id="vippsRetur" style="display:none;max-width:520px;">
+    <span class="suksess-ikon" id="vippsReturIkon">⏳</span>
+    <h2 style="margin-bottom:6px;" id="vippsReturTittel">Sjekker betalingen …</h2>
+    <p style="color:rgba(245,237,214,0.65);font-size:0.9rem;line-height:1.8;margin-bottom:22px;" id="vippsReturTekst">Et øyeblikk, jeg spør Vipps.</p>
+    <button class="vipps-betal-knapp" id="vippsProvIgjen" style="display:none;border:none;cursor:pointer;margin:0 auto;" onclick="provVippsIgjen()">Prøv å betale igjen</button>
+    <a href="/" style="display:inline-block;margin-top:24px;padding:10px 24px;border:1px solid rgba(245,237,214,0.2);color:rgba(245,237,214,0.5);border-radius:100px;text-decoration:none;font-size:0.82rem;">Tilbake til forsiden</a>
+  </div>
 </div>
 
 </div><!-- page-content -->
@@ -1039,14 +1052,24 @@
 })();
 
 /* Produkter */
-// Produktene administreres nå fra admin -> Julebestillinger (ikke hardkodet lenger).
-let PRODUKTER=[];
+// Produktene administreres fra admin -> Julebestillinger.
+// Reservelista brukes bare hvis serveren ikke svarer, så kundene aldri møter en tom side.
+const RESERVE_PRODUKTER=[
+  {k:'kling',          n:'Kling',            unit:'2 stk',     pris:169, desc:'Kakefrues ny og forbedrede oppskrift – 2 ferdigsmurte lefser med Kakefrues eget fyll', popular:true},
+  {k:'nordlandslefse', n:'Nordlandslefse',   unit:'3 stk',     pris:249, desc:'Tykklefse med smør, kanel og sukker'},
+  {k:'pepperkakdrom',  n:'Pepperkakedrøm',  unit:'6 stk',     pris:149, desc:'Kakefrues spesial – silkemyk pepperkakekrem i mandelskall', hit:true, popular:true},
+  {k:'gulebomber',     n:'Gule bomber',      unit:'8 stk',     pris:179, desc:'Mandelskall fylt med silkemyk krem – en norsk juleklassiker'},
+  {k:'krumkaker',      n:'Krumkaker',        unit:'6 stk',     pris:119, desc:'Sprø og delikate – perfekt til julebordet'},
+  {k:'cookies',        n:'Cookies',          unit:'4 stk',     pris:89,  desc:'Store og seige hjemmelagde cookies', gfEkstra:20},
+  {k:'kransekake',     n:'Kransekake',       unit:'18 ringer', pris:649, desc:'En imponerende juleklassiker – bestilles på forhånd'},
+];
+let PRODUKTER=RESERVE_PRODUKTER;
 let valgt={}, valgtGF={}, levering='henting', leveringKm=0, leveringKostnad=0;
 
-fetch('/api/jul-produkter').then(r=>r.json()).then(p=>{
-  if(p && p.length) PRODUKTER=p;
+fetch('/api/jul-produkter').then(r=>r.ok ? r.json() : null).then(p=>{
+  if(Array.isArray(p) && p.length && p.every(x=>x && x.k && x.n && typeof x.pris==='number')) PRODUKTER=p;
   if(document.getElementById('produktListe')) visProdukter();
-}).catch(()=>{ /* siden skal virke selv om kallet feiler */ });
+}).catch(()=>{ if(document.getElementById('produktListe')) visProdukter(); });
 
 fetch('/api/photos?category=jul').then(r=>r.json()).then(p=>{
   if(!p.length)return;
@@ -1054,6 +1077,34 @@ fetch('/api/photos?category=jul').then(r=>r.json()).then(p=>{
   t.innerHTML=[...p,...p].map(x=>`<img src="${x.url}" alt="${x.alt_text||''}">`).join('');
   w.style.display='block';
 }).catch(()=>{});
+
+/* Bestillingsfrist: stenger 2. desember kl. 00:00 norsk tid.
+   ?stengt i adressen viser hvordan siden ser ut etter fristen. */
+const BESTILLINGSFRIST = new Date('2026-12-01T23:00:00Z');
+function fristUte(){
+  return Date.now() >= BESTILLINGSFRIST.getTime() || new URLSearchParams(location.search).has('stengt');
+}
+function stengBestilling(){
+  if(!fristUte()) return;
+  const intro=document.querySelector('.bestilling-tittel p');
+  if(intro) intro.textContent='Bestillingsfristen for julebakst er ute.';
+  const banner=document.querySelector('.frist-banner');
+  if(banner) banner.textContent='Bestillingsfristen gikk ut 1. desember';
+  const hoyre=document.querySelector('.bestilling-hoyre');
+  if(hoyre) hoyre.innerHTML=`
+    <div class="bestilling-kolonne" style="text-align:center;">
+      <div style="font-size:2rem;margin-bottom:10px;">🎄</div>
+      <div class="kolonne-tittel" style="border:none;padding:0;margin-bottom:10px;">Bestillingsfristen er ute</div>
+      <p style="font-size:0.9rem;color:var(--muted);line-height:1.75;margin:0 0 20px;">
+        Tusen takk til alle som har bestilt julebakst i år!<br>
+        Har du likevel glemt å bestille eller har et spesielt ønske til jul, ta kontakt så ser jeg hva jeg får til.
+      </p>
+      <div style="display:grid;gap:10px;">
+        <a href="https://m.me/kakefrue" target="_blank" rel="noopener" class="send-knapp" style="text-decoration:none;display:block;">Skriv til meg på Messenger</a>
+        <a href="tel:90033039" style="display:block;padding:12px;border:1.5px solid #E8D2C0;border-radius:100px;color:var(--body);text-decoration:none;font-size:0.9rem;font-weight:700;">Ring 900 33 039</a>
+      </div>
+    </div>`;
+}
 
 function visProdukter(){
   const liste=document.getElementById('produktListe');
@@ -1069,12 +1120,12 @@ function visProdukter(){
         ${allergenLinje(p.n, p.k)}
       </div>
       <div class="produkt-pris-liten">${visPris},-</div>
-      <div class="qty-mini">
+      ${fristUte()?'':`<div class="qty-mini">
         <button class="qty-mini-knapp${qty>0?' aktiv':''}" onclick="endreAntall('${p.k}',-1)">−</button>
         <span class="qty-mini-tall${qty>0?' har-antall':''}" id="qv-${p.k}">${qty}</span>
         <button class="qty-mini-knapp aktiv" onclick="endreAntall('${p.k}',1)">+</button>
-      </div>
-      ${p.gfEkstra?`<div class="gf-rad" style="width:100%;" onclick="toggleGF('${p.k}')"><div class="gf-boks${gf?' aktiv':''}"></div><span>Glutenfrie? <strong>+${p.gfEkstra} kr</strong> per pakke</span></div>`:''}
+      </div>`}
+      ${p.gfEkstra&&!fristUte()?`<div class="gf-rad" style="width:100%;" onclick="toggleGF('${p.k}')"><div class="gf-boks${gf?' aktiv':''}"></div><span>Glutenfrie? <strong>+${p.gfEkstra} kr</strong> per pakke</span></div>`:''}
     </li>`;
   }).join('');
   oppdaterTotal();
@@ -1269,6 +1320,12 @@ async function sjekkLevering(){
     info.innerHTML='<span style="color:var(--muted)">Kunne ikke beregne avstand automatisk – Cecilie sjekker leveringsmuligheten.</span>';
   }
 }
+function settIngenEpost(av){
+  const f=document.getElementById('epost');
+  f.disabled=av;
+  if(av) f.value='';
+  f.style.opacity=av?'0.45':'';
+}
 let _vippsTotal=0, _vippsNavn='';
 async function sendBestilling(){
   const navn=document.getElementById('navn').value.trim();
@@ -1284,6 +1341,8 @@ async function sendBestilling(){
   if(!Object.keys(valgt).length){feil.textContent='Velg minst ett produkt.';feil.style.display='block';feil.scrollIntoView({behavior:'smooth'});return;}
   if(!navn){feil.textContent='Skriv inn navn.';feil.style.display='block';return;}
   if(!tlf){feil.textContent='Skriv inn telefonnummer.';feil.style.display='block';return;}
+  const ingenEpost=document.getElementById('ingenEpost').checked;
+  if(!ingenEpost&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(epost)){feil.textContent='Skriv inn e-postadressen din, eller huk av for «Jeg har ikke e-post».';feil.style.display='block';return;}
   if(levering==='levering'){
     if(!gate){feil.textContent='Skriv inn gateadresse for levering.';feil.style.display='block';return;}
     if(!postnr||postnr.length!==4){feil.textContent='Skriv inn gyldig postnummer (4 siffer).';feil.style.display='block';return;}
@@ -1293,7 +1352,7 @@ async function sendBestilling(){
     const p=PRODUKTER.find(x=>x.k===k);
     const gf=!!(p.gfEkstra&&valgtGF[k]);
     const pris=gf?p.pris+p.gfEkstra:p.pris;
-    return{key:k,name:p.n+(gf?' (glutenfri)':''),unit:p.unit,price:pris,qty:valgt[k]};
+    return{key:k,gf,name:p.n+(gf?' (glutenfri)':''),unit:p.unit,price:pris,qty:valgt[k]};
   });
   const produktTotal=products.reduce((s,p)=>s+p.price*p.qty,0);
   const levKost=levering==='levering'&&leveringKostnad>0?leveringKostnad:0;
@@ -1308,9 +1367,17 @@ async function sendBestilling(){
     const svar = await res.json().catch(() => ({}));
     _bestillingId = svar.id;
 
+    /* Integrert Vipps: kunden sendes rett til Vipps og kommer tilbake hit */
+    if (svar.vippsUrl) {
+      knapp.textContent = 'Åpner Vipps...';
+      window.location.href = svar.vippsUrl;
+      return;
+    }
+    if (typeof svar.total === 'number') { _vippsTotal = svar.total; }
+
     /* Vipps godtar ikke forhaandsutfylte betalingslenker, saa
        tallene vises til kopiering i stedet */
-    document.getElementById('vippsBelopVis').textContent = total + ' kr';
+    document.getElementById('vippsBelopVis').textContent = _vippsTotal + ' kr';
     document.getElementById('vippsNavnVis').textContent = 'Julekaker ' + navn;
 
     /* Kvittering-tekst */
@@ -1392,9 +1459,57 @@ function vippsKlikket(){
     document.getElementById('vippsEtterBetalt').style.display = 'block';
   }, 2500);
 }
+/* Kunden kommer tilbake fra Vipps med ?betaling=<referanse> */
+const _vippsRef = new URLSearchParams(location.search).get('betaling');
+async function visVippsRetur(forsok = 0){
+  const $v = id => document.getElementById(id);
+  document.getElementById('skjemaWrap').style.display = 'none';
+  const side = $v('vippsRetur');
+  side.style.display = 'block';
+  if (forsok === 0) side.scrollIntoView({ behavior: 'smooth' });
+  try {
+    const res = await fetch('/api/christmas-orders/vipps/' + encodeURIComponent(_vippsRef));
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error);
+    if (d.state === 'AUTHORIZED') {
+      $v('vippsReturIkon').textContent = '🎄';
+      $v('vippsReturTittel').textContent = `Tusen takk, ${d.fornavn}!`;
+      $v('vippsReturTekst').innerHTML = `Betalingen på <strong>${d.total} kr</strong> er godkjent, og bestillingen er bekreftet.` +
+        (d.epost ? `<br>Bekreftelse er sendt til ${d.epost}.` : '');
+      $v('vippsProvIgjen').style.display = 'none';
+    } else if (d.state === 'CREATED' && forsok < 5) {
+      /* Vipps kan bruke noen sekunder på å registrere godkjenningen */
+      setTimeout(() => visVippsRetur(forsok + 1), 2000);
+    } else {
+      $v('vippsReturIkon').textContent = '🧾';
+      $v('vippsReturTittel').textContent = 'Betalingen ble ikke fullført';
+      $v('vippsReturTekst').textContent = 'Bestillingen din er lagret, men den er ikke betalt ennå. Prøv igjen, eller ring 900 33 039 så ordner vi det.';
+      $v('vippsProvIgjen').style.display = 'inline-flex';
+    }
+  } catch (e) {
+    $v('vippsReturIkon').textContent = '📞';
+    $v('vippsReturTittel').textContent = 'Fikk ikke sjekket betalingen';
+    $v('vippsReturTekst').textContent = 'Har du godkjent i Vipps, er alt i orden, og du får bekreftelse. Er du usikker, ring 900 33 039.';
+  }
+}
+async function provVippsIgjen(){
+  const k = document.getElementById('vippsProvIgjen');
+  k.disabled = true; k.textContent = 'Åpner Vipps...';
+  try {
+    const d = await fetch('/api/christmas-orders/vipps/' + encodeURIComponent(_vippsRef) + '/ny', { method: 'POST' }).then(r => r.json());
+    if (d.vippsUrl) { location.href = d.vippsUrl; return; }
+    visVippsRetur();
+  } catch (e) {
+    k.disabled = false; k.textContent = 'Prøv å betale igjen';
+    alert('Fikk ikke åpnet Vipps. Ring gjerne 900 33 039.');
+  }
+}
+
 document.getElementById('hamburger').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('open'));
+stengBestilling();
 visProdukter();
 hentAllergener();
+if (_vippsRef) visVippsRetur();
 </script>
 </body>
 </html>

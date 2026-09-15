@@ -171,6 +171,12 @@ async function initDB() {
     try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN notified_via VARCHAR(20) NULL`); } catch (e) {}
     try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN paid_at DATETIME NULL`); } catch (e) {}
     try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN payment_claimed_at DATETIME NULL`); } catch (e) {}
+    // Vipps ePayment: referanse, siste kjente status, og når beløpet ble trukket/refundert
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN vipps_reference VARCHAR(64) NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN vipps_state VARCHAR(20) NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN vipps_captured_at DATETIME NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN vipps_refunded_at DATETIME NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN total_kr INT NULL`); } catch (e) {}
 
     await conn.query(`
       CREATE TABLE IF NOT EXISTS page_views (
@@ -261,19 +267,19 @@ async function initDB() {
     // sa overgangen til admin-styring ikke endrer noe kundene ser.
     // INSERT IGNORE - rorer ikke raden hvis Cecilie allerede har redigert den.
     const JUL_PRODUKTER_DEFAULT = [
-      { k: 'kling', n: 'Kling', unit: '2 stk', pris: 189,
+      { k: 'kling', n: 'Kling', unit: '2 stk', pris: 169,
         desc: 'Kakefrues ny og forbedrede oppskrift – 2 ferdigsmurte lefser med Kakefrues eget fyll', popular: true },
-      { k: 'nordlandslefse', n: 'Nordlandslefse', unit: '3 stk', pris: 250,
+      { k: 'nordlandslefse', n: 'Nordlandslefse', unit: '3 stk', pris: 249,
         desc: 'Tykklefse med smør, kanel og sukker' },
-      { k: 'pepperkakdrom', n: 'Pepperkakedrøm', unit: '6 stk', pris: 159,
+      { k: 'pepperkakdrom', n: 'Pepperkakedrøm', unit: '6 stk', pris: 149,
         desc: 'Kakefrues spesial – silkemyk pepperkakekrem i mandelskall', hit: true, popular: true },
-      { k: 'gulebomber', n: 'Gule bomber', unit: '6 stk', pris: 129,
+      { k: 'gulebomber', n: 'Gule bomber', unit: '8 stk', pris: 179,
         desc: 'Mandelskall fylt med silkemyk krem – en norsk juleklassiker' },
-      { k: 'krumkaker', n: 'Krumkaker', unit: '6 stk', pris: 129,
+      { k: 'krumkaker', n: 'Krumkaker', unit: '6 stk', pris: 119,
         desc: 'Sprø og delikate – perfekt til julebordet' },
-      { k: 'cookies', n: 'Cookies', unit: '4 stk', pris: 99,
+      { k: 'cookies', n: 'Cookies', unit: '4 stk', pris: 89,
         desc: 'Store og seige hjemmelagde cookies', gfEkstra: 20 },
-      { k: 'kransekake', n: 'Kransekake', unit: '18 ringer', pris: 700,
+      { k: 'kransekake', n: 'Kransekake', unit: '18 ringer', pris: 649,
         desc: 'En imponerende juleklassiker – bestilles på forhånd' }
     ];
     await conn.query(

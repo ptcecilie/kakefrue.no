@@ -5,6 +5,11 @@ const fs = require('fs');
 const { pool, initDB } = require('./db');
 const { createSumUpCheckout, getSumUpCheckoutStatus, handlePaymentSuccess } = require('./payments');
 const { sendTastingConfirmation, sendCourseConfirmation, createTransporter } = require('./email');
+const crypto = require('crypto');
+const {
+  vippsAktiv, opprettBetaling, hentBetaling, trekkBetaling,
+  kansellerBetaling, refunderBetaling, vippsFeiltekst
+} = require('./vipps');
 
 const app = express();
 app.use(express.json({ limit: '25mb' }));
@@ -396,22 +401,223 @@ app.post('/api/tastings', async (req, res) => {
   }
 });
 
+// ── Julebestilling: priser regnes ut her, ikke i nettleseren ──
+// Med integrert Vipps er det dette beløpet kunden faktisk belastes,
+// så en endret side skal ikke kunne sette sin egen pris.
+const LEVERINGSPRISER = [150, 250];
+const escHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+async function prisBestilling(products, delivery, delivery_cost) {
+  const [rows] = await pool.query(`SELECT v FROM settings WHERE k = 'jul_produkter'`);
+  const katalog = rows[0]?.v ? JSON.parse(rows[0].v) : [];
+  const linjer = [];
+  for (const valgt of products) {
+    const p = katalog.find(x => x.k === valgt.key);
+    const qty = parseInt(valgt.qty, 10);
+    if (!p || !(qty > 0) || qty > 50) throw { status: 400, message: 'Et produkt i handlekurven finnes ikke lenger. Last siden på nytt.' };
+    // Eldre sider sender ikke gf, bare «(glutenfri)» i navnet
+    const gf = !!p.gfEkstra && (valgt.gf === true || /glutenfri/i.test(valgt.name || ''));
+    linjer.push({ key: p.k, name: p.n + (gf ? ' (glutenfri)' : ''), unit: p.unit, price: p.pris + (gf ? p.gfEkstra : 0), qty, gf });
+  }
+  const frakt = delivery === 'levering' && LEVERINGSPRISER.includes(parseInt(delivery_cost, 10)) ? parseInt(delivery_cost, 10) : 0;
+  const total = linjer.reduce((s, l) => s + l.price * l.qty, 0) + frakt;
+  return { linjer, frakt, total };
+}
+
+const nettstedUrl = () => (process.env.PUBLIC_URL || 'https://kakefrue.no').replace(/\/$/, '');
+
+async function startVippsBetaling(o, total) {
+  const reference = `kfjul-${o.id}-${crypto.randomBytes(6).toString('hex')}`;
+  const svar = await opprettBetaling({
+    reference,
+    belopKr: total,
+    beskrivelse: `Julebestilling #${o.id} – Kakefrue`,
+    returnUrl: `${nettstedUrl()}/jul.html?betaling=${reference}`,
+    telefon: o.phone
+  });
+  await pool.query(`UPDATE christmas_orders SET vipps_reference = ?, vipps_state = 'CREATED' WHERE id = ?`, [reference, o.id]);
+  return svar.redirectUrl;
+}
+
+// Henter status fra Vipps og oppdaterer bestillingen. Første gang betalingen
+// er godkjent, markeres den som betalt og e-postene sendes.
+async function synkVipps(o) {
+  const b = await hentBetaling(o.vipps_reference);
+  let trukket = (b.aggregate?.capturedAmount?.value || 0) > 0;
+  const refundert = (b.aggregate?.refundedAmount?.value || 0) > 0;
+  // Cecilie vil ha pengene med en gang kunden har godkjent, ikke ved levering
+  if (b.state === 'AUTHORIZED' && !trukket && !refundert && !o.vipps_refunded_at &&
+      !((b.aggregate?.cancelledAmount?.value || 0) > 0)) {
+    try {
+      await trekkBetaling(o.vipps_reference, b.amount.value);
+      trukket = true;
+    } catch (e) {
+      // Blir stående som reservert; admin viser «Trekk beløpet»
+      console.log('[Vipps] Automatisk trekk feilet:', vippsFeiltekst(e));
+    }
+  }
+  await pool.query(
+    `UPDATE christmas_orders SET vipps_state = ?,
+       vipps_captured_at = IF(? AND vipps_captured_at IS NULL, NOW(), vipps_captured_at),
+       vipps_refunded_at = IF(? AND vipps_refunded_at IS NULL, NOW(), vipps_refunded_at)
+     WHERE id = ?`,
+    [b.state, trukket, refundert, o.id]
+  );
+  // En refundert bestilling skal ikke bli «betalt» igjen – Vipps viser den fortsatt som AUTHORIZED
+  if (b.state === 'AUTHORIZED' && !o.paid_at && !o.vipps_refunded_at && !refundert) {
+    const [r] = await pool.query(`UPDATE christmas_orders SET paid_at = NOW(), payment_claimed_at = NOW() WHERE id = ? AND paid_at IS NULL`, [o.id]);
+    if (r.affectedRows) await sendVippsEposter(o).catch(e => console.log('[Vipps e-post]', e.message));
+  }
+  return b.state;
+}
+
+async function sendVippsEposter(o) {
+  const products = typeof o.products === 'string' ? JSON.parse(o.products) : (o.products || []);
+  const total = o.total_kr ?? products.reduce((s, p) => s + p.price * p.qty, 0) + (o.delivery_cost || 0);
+  const liste = products.map(p => `<li>${escHtml(p.name)} × ${p.qty} — ${p.price * p.qty} kr</li>`).join('');
+  const levering = o.delivery === 'levering' ? 'Leveres til ' + escHtml(o.address || '—') : 'Hentes i Porsgrunn';
+  const transporter = createTransporter();
+  const fra = `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`;
+
+  try {
+    await transporter.sendMail({
+      from: fra, to: 'cecilie@kakefrue.no',
+      subject: `🎄 Ny julebestilling betalt med Vipps: ${o.full_name} – ${total} kr`,
+      html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
+        <h2 style="color:#8B1A1A;">🎄 Ny julebestilling – betalt med Vipps</h2>
+        <p><strong>${escHtml(o.full_name)}</strong> · ${escHtml(o.phone)}${o.email ? ' · ' + escHtml(o.email) : ''}</p>
+        <ul>${liste}</ul>
+        <p><strong>Totalt ${total} kr</strong> · ${levering}</p>
+        ${o.note ? `<p><strong>Kommentar:</strong> ${escHtml(o.note)}</p>` : ''}
+        <p style="font-size:0.85rem;color:#8A6858;">Betalingen er gjennomført i Vipps.</p>
+        <p><a href="${nettstedUrl()}/admin.html" style="color:#8B1A1A;">Se i adminpanelet →</a></p>
+      </div>`
+    });
+  } catch (e) { console.log('[Vipps varsel til Cecilie]', e.message); }
+
+  if (o.email) {
+    try {
+      await transporter.sendMail({
+        from: fra, to: o.email,
+        subject: '🎄 Bestillingsbekreftelse fra Kakefrue',
+        html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
+          <h2 style="color:#8B1A1A;margin-bottom:4px;">Tusen takk, ${escHtml(o.full_name.split(' ')[0])}!</h2>
+          <p style="color:#6B5040;">Betalingen er godkjent i Vipps, og bestillingen din er bekreftet.</p>
+          <div style="background:white;border-radius:10px;padding:20px;margin:20px 0;">
+            <strong style="display:block;margin-bottom:10px;">Du har bestilt:</strong>
+            <ul style="margin:0;padding-left:20px;color:#3D2420;">${liste}</ul>
+            <div style="margin-top:14px;padding-top:14px;border-top:1px solid #EEE;font-size:1.1rem;font-weight:700;color:#8B1A1A;">Totalt: ${total} kr</div>
+          </div>
+          <p style="color:#8A6858;font-size:0.85rem;">${levering}. Du får en melding når bestillingen er klar.</p>
+          <p style="color:#B0A090;font-size:0.75rem;margin-top:24px;">Spørsmål? Ring 900 33 039 eller skriv på <a href="https://m.me/kakefrue" style="color:#C4956A;">Messenger</a>.</p>
+        </div>`
+      });
+    } catch (e) { console.log('[Vipps bekreftelse til kunde]', e.message); }
+  }
+}
+
 // POST /api/christmas-orders
 app.post('/api/christmas-orders', async (req, res) => {
   const { full_name, phone, email, delivery, address, products, note, delivery_cost } = req.body;
+  // Bestillingsfrist 2. desember kl. 00:00 norsk tid – også om noen har siden åpen fra før
+  if (Date.now() >= Date.parse('2026-12-01T23:00:00Z')) {
+    return res.status(403).json({ error: 'Bestillingsfristen er ute. Har du et spesielt ønske, ring 900 33 039.' });
+  }
   if (!full_name || !phone) return res.status(400).json({ error: 'Navn og telefon er påkrevd' });
-  if (!products || !products.length) return res.status(400).json({ error: 'Velg minst ett produkt' });
+  if (!Array.isArray(products) || !products.length) return res.status(400).json({ error: 'Velg minst ett produkt' });
   try {
+    const { linjer, frakt, total } = await prisBestilling(products, delivery, delivery_cost);
     const [result] = await pool.query(
-      `INSERT INTO christmas_orders (full_name, phone, email, delivery, address, products, note, delivery_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [full_name.trim(), phone.trim(), email?.trim() || null, delivery || 'henting', address?.trim() || null, JSON.stringify(products), note?.trim() || null, parseInt(delivery_cost) || 0]
+      `INSERT INTO christmas_orders (full_name, phone, email, delivery, address, products, note, delivery_cost, total_kr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [full_name.trim(), phone.trim(), email?.trim() || null, delivery === 'levering' ? 'levering' : 'henting', address?.trim() || null, JSON.stringify(linjer), note?.trim() || null, frakt, total]
     );
-    // Ingen e-post her. Den sendes foerst naar betaling er bekreftet,
-    // via /api/christmas-orders/:id/betalt
-    res.json({ ok: true, id: result.insertId });
+    const o = { id: result.insertId, phone: phone.trim() };
+
+    // Kun Vipps for bedrift. Betaling til privat nummer skal ikke tilbys lenger.
+    try {
+      if (!vippsAktiv()) throw new Error('Vipps-nøkler mangler i Coolify');
+      const vippsUrl = await startVippsBetaling(o, total);
+      return res.json({ ok: true, id: o.id, total, vippsUrl });
+    } catch (err) {
+      console.error('[Vipps] Kunne ikke starte betaling:', vippsFeiltekst(err));
+      // Ingen halvferdig bestilling i admin når kunden ikke fikk betalt
+      await pool.query(`DELETE FROM christmas_orders WHERE id = ?`, [o.id]);
+      return res.status(503).json({ error: 'Vipps-betalingen kunne ikke startes akkurat nå. Prøv igjen om litt, eller ring 900 33 039.' });
+    }
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
     console.error(err);
     res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// GET /api/christmas-orders/vipps/:ref – kunden er tilbake fra Vipps
+app.get('/api/christmas-orders/vipps/:ref', async (req, res) => {
+  try {
+    const [[o]] = await pool.query(`SELECT * FROM christmas_orders WHERE vipps_reference = ?`, [req.params.ref]);
+    if (!o) return res.status(404).json({ error: 'Fant ikke betalingen' });
+    const state = await synkVipps(o);
+    res.json({ state, id: o.id, total: o.total_kr, epost: o.email || null, fornavn: o.full_name.split(' ')[0] });
+  } catch (err) {
+    console.error('[Vipps] Statussjekk feilet:', vippsFeiltekst(err));
+    res.status(502).json({ error: 'Fikk ikke svar fra Vipps' });
+  }
+});
+
+// POST /api/christmas-orders/vipps/:ref/ny – kunden avbrøt og vil prøve igjen
+app.post('/api/christmas-orders/vipps/:ref/ny', async (req, res) => {
+  try {
+    const [[o]] = await pool.query(`SELECT * FROM christmas_orders WHERE vipps_reference = ?`, [req.params.ref]);
+    if (!o) return res.status(404).json({ error: 'Fant ikke bestillingen' });
+    const state = await synkVipps(o);
+    if (state === 'AUTHORIZED') return res.json({ state });
+    if (state === 'CREATED') await kansellerBetaling(o.vipps_reference).catch(() => {});
+    res.json({ vippsUrl: await startVippsBetaling(o, o.total_kr) });
+  } catch (err) {
+    console.error('[Vipps] Ny betaling feilet:', vippsFeiltekst(err));
+    res.status(502).json({ error: 'Fikk ikke startet Vipps' });
+  }
+});
+
+// Trekker det reserverte beløpet. Kalles når Cecilie varsler om henting/levering.
+async function trekkVipps(o) {
+  if (!o.vipps_reference || o.vipps_captured_at) return false;
+  const state = await synkVipps(o);
+  if (state !== 'AUTHORIZED') return false;
+  const [[fersk]] = await pool.query(`SELECT vipps_captured_at FROM christmas_orders WHERE id = ?`, [o.id]);
+  if (fersk.vipps_captured_at) return false;
+  await trekkBetaling(o.vipps_reference, o.total_kr * 100);
+  await pool.query(`UPDATE christmas_orders SET vipps_captured_at = NOW() WHERE id = ?`, [o.id]);
+  return true;
+}
+
+// POST /api/admin/christmas-orders/:id/vipps-trekk
+app.post('/api/admin/christmas-orders/:id/vipps-trekk', requireAdmin, async (req, res) => {
+  try {
+    const [[o]] = await pool.query(`SELECT * FROM christmas_orders WHERE id = ?`, [req.params.id]);
+    if (!o?.vipps_reference) return res.status(404).json({ error: 'Bestillingen er ikke betalt med Vipps' });
+    const trukket = await trekkVipps(o);
+    res.json({ ok: true, trukket });
+  } catch (err) {
+    res.status(502).json({ error: 'Vipps: ' + vippsFeiltekst(err) });
+  }
+});
+
+// POST /api/admin/christmas-orders/:id/vipps-refunder – hele beløpet tilbake
+app.post('/api/admin/christmas-orders/:id/vipps-refunder', requireAdmin, async (req, res) => {
+  try {
+    const [[o]] = await pool.query(`SELECT * FROM christmas_orders WHERE id = ?`, [req.params.id]);
+    if (!o?.vipps_reference) return res.status(404).json({ error: 'Bestillingen er ikke betalt med Vipps' });
+    if (o.vipps_refunded_at) return res.json({ ok: true });
+    if (o.vipps_captured_at) {
+      await refunderBetaling(o.vipps_reference, o.total_kr * 100);
+    } else {
+      await kansellerBetaling(o.vipps_reference);
+    }
+    await pool.query(`UPDATE christmas_orders SET vipps_refunded_at = NOW(), paid_at = NULL WHERE id = ?`, [o.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(502).json({ error: 'Vipps: ' + vippsFeiltekst(err) });
   }
 });
 
@@ -534,7 +740,15 @@ app.post('/api/admin/christmas-orders/:id/bekreft-betaling', requireAdmin, async
 // GET /api/admin/christmas-orders
 app.get('/api/admin/christmas-orders', requireAdmin, async (req, res) => {
   try {
-    const [rows] = await pool.query(`SELECT * FROM christmas_orders ORDER BY created_at DESC`);
+    let [rows] = await pool.query(`SELECT * FROM christmas_orders ORDER BY created_at DESC`);
+    // Kunder som lukket nettleseren i Vipps kom aldri tilbake til julesiden.
+    // Sjekk de uavklarte betalingene her, så admin alltid viser riktig status.
+    const uavklart = rows.filter(r => r.vipps_reference && !r.paid_at && !r.vipps_refunded_at &&
+      ['CREATED', 'AUTHORIZED'].includes(r.vipps_state || 'CREATED'));
+    if (uavklart.length && vippsAktiv()) {
+      await Promise.all(uavklart.map(r => synkVipps(r).catch(e => console.log('[Vipps synk]', vippsFeiltekst(e)))));
+      [rows] = await pool.query(`SELECT * FROM christmas_orders ORDER BY created_at DESC`);
+    }
     res.json(rows.map(r => ({ ...r, products: typeof r.products === 'string' ? JSON.parse(r.products) : r.products })));
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
@@ -553,8 +767,17 @@ app.put('/api/admin/christmas-orders/:id', requireAdmin, async (req, res) => {
         [via || 'ukjent', req.params.id]
       );
     }
+    // Varen er klar: nå kan det reserverte Vipps-beløpet trekkes
+    let vipps_trukket = false, vipps_feil = null;
+    if (notified !== false) {
+      const [[o]] = await pool.query(`SELECT * FROM christmas_orders WHERE id = ?`, [req.params.id]);
+      if (o?.vipps_reference && !o.vipps_captured_at && !o.vipps_refunded_at && vippsAktiv()) {
+        try { vipps_trukket = await trekkVipps(o); }
+        catch (e) { vipps_feil = vippsFeiltekst(e); console.log('[Vipps trekk]', vipps_feil); }
+      }
+    }
     const [[r]] = await pool.query(`SELECT notified_at, notified_via FROM christmas_orders WHERE id = ?`, [req.params.id]);
-    res.json({ ok: true, ...r });
+    res.json({ ok: true, ...r, vipps_trukket, vipps_feil });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Serverfeil: ' + err.message });
@@ -564,6 +787,14 @@ app.put('/api/admin/christmas-orders/:id', requireAdmin, async (req, res) => {
 // DELETE /api/admin/christmas-orders/:id
 app.delete('/api/admin/christmas-orders/:id', requireAdmin, async (req, res) => {
   try {
+    const [[o]] = await pool.query(`SELECT * FROM christmas_orders WHERE id = ?`, [req.params.id]);
+    if (o?.vipps_reference && !o.vipps_refunded_at && vippsAktiv()) {
+      if (o.vipps_captured_at) {
+        return res.status(409).json({ error: 'Kunden har betalt med Vipps. Refunder beløpet før du sletter bestillingen.' });
+      }
+      // Reservert eller påbegynt betaling: frigjør pengene hos kunden
+      await kansellerBetaling(o.vipps_reference).catch(e => console.log('[Vipps kanseller]', vippsFeiltekst(e)));
+    }
     const [r] = await pool.query(`DELETE FROM christmas_orders WHERE id = ?`, [req.params.id]);
     if (!r.affectedRows) return res.status(404).json({ error: 'Fant ikke bestillingen' });
     res.json({ ok: true });
