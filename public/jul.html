@@ -845,8 +845,12 @@
         </div>
 
         <div class="felt-rad">
-          <label class="felt-label">E-post <span style="font-weight:300;opacity:0.6;">(valgfritt)</span></label>
+          <label class="felt-label" for="epost">E-post *</label>
           <input class="felt-input" id="epost" type="email" placeholder="navn@epost.no">
+          <label style="display:flex;align-items:center;gap:8px;margin-top:9px;font-size:0.82rem;color:var(--muted);cursor:pointer;">
+            <input type="checkbox" id="ingenEpost" onchange="settIngenEpost(this.checked)" style="width:16px;height:16px;accent-color:var(--red);margin:0;">
+            Jeg har ikke e-post
+          </label>
         </div>
 
         <div class="felt-rad">
@@ -1288,6 +1292,12 @@ async function sjekkLevering(){
     info.innerHTML='<span style="color:var(--muted)">Kunne ikke beregne avstand automatisk – Cecilie sjekker leveringsmuligheten.</span>';
   }
 }
+function settIngenEpost(av){
+  const f=document.getElementById('epost');
+  f.disabled=av;
+  if(av) f.value='';
+  f.style.opacity=av?'0.45':'';
+}
 let _vippsTotal=0, _vippsNavn='';
 async function sendBestilling(){
   const navn=document.getElementById('navn').value.trim();
@@ -1303,6 +1313,8 @@ async function sendBestilling(){
   if(!Object.keys(valgt).length){feil.textContent='Velg minst ett produkt.';feil.style.display='block';feil.scrollIntoView({behavior:'smooth'});return;}
   if(!navn){feil.textContent='Skriv inn navn.';feil.style.display='block';return;}
   if(!tlf){feil.textContent='Skriv inn telefonnummer.';feil.style.display='block';return;}
+  const ingenEpost=document.getElementById('ingenEpost').checked;
+  if(!ingenEpost&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(epost)){feil.textContent='Skriv inn e-postadressen din, eller huk av for «Jeg har ikke e-post».';feil.style.display='block';return;}
   if(levering==='levering'){
     if(!gate){feil.textContent='Skriv inn gateadresse for levering.';feil.style.display='block';return;}
     if(!postnr||postnr.length!==4){feil.textContent='Skriv inn gyldig postnummer (4 siffer).';feil.style.display='block';return;}
