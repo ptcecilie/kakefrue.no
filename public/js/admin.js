@@ -603,7 +603,9 @@ async function loadChristmasOrders() {
               ${!o.paid_at && !o.vipps_refunded_at
                 ? `<button class="btn btn-outline btn-sm" style="color:#9B3A52;border-color:rgba(155,58,82,.45);" onclick='aapnePurring(${JSON.stringify(o).replace(/'/g, "&apos;")})'>⚠️ Mangler betaling</button>`
                 : ''}
-              <button class="btn btn-primary btn-sm" onclick='aapneHentemelding(${JSON.stringify(o).replace(/'/g, "&apos;")})'>${o.delivery === 'levering' ? '🚗 Varsle om levering' : '📦 Klar til henting'}</button>
+              ${o.notified_at
+                ? `<button class="btn btn-sm" style="background:#7A9E82;color:#fff;border-color:#7A9E82;" title="Allerede sendt – trykk for å se eller angre" onclick='aapneHentemelding(${JSON.stringify(o).replace(/'/g, "&apos;")})'>✓ ${o.delivery === 'levering' ? 'Levering varslet' : 'Henting varslet'} ${new Date(o.notified_at).toLocaleDateString('nb-NO',{day:'numeric',month:'short'})}</button>`
+                : `<button class="btn btn-primary btn-sm" onclick='aapneHentemelding(${JSON.stringify(o).replace(/'/g, "&apos;")})'>${o.delivery === 'levering' ? '🚗 Varsle om levering' : '📦 Klar til henting'}</button>`}
               <button class="photo-delete-btn" style="padding:7px 12px;" title="Slett bestilling" onclick="slettJulebestilling(${o.id}, this)">🗑</button>
             </div>
           </div>
