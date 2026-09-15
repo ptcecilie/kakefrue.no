@@ -171,6 +171,12 @@ async function initDB() {
     try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN notified_via VARCHAR(20) NULL`); } catch (e) {}
     try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN paid_at DATETIME NULL`); } catch (e) {}
     try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN payment_claimed_at DATETIME NULL`); } catch (e) {}
+    // Vipps ePayment: referanse, siste kjente status, og når beløpet ble trukket/refundert
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN vipps_reference VARCHAR(64) NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN vipps_state VARCHAR(20) NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN vipps_captured_at DATETIME NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN vipps_refunded_at DATETIME NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN total_kr INT NULL`); } catch (e) {}
 
     await conn.query(`
       CREATE TABLE IF NOT EXISTS page_views (

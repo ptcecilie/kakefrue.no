@@ -16,6 +16,11 @@ services:
       - SMTP_FROM=${SMTP_FROM:-post@kakefrue.no}
       - SUMUP_API_KEY=${SUMUP_API_KEY:-}
       - SUMUP_MERCHANT_CODE=${SUMUP_MERCHANT_CODE:-}
+      - VIPPS_CLIENT_ID=${VIPPS_CLIENT_ID:-}
+      - VIPPS_CLIENT_SECRET=${VIPPS_CLIENT_SECRET:-}
+      - VIPPS_SUBSCRIPTION_KEY=${VIPPS_SUBSCRIPTION_KEY:-}
+      - VIPPS_MSN=${VIPPS_MSN:-}
+      - VIPPS_TEST=${VIPPS_TEST:-false}
       - PORT=3000
       - NODE_ENV=production
     expose:

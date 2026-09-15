@@ -980,6 +980,15 @@
 
     <a href="/" style="display:inline-block;margin-top:24px;padding:10px 24px;border:1px solid rgba(245,237,214,0.2);color:rgba(245,237,214,0.5);border-radius:100px;text-decoration:none;font-size:0.82rem;">Tilbake til forsiden</a>
   </div>
+
+  <!-- TILBAKE FRA VIPPS -->
+  <div class="suksess" id="vippsRetur" style="display:none;max-width:520px;">
+    <span class="suksess-ikon" id="vippsReturIkon">⏳</span>
+    <h2 style="margin-bottom:6px;" id="vippsReturTittel">Sjekker betalingen …</h2>
+    <p style="color:rgba(245,237,214,0.65);font-size:0.9rem;line-height:1.8;margin-bottom:22px;" id="vippsReturTekst">Et øyeblikk, jeg spør Vipps.</p>
+    <button class="vipps-betal-knapp" id="vippsProvIgjen" style="display:none;border:none;cursor:pointer;margin:0 auto;" onclick="provVippsIgjen()">Prøv å betale igjen</button>
+    <a href="/" style="display:inline-block;margin-top:24px;padding:10px 24px;border:1px solid rgba(245,237,214,0.2);color:rgba(245,237,214,0.5);border-radius:100px;text-decoration:none;font-size:0.82rem;">Tilbake til forsiden</a>
+  </div>
 </div>
 
 </div><!-- page-content -->
@@ -1303,7 +1312,7 @@ async function sendBestilling(){
     const p=PRODUKTER.find(x=>x.k===k);
     const gf=!!(p.gfEkstra&&valgtGF[k]);
     const pris=gf?p.pris+p.gfEkstra:p.pris;
-    return{key:k,name:p.n+(gf?' (glutenfri)':''),unit:p.unit,price:pris,qty:valgt[k]};
+    return{key:k,gf,name:p.n+(gf?' (glutenfri)':''),unit:p.unit,price:pris,qty:valgt[k]};
   });
   const produktTotal=products.reduce((s,p)=>s+p.price*p.qty,0);
   const levKost=levering==='levering'&&leveringKostnad>0?leveringKostnad:0;
@@ -1318,9 +1327,17 @@ async function sendBestilling(){
     const svar = await res.json().catch(() => ({}));
     _bestillingId = svar.id;
 
+    /* Integrert Vipps: kunden sendes rett til Vipps og kommer tilbake hit */
+    if (svar.vippsUrl) {
+      knapp.textContent = 'Åpner Vipps...';
+      window.location.href = svar.vippsUrl;
+      return;
+    }
+    if (typeof svar.total === 'number') { _vippsTotal = svar.total; }
+
     /* Vipps godtar ikke forhaandsutfylte betalingslenker, saa
        tallene vises til kopiering i stedet */
-    document.getElementById('vippsBelopVis').textContent = total + ' kr';
+    document.getElementById('vippsBelopVis').textContent = _vippsTotal + ' kr';
     document.getElementById('vippsNavnVis').textContent = 'Julekaker ' + navn;
 
     /* Kvittering-tekst */
@@ -1402,9 +1419,57 @@ function vippsKlikket(){
     document.getElementById('vippsEtterBetalt').style.display = 'block';
   }, 2500);
 }
+/* Kunden kommer tilbake fra Vipps med ?betaling=<referanse> */
+const _vippsRef = new URLSearchParams(location.search).get('betaling');
+async function visVippsRetur(forsok = 0){
+  const $v = id => document.getElementById(id);
+  document.getElementById('skjemaWrap').style.display = 'none';
+  const side = $v('vippsRetur');
+  side.style.display = 'block';
+  if (forsok === 0) side.scrollIntoView({ behavior: 'smooth' });
+  try {
+    const res = await fetch('/api/christmas-orders/vipps/' + encodeURIComponent(_vippsRef));
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error);
+    if (d.state === 'AUTHORIZED') {
+      $v('vippsReturIkon').textContent = '🎄';
+      $v('vippsReturTittel').textContent = `Tusen takk, ${d.fornavn}!`;
+      $v('vippsReturTekst').innerHTML = `Betalingen på <strong>${d.total} kr</strong> er godkjent, og bestillingen er bekreftet.` +
+        (d.epost ? `<br>Bekreftelse er sendt til ${d.epost}.` : '') +
+        '<br>Beløpet trekkes først når bestillingen er klar.';
+      $v('vippsProvIgjen').style.display = 'none';
+    } else if (d.state === 'CREATED' && forsok < 5) {
+      /* Vipps kan bruke noen sekunder på å registrere godkjenningen */
+      setTimeout(() => visVippsRetur(forsok + 1), 2000);
+    } else {
+      $v('vippsReturIkon').textContent = '🧾';
+      $v('vippsReturTittel').textContent = 'Betalingen ble ikke fullført';
+      $v('vippsReturTekst').textContent = 'Bestillingen din er lagret, men den er ikke betalt ennå. Prøv igjen, eller ring 900 33 039 så ordner vi det.';
+      $v('vippsProvIgjen').style.display = 'inline-flex';
+    }
+  } catch (e) {
+    $v('vippsReturIkon').textContent = '📞';
+    $v('vippsReturTittel').textContent = 'Fikk ikke sjekket betalingen';
+    $v('vippsReturTekst').textContent = 'Har du godkjent i Vipps, er alt i orden, og du får bekreftelse. Er du usikker, ring 900 33 039.';
+  }
+}
+async function provVippsIgjen(){
+  const k = document.getElementById('vippsProvIgjen');
+  k.disabled = true; k.textContent = 'Åpner Vipps...';
+  try {
+    const d = await fetch('/api/christmas-orders/vipps/' + encodeURIComponent(_vippsRef) + '/ny', { method: 'POST' }).then(r => r.json());
+    if (d.vippsUrl) { location.href = d.vippsUrl; return; }
+    visVippsRetur();
+  } catch (e) {
+    k.disabled = false; k.textContent = 'Prøv å betale igjen';
+    alert('Fikk ikke åpnet Vipps. Ring gjerne 900 33 039.');
+  }
+}
+
 document.getElementById('hamburger').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('open'));
 visProdukter();
 hentAllergener();
+if (_vippsRef) visVippsRetur();
 </script>
 </body>
 </html>
