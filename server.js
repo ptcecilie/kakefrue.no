@@ -529,18 +529,17 @@ app.post('/api/christmas-orders', async (req, res) => {
     );
     const o = { id: result.insertId, phone: phone.trim() };
 
-    if (vippsAktiv()) {
-      try {
-        const vippsUrl = await startVippsBetaling(o, total);
-        return res.json({ ok: true, id: o.id, total, vippsUrl });
-      } catch (err) {
-        // Vipps nede eller feil nøkler: bestillingen er lagret, kunden betaler til privat nummer
-        console.error('[Vipps] Kunne ikke starte betaling:', vippsFeiltekst(err));
-      }
+    // Kun Vipps for bedrift. Betaling til privat nummer skal ikke tilbys lenger.
+    try {
+      if (!vippsAktiv()) throw new Error('Vipps-nøkler mangler i Coolify');
+      const vippsUrl = await startVippsBetaling(o, total);
+      return res.json({ ok: true, id: o.id, total, vippsUrl });
+    } catch (err) {
+      console.error('[Vipps] Kunne ikke starte betaling:', vippsFeiltekst(err));
+      // Ingen halvferdig bestilling i admin når kunden ikke fikk betalt
+      await pool.query(`DELETE FROM christmas_orders WHERE id = ?`, [o.id]);
+      return res.status(503).json({ error: 'Vipps-betalingen kunne ikke startes akkurat nå. Prøv igjen om litt, eller ring 900 33 039.' });
     }
-    // Uten Vipps sendes ingen e-post her – den går først når betaling er meldt,
-    // via /api/christmas-orders/:id/betalt
-    res.json({ ok: true, id: o.id, total });
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message });
     console.error(err);
