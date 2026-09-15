@@ -519,6 +519,10 @@ async function sendVippsEposter(o) {
 // POST /api/christmas-orders
 app.post('/api/christmas-orders', async (req, res) => {
   const { full_name, phone, email, delivery, address, products, note, delivery_cost } = req.body;
+  // Bestillingsfrist 2. desember kl. 00:00 norsk tid – også om noen har siden åpen fra før
+  if (Date.now() >= Date.parse('2026-12-01T23:00:00Z')) {
+    return res.status(403).json({ error: 'Bestillingsfristen er ute. Har du et spesielt ønske, ring 900 33 039.' });
+  }
   if (!full_name || !phone) return res.status(400).json({ error: 'Navn og telefon er påkrevd' });
   if (!Array.isArray(products) || !products.length) return res.status(400).json({ error: 'Velg minst ett produkt' });
   try {

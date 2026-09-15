@@ -1078,6 +1078,34 @@ fetch('/api/photos?category=jul').then(r=>r.json()).then(p=>{
   w.style.display='block';
 }).catch(()=>{});
 
+/* Bestillingsfrist: stenger 2. desember kl. 00:00 norsk tid.
+   ?stengt i adressen viser hvordan siden ser ut etter fristen. */
+const BESTILLINGSFRIST = new Date('2026-12-01T23:00:00Z');
+function fristUte(){
+  return Date.now() >= BESTILLINGSFRIST.getTime() || new URLSearchParams(location.search).has('stengt');
+}
+function stengBestilling(){
+  if(!fristUte()) return;
+  const intro=document.querySelector('.bestilling-tittel p');
+  if(intro) intro.textContent='Bestillingsfristen for julebakst er ute.';
+  const banner=document.querySelector('.frist-banner');
+  if(banner) banner.textContent='Bestillingsfristen gikk ut 1. desember';
+  const hoyre=document.querySelector('.bestilling-hoyre');
+  if(hoyre) hoyre.innerHTML=`
+    <div class="bestilling-kolonne" style="text-align:center;">
+      <div style="font-size:2rem;margin-bottom:10px;">🎄</div>
+      <div class="kolonne-tittel" style="border:none;padding:0;margin-bottom:10px;">Bestillingsfristen er ute</div>
+      <p style="font-size:0.9rem;color:var(--muted);line-height:1.75;margin:0 0 20px;">
+        Tusen takk til alle som har bestilt julebakst i år!<br>
+        Har du et spesielt ønske, ta gjerne kontakt, så ser jeg hva jeg kan få til.
+      </p>
+      <div style="display:grid;gap:10px;">
+        <a href="https://m.me/kakefrue" target="_blank" rel="noopener" class="send-knapp" style="text-decoration:none;display:block;">Skriv til meg på Messenger</a>
+        <a href="tel:90033039" style="display:block;padding:12px;border:1.5px solid #E8D2C0;border-radius:100px;color:var(--body);text-decoration:none;font-size:0.9rem;font-weight:700;">Ring 900 33 039</a>
+      </div>
+    </div>`;
+}
+
 function visProdukter(){
   const liste=document.getElementById('produktListe');
   if(!liste)return;
@@ -1092,12 +1120,12 @@ function visProdukter(){
         ${allergenLinje(p.n, p.k)}
       </div>
       <div class="produkt-pris-liten">${visPris},-</div>
-      <div class="qty-mini">
+      ${fristUte()?'':`<div class="qty-mini">
         <button class="qty-mini-knapp${qty>0?' aktiv':''}" onclick="endreAntall('${p.k}',-1)">−</button>
         <span class="qty-mini-tall${qty>0?' har-antall':''}" id="qv-${p.k}">${qty}</span>
         <button class="qty-mini-knapp aktiv" onclick="endreAntall('${p.k}',1)">+</button>
-      </div>
-      ${p.gfEkstra?`<div class="gf-rad" style="width:100%;" onclick="toggleGF('${p.k}')"><div class="gf-boks${gf?' aktiv':''}"></div><span>Glutenfrie? <strong>+${p.gfEkstra} kr</strong> per pakke</span></div>`:''}
+      </div>`}
+      ${p.gfEkstra&&!fristUte()?`<div class="gf-rad" style="width:100%;" onclick="toggleGF('${p.k}')"><div class="gf-boks${gf?' aktiv':''}"></div><span>Glutenfrie? <strong>+${p.gfEkstra} kr</strong> per pakke</span></div>`:''}
     </li>`;
   }).join('');
   oppdaterTotal();
@@ -1478,6 +1506,7 @@ async function provVippsIgjen(){
 }
 
 document.getElementById('hamburger').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('open'));
+stengBestilling();
 visProdukter();
 hentAllergener();
 if (_vippsRef) visVippsRetur();
