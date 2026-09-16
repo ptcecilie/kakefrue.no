@@ -568,15 +568,7 @@ async function sendVippsEposter(o) {
     await transporter.sendMail({
       from: fra, to: 'cecilie@kakefrue.no',
       subject: `🎄 Ny julebestilling betalt med Vipps: ${o.full_name} – ${total} kr`,
-      html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
-        <h2 style="color:#8B1A1A;">🎄 Ny julebestilling – betalt med Vipps</h2>
-        <p><strong>${escHtml(o.full_name)}</strong> · ${escHtml(o.phone)}${o.email ? ' · ' + escHtml(o.email) : ''}</p>
-        <ul>${liste}</ul>
-        <p><strong>Totalt ${total} kr</strong> · ${levering}</p>
-        ${o.note ? `<p><strong>Kommentar:</strong> ${escHtml(o.note)}</p>` : ''}
-        <p style="font-size:0.85rem;color:#8A6858;">Betalingen er gjennomført i Vipps.</p>
-        <p><a href="${nettstedUrl()}/admin.html" style="color:#8B1A1A;">Se i adminpanelet →</a></p>
-      </div>`
+      html: internVarselJulHtml(o, total, liste, levering)
     });
   } catch (e) { console.log('[Vipps varsel til Cecilie]', e.message); }
 
@@ -1420,10 +1412,12 @@ function bestillingsbekreftelseTekst(o, total, produktlinjer, levering) {
   const erHenting = levering === 'henting' || levering === 'marked';
   const adresse = levering === 'levering' ? (o.address || '')
     : levering === 'marked' ? (o.address || '') : HENTEADRESSE;
+  // Levering: adressen star allerede i "Leveres til X" - ingen egen Adresse-linje
+  // (var dobbelt opp for). Henting/marked far en egen Adresse-linje siden
+  // "Hentes hos Kakefrue"/"Hentes pa julemarkedet" ikke selv nevner adressen.
   const leveringstekst = levering === 'levering' ? `Leveres til ${adresse}`
-    : levering === 'marked' ? `Hentes på julemarkedet` : `Hentes hos Kakefrue`;
+    : levering === 'marked' ? `Hentes på julemarkedet\nAdresse: ${adresse}` : `Hentes hos Kakefrue\nAdresse: ${adresse}`;
   const kartLinje = adresse ? `\n📍 Åpne i Google Maps: ${googleMapsLenke(adresse)}` : '';
-  const adresseLinje = adresse ? `Adresse: ${adresse}` : '';
 
   return `Hei ${fornavn}!
 
@@ -1433,8 +1427,7 @@ Du har bestilt:
 ${produktlinjer}
 Totalt: ${total} kr
 
-${leveringstekst}
-${adresseLinje}${kartLinje}
+${leveringstekst}${kartLinje}
 ${erHenting ? '\nHvis bestillingen ikke hentes innen avtalt hentedag, bortfaller retten til refusjon.' : ''}
 
 ${JULEPOST_SIGNATUR}`;
@@ -1450,29 +1443,28 @@ function julEpostHtml(name, message) {
     before = message.slice(0, idx).replace(/\n+$/, '');
     after = message.slice(idx + match[0].length).replace(/^\n+/, '');
   }
-  // Gjor selve adressen (etter "Adresse:") til en lenke, inne i teksten.
+  // Gjor selve adressen (etter "Adresse:" eller "Leveres til") til en lenke, inne i teksten.
   const lenkAdresse = (txt) => !kartUrl ? esc(txt) : esc(txt).replace(
-    /(Adresse:\s*)(.+)/,
+    /(Adresse:\s*|Leveres til\s*)(.+)/,
     (m0, label, adr) => `${label}<a href="${kartUrl}" style="color:#F3E9D2; text-decoration:underline;">${adr}</a>`
   );
-  // Avsnitt-for-avsnitt (delt pa blanke linjer). Forste avsnitt i "before" er
-  // hilsenen, siste avsnitt i "after" er signaturen - begge sentreres og far
-  // Dancing Script; resten star venstrejustert som vanlig brodtekst i Caveat.
+  // Avsnitt-for-avsnitt (delt pa blanke linjer). Hele teksten i Dancing Script -
+  // Cecilie ville ha samme skrift gjennomgaende, ikke ulik font pa hilsen/signatur
+  // vs. brodtekst (2026-09-16).
   const paragrafer = (txt, senterForste, senterSiste) => {
     if (!txt) return '';
     const deler = txt.split(/\n{2,}/).filter(p => p.trim());
     return deler.map((p, i) => {
       const senter = (senterForste && i === 0) || (senterSiste && i === deler.length - 1);
-      const font = senter ? "'Dancing Script',cursive" : "'Caveat',cursive";
       const storrelse = senter ? '1.7rem' : '1.85rem';
       const innhold = senter ? esc(p) : lenkAdresse(p);
-      return `<div style="font-family:${font}; font-weight:700; color:#F3E9D2; font-size:${storrelse}; line-height:1.5; white-space:pre-wrap; margin:0 0 28px; text-align:${senter ? 'center' : 'left'};">${innhold}</div>`;
+      return `<div style="font-family:'Dancing Script',cursive; font-weight:700; color:#F3E9D2; font-size:${storrelse}; line-height:1.5; white-space:pre-wrap; margin:0 0 28px; text-align:${senter ? 'center' : 'left'};">${innhold}</div>`;
     }).join('');
   };
 
   return `<!DOCTYPE html>
 <html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Dancing+Script:wght@700&family=Caveat:wght@700&display=swap');</style>
+<style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Dancing+Script:wght@700&display=swap');</style>
 </head><body style="margin:0;">
   <div style="background-color:#230D0A;
               background-image:linear-gradient(180deg, rgba(35,13,10,0.30) 0%, rgba(35,13,10,0.55) 35%, rgba(35,13,10,0.68) 100%), url('https://kakefrue.no/assets/jul-hero.jpg');
@@ -1494,18 +1486,66 @@ function julEpostHtml(name, message) {
 </body></html>`;
 }
 
-function standardEpostHtml(name, message) {
-  return `
-    <div style="font-family: 'Lato', sans-serif; max-width: 600px; margin: 0 auto; background: #F5F2EC; padding: 32px; border-radius: 12px;">
-      <h1 style="font-family: 'Playfair Display', serif; color: #2A1E3E; text-align: center;">Kakefrue</h1>
-      <p>Hei ${esc(name || '')},</p>
-      <div style="white-space: pre-wrap; line-height: 1.7; margin: 20px 0;">${esc(message).replace(/\n/g, '<br>')}</div>
-      <div style="text-align: center; margin-top: 32px; color: #7A9E82;">
-        <p>Med kjærlig hilsen,<br><strong>Cecilie – Kakefrue</strong></p>
-        <p style="font-size: 12px;">Porsgrunn · cecilie@kakefrue.no</p>
-      </div>
+// Internt varsel til Cecilie selv nar en julebestilling betales med Vipps.
+// Samme julepost-visuell (jul-hero.jpg, logo, varm farge) som kunde-epostene,
+// siden det handler om en julebestilling - men vanlig lesbar Lato-liste i
+// stedet for handskrift-avsnitt, siden dette er et arbeidsvarsel hun skal
+// skumlese raskt, ikke et personlig brev.
+function internVarselJulHtml(o, total, produktlisteHtml, leveringstekst) {
+  return `<!DOCTYPE html>
+<html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
+</head><body style="margin:0;">
+  <div style="background-color:#230D0A;
+              background-image:linear-gradient(180deg, rgba(35,13,10,0.55) 0%, rgba(35,13,10,0.72) 40%, rgba(35,13,10,0.85) 100%), url('https://kakefrue.no/assets/jul-hero.jpg');
+              background-size:cover; background-position:center top; background-repeat:no-repeat;
+              padding:36px 20px 32px; font-family:'Lato',Arial,sans-serif;">
+    <div style="max-width:480px; margin:0 auto; text-align:center;">
+      <div style="font-size:1.6rem; margin-bottom:10px; line-height:1;">🎄</div>
+      <img src="https://kakefrue.no/assets/kakefrue-logo-circle.png" alt="Kakefrue" width="90" style="width:90px; max-width:40%; height:auto; display:inline-block;">
     </div>
-  `;
+    <div style="max-width:460px; margin:20px auto 0; background:rgba(35,13,10,0.35); border:1px solid rgba(243,233,210,0.18); border-radius:12px; padding:22px 24px;">
+      <p style="font-family:'Playfair Display',serif; font-weight:700; color:#F3E9D2; font-size:1.2rem; margin:0 0 14px;">Ny julebestilling – betalt med Vipps</p>
+      <p style="color:#F3E9D2; font-size:0.95rem; margin:0 0 12px;"><strong>${escHtml(o.full_name)}</strong> · ${escHtml(o.phone)}${o.email ? ' · ' + escHtml(o.email) : ''}</p>
+      <ul style="color:#F3E9D2; font-size:0.92rem; margin:0 0 12px; padding-left:20px;">${produktlisteHtml}</ul>
+      <p style="color:#F3E9D2; font-size:0.95rem; margin:0 0 4px;"><strong>Totalt ${total} kr</strong> · ${leveringstekst}</p>
+      ${o.note ? `<p style="color:rgba(243,233,210,0.85); font-size:0.88rem; margin:8px 0 0;"><strong>Kommentar:</strong> ${escHtml(o.note)}</p>` : ''}
+    </div>
+    <div style="max-width:460px; margin:18px auto 0; text-align:center;">
+      <a href="${nettstedUrl()}/admin.html" style="color:#F3E9D2; text-decoration:underline; font-size:0.9rem;">Se i adminpanelet →</a>
+    </div>
+  </div>
+</body></html>`;
+}
+
+// Generell kunde-epost (ikke julebestilling) - forsidebildet fra kakefrue.no i
+// stedet for hvit bakgrunn, men vanlig lesbar Lato-brodtekst (ikke handskrift-
+// fonten fra julepost-temaet, som er forbeholdt julebestillingene).
+function standardEpostHtml(name, message) {
+  const avsnitt = esc(message).split(/\n{2,}/).filter(p => p.trim())
+    .map(p => `<p style="margin:0 0 18px; white-space:pre-wrap;">${p}</p>`).join('');
+  return `<!DOCTYPE html>
+<html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
+</head><body style="margin:0;">
+  <div style="background-color:#2A1B14;
+              background-image:linear-gradient(180deg, rgba(42,27,20,0.38) 0%, rgba(42,27,20,0.62) 40%, rgba(42,27,20,0.82) 100%), url('https://kakefrue.no/assets/forside-hero.jpg');
+              background-size:cover; background-position:center; background-repeat:no-repeat;
+              padding:40px 20px 36px; font-family:'Lato',Arial,sans-serif;">
+    <div style="max-width:480px; margin:0 auto; text-align:center;">
+      <img src="https://kakefrue.no/assets/kakefrue-logo-circle.png" alt="Kakefrue" width="110" style="width:110px; max-width:50%; height:auto; display:inline-block;">
+      <p style="font-style:italic; color:rgba(250,247,244,0.7); font-size:0.8rem; letter-spacing:0.04em; margin:12px 0 0;">Håndlagde kaker i Porsgrunn</p>
+    </div>
+    <div style="max-width:480px; margin:24px auto 0;">
+      <p style="font-family:'Playfair Display',serif; font-weight:700; color:#FAF7F4; font-size:1.5rem; margin:0 0 20px;">Hei ${esc(name || '')},</p>
+      <div style="color:#FAF7F4; font-size:1rem; line-height:1.75;">${avsnitt}</div>
+      <p style="font-family:'Playfair Display',serif; color:#FAF7F4; font-size:1.05rem; margin:24px 0 0;">Med kjærlig hilsen,<br><strong>Cecilie – Kakefrue</strong></p>
+    </div>
+    <div style="max-width:480px; margin:20px auto 0; text-align:center;">
+      <p style="color:rgba(250,247,244,0.55); font-size:0.76rem; margin:0;">Porsgrunn · cecilie@kakefrue.no</p>
+    </div>
+  </div>
+</body></html>`;
 }
 
 app.post('/api/admin/send-email', requireAdmin, async (req, res) => {
