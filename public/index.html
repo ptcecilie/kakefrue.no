@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kakefrue – Håndlagde kaker i Porsgrunn</title>
   <meta name="description" content="Kakefrue lager unike, håndlagde kaker til dine spesielle anledninger i Porsgrunn. Bryllupskaker, bursdagskaker, konfirmasjonskaker og mer.">
-  <link rel="stylesheet" href="/css/main.css?v=6.2">
+  <link rel="stylesheet" href="/css/main.css?v=6.3">
 </head>
 <body>
 
@@ -74,15 +74,12 @@
   </div>
 
   <!-- Kommende eventer – styres fra admin -> Eventer. Skjult når det ikke er noen.
+       Smal stripe med pills (dato+navn) - skal ta minst mulig plass over resten av forsiden.
        farget-band + egen bakgrunn: unngar den globale --side-foto-hvitoverlayen. -->
-  <section class="eventer-seksjon farget-band" id="eventer" hidden style="background:var(--cream);">
-    <div class="container">
-      <div class="eventer-innhold">
-        <span class="tag tag-gold" style="margin-bottom:12px;">🎄 Kommende eventer</span>
-        <h2 class="section-title">Møt Kakefrue</h2>
-        <p class="section-subtitle">Her kan du treffe Kakefrue</p>
-        <div class="eventer-liste" id="eventerListe"></div>
-      </div>
+  <section class="eventer-seksjon farget-band" id="eventer" hidden style="background:var(--cream); padding:22px 24px;">
+    <div class="container eventer-strip">
+      <span class="eventer-strip-label">🎄 Kommende eventer</span>
+      <div class="eventer-liste" id="eventerListe"></div>
     </div>
   </section>
 
@@ -362,30 +359,22 @@ fetch('/api/reviews').then(r => r.json()).then(reviews => {
   try { eventer = (await fetch('/api/eventer').then(r => r.json())).filter(e => e.vis_forside); } catch (e) {}
   if (!eventer.length) return;
   // Eventer kommer allerede kronologisk sortert fra /api/eventer (ORDER BY dato, fra) -
-  // forste element er derfor alltid det naermeste, og far et "NESTE"-merke.
-  // Julebildet mykes/lysnes med filter sa det passer inn pa den lyse, helarlige forsiden.
+  // forste element er derfor alltid det naermeste, og far et uthevet "pil"-utseende.
+  // Smal stripe med kompakte pills i stedet for kort - skal ta minst mulig plass over
+  // resten av forsiden. Bestillbare eventer lenker rett til bestilling, resten til kart.
   document.getElementById('eventerListe').innerHTML = eventer.map((e, i) => {
     const d = new Date(e.dato + 'T12:00:00');
     const mnd = d.toLocaleDateString('nb-NO', { month: 'short' }).replace('.', '');
     const ukedag = d.toLocaleDateString('nb-NO', { weekday: 'long' });
     const kart = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([e.sted, e.adresse].filter(Boolean).join(', '));
-    const frist = e.frist ? new Date(e.frist).toLocaleString('nb-NO', { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Oslo' }) : '';
     const naermest = i === 0;
-    return `<article class="event-kort${naermest ? ' event-naermest' : ''}">
-      ${naermest ? `<span class="event-neste-merke">NESTE</span>` : ''}
-      <div class="event-kort-bilde"></div>
-      <div class="event-kort-rad">
-        <div class="event-dato"><span class="event-dag">${d.getDate()}</span><span class="event-mnd">${mnd}</span></div>
-        <div class="event-info">
-          <h3>${esc(e.tittel)}</h3>
-          <p class="event-tid">${ukedag.charAt(0).toUpperCase() + ukedag.slice(1)}${e.fra ? ` kl. ${e.fra}–${e.til || ''}` : ''}</p>
-          <p class="event-sted">${esc(e.adresse || e.sted || '')} · <a href="${kart}" target="_blank" rel="noopener">Vis i kart</a></p>
-          ${e.beskrivelse ? `<p class="event-tekst">${esc(e.beskrivelse)}</p>` : ''}
-          ${e.henting && e.bestillbar ? `<a class="btn btn-primary event-knapp" href="/jul.html?marked=${e.id}#bestill">Bestill og hent på markedet</a>${frist ? `<span class="event-frist">Bestill innen ${frist}</span>` : ''}` : ''}
-          ${e.henting && !e.bestillbar ? `<span class="event-frist">Fristen for å bestille til henting er ute, men kom gjerne innom standen!</span>` : ''}
-        </div>
-      </div>
-    </article>`;
+    const lenke = (e.henting && e.bestillbar) ? `/jul.html?marked=${e.id}#bestill` : kart;
+    const apneNytt = lenke === kart ? ' target="_blank" rel="noopener"' : '';
+    const tittelAttr = `${esc(e.tittel)} – ${ukedag.charAt(0).toUpperCase() + ukedag.slice(1)}${e.fra ? ` kl. ${e.fra}–${e.til || ''}` : ''}`;
+    return `<a class="event-pil${naermest ? ' event-pil-neste' : ''}" href="${lenke}"${apneNytt} title="${tittelAttr}">
+      <span class="event-pil-dato">${d.getDate()}. ${mnd}</span>
+      <span class="event-pil-navn">${esc(e.tittel)}</span>
+    </a>`;
   }).join('');
   document.getElementById('eventer').hidden = false;
 })();

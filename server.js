@@ -582,20 +582,11 @@ async function sendVippsEposter(o) {
 
   if (o.email) {
     try {
+      const produktlinjer = products.map(p => `${p.name} × ${p.qty} — ${p.price * p.qty} kr`).join('\n');
       await transporter.sendMail({
         from: fra, to: o.email,
         subject: '🎄 Bestillingsbekreftelse fra Kakefrue',
-        html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
-          <h2 style="color:#8B1A1A;margin-bottom:4px;">Tusen takk, ${escHtml(o.full_name.split(' ')[0])}!</h2>
-          <p style="color:#6B5040;">Betalingen er godkjent i Vipps, og bestillingen din er bekreftet.</p>
-          <div style="background:white;border-radius:10px;padding:20px;margin:20px 0;">
-            <strong style="display:block;margin-bottom:10px;">Du har bestilt:</strong>
-            <ul style="margin:0;padding-left:20px;color:#3D2420;">${liste}</ul>
-            <div style="margin-top:14px;padding-top:14px;border-top:1px solid #EEE;font-size:1.1rem;font-weight:700;color:#8B1A1A;">Totalt: ${total} kr</div>
-          </div>
-          <p style="color:#8A6858;font-size:0.85rem;">${levering}. ${o.delivery === 'marked' ? 'Kom innom standen til Kakefrue, så står posen klar med navnet ditt.' : 'Du får en melding når bestillingen er klar.'}</p>
-          <p style="color:#B0A090;font-size:0.75rem;margin-top:24px;">Spørsmål? Ring 900 33 039 eller skriv på <a href="https://m.me/kakefrue" style="color:#C4956A;">Messenger</a>.</p>
-        </div>`
+        html: julEpostHtml(o.full_name, bestillingsbekreftelseTekst(o, total, produktlinjer, o.delivery))
       });
     } catch (e) { console.log('[Vipps bekreftelse til kunde]', e.message); }
   }
@@ -797,35 +788,18 @@ app.post('/api/admin/christmas-orders/:id/bekreft-betaling', requireAdmin, async
     const note = o.note;
     const delivery_cost = o.delivery_cost;
     const transporter = createTransporter();
-    const productList = products.map(p => `<li>${p.name} × ${p.qty} — ${p.price * p.qty} kr</li>`).join('');
     const frakt = parseInt(delivery_cost) || 0;
     const varesum = products.reduce((s, p) => s + (p.price || 0) * (p.qty || 1), 0);
     const total = varesum + frakt;
     if (email) {
       try {
+        const produktlinjer = products.map(p => `${p.name} × ${p.qty} — ${p.price * p.qty} kr`).join('\n');
+        const oForTekst = { full_name, address };
         await transporter.sendMail({
           from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
           to: email.trim(),
           subject: `🎄 Bestillingsbekreftelse fra Kakefrue`,
-          html: `
-            <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
-              <h2 style="color:#8B1A1A;margin-bottom:4px;">Tusen takk, ${full_name.trim().split(' ')[0]}!</h2>
-              <p style="color:#6B5040;margin-bottom:24px;">Bestillingen din er registrert. Betal med Vipps for å bekrefte.</p>
-              <div style="background:white;border-radius:10px;padding:20px;margin-bottom:20px;">
-                <strong style="display:block;margin-bottom:10px;">Du har bestilt:</strong>
-                <ul style="margin:0;padding-left:20px;color:#3D2420;">${productList}</ul>
-                <div style="margin-top:14px;padding-top:14px;border-top:1px solid #EEE;font-size:1.1rem;font-weight:700;color:#8B1A1A;">Totalt: ${total} kr</div>
-              </div>
-              <div style="background:#FF5B24;border-radius:12px;padding:20px;text-align:center;color:white;">
-                <div style="font-size:0.8rem;opacity:0.85;margin-bottom:4px;">BETAL MED VIPPS TIL</div>
-                <div style="font-size:2rem;font-weight:900;letter-spacing:0.05em;">90 03 30 39</div>
-                <div style="font-size:0.85rem;opacity:0.85;margin-top:4px;">Cecilie Linder · Skriv «${full_name.trim()}» som melding</div>
-              </div>
-              <p style="color:#8A6858;font-size:0.82rem;margin-top:20px;">Levering: ${delivery === 'levering' ? 'Leveres til ' + (address || '—') : 'Hentes i Porsgrunn'}</p>
-              ${note ? `<p style="color:#8A6858;font-size:0.82rem;">Kommentar: ${note}</p>` : ''}
-              <p style="color:#B0A090;font-size:0.75rem;margin-top:24px;">Spørsmål? Ring 900 33 039 eller skriv på <a href="https://m.me/kakefrue" style="color:#C4956A;">Messenger</a>.</p>
-            </div>
-          `
+          html: julEpostHtml(full_name, bestillingsbekreftelseTekst(oForTekst, total, produktlinjer, delivery))
         });
       } catch (mailErr) { console.log('[Christmas customer email] Not sent:', mailErr.message); }
     }
@@ -1429,10 +1403,43 @@ app.delete('/api/admin/customers/:id', requireAdmin, async (req, res) => {
 // Meldingsteksten kan inneholde en linje "📍 Åpne i Google Maps: <url>" -
 // den fjernes, og selve adresselinjen ("Adresse: ...") blir i stedet en
 // vanlig, inline tekstlenke til kartet - ingen egen knapp.
+const HENTEADRESSE = 'Snarvegen 8, 3925 Porsgrunn';
+const googleMapsLenke = sted => sted ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(sted) : '';
+
 function esc(t) {
   return String(t == null ? '' : t)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
+
+// Meldingsteksten til bestillingsbekreftelsen (samme julepost-tema som hentemeldingene).
+// Kun bestillinger med henting/marked (ikke levering) har en fast avhentingsdag -
+// derfor star refusjons-forbeholdet kun der, og adressen far Google Maps-lenke.
+const JULEPOST_SIGNATUR = 'En varm juleklem sendes deg fra\nKakefrue';
+function bestillingsbekreftelseTekst(o, total, produktlinjer, levering) {
+  const fornavn = (o.full_name || '').trim().split(' ')[0];
+  const erHenting = levering === 'henting' || levering === 'marked';
+  const adresse = levering === 'levering' ? (o.address || '')
+    : levering === 'marked' ? (o.address || '') : HENTEADRESSE;
+  const leveringstekst = levering === 'levering' ? `Leveres til ${adresse}`
+    : levering === 'marked' ? `Hentes på julemarkedet` : `Hentes hos Kakefrue`;
+  const kartLinje = adresse ? `\n📍 Åpne i Google Maps: ${googleMapsLenke(adresse)}` : '';
+  const adresseLinje = adresse ? `Adresse: ${adresse}` : '';
+
+  return `Hei ${fornavn}!
+
+Tusen takk for bestillingen din! Betalingen er godkjent, og bestillingen er bekreftet.
+
+Du har bestilt:
+${produktlinjer}
+Totalt: ${total} kr
+
+${leveringstekst}
+${adresseLinje}${kartLinje}
+${erHenting ? '\nHvis bestillingen ikke hentes innen avtalt hentedag, bortfaller retten til refusjon.' : ''}
+
+${JULEPOST_SIGNATUR}`;
+}
+
 function julEpostHtml(name, message) {
   const kartRegex = /^📍\s*Åpne i Google Maps:\s*(\S+)\s*$/m;
   const match = message.match(kartRegex);

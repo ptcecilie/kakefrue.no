@@ -245,92 +245,11 @@ async function exportJulebestillingerExcel() {
 
 const HENTEADRESSE = 'Snarvegen 8, 3925 Porsgrunn';
 
-// Warm avbestillings- og avslutningstekst for julepost-temaet (se byggHentetekst()).
-const AVBESTILLING_UTKAST = 'Må du avbestille, si fra så fort som mulig – helst noen dager før, så jeg rekker å tilpasse bakingen. Gir du beskjed for sent, må jeg dessverre fakturere bestillingen likevel, siden varene da allerede er laget til deg.';
+// Avslutningslinje for julepost-temaet (se byggHentetekst()).
 const PERSONLIG_UTKAST = 'En varm juleklem sendes deg fra\nKakefrue';
 
 function googleMapsLenke(sted) {
   return sted ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(sted) : '';
-}
-
-function aapnePurring(o) {
-  const varer = (o.products || []).map(p => `${p.name} x${p.qty}`).join(', ');
-  const vare = (o.products || []).reduce((s2,p) => s2 + (p.price||0)*(p.qty||1), 0);
-  const total = vare + (parseInt(o.delivery_cost) || 0);
-  const bestilt = o.created_at ? new Date(o.created_at).toLocaleDateString('nb-NO',{day:'numeric',month:'long'}) : '';
-
-  openModal(`
-    <div class="modal-header">
-      <h3>⚠️ Mangler betaling – ${o.full_name}</h3>
-      <button class="modal-close" onclick="closeModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div style="background:rgba(196,120,138,.12);border:1px solid rgba(155,58,82,.3);border-radius:8px;padding:12px 15px;margin-bottom:16px;font-size:0.85rem;line-height:1.65;">
-        Bestilt <strong>${bestilt}</strong> · <strong>${total} kr</strong> · ${varer || '—'}<br>
-        <span style="opacity:0.7;">${o.payment_claimed_at ? 'Kunden har trykket «Jeg har betalt», men du har ikke bekreftet.' : 'Kunden har ikke meldt om betaling.'}</span>
-      </div>
-
-      <div class="form-group" style="margin-bottom:6px;">
-        <label class="form-label">Meldingen – rediger fritt</label>
-        <textarea class="form-input" id="purreTekst" rows="10" style="line-height:1.65;"></textarea>
-      </div>
-      <p style="font-size:0.78rem;opacity:0.6;margin:0;">📞 ${o.phone}${o.email ? ' · ' + o.email : ' · ingen e-post oppgitt'}</p>
-      <div id="purreStatus" style="font-size:0.85rem;margin-top:10px;"></div>
-    </div>
-    <div class="modal-footer" style="flex-wrap:wrap;gap:8px;">
-      <button class="btn btn-outline" onclick="closeModal()">Lukk</button>
-      <button class="btn btn-outline" onclick="kopierPurring()">📋 Kopier til SMS</button>
-      ${o.email
-        ? `<button class="btn btn-primary" id="purreSendBtn" onclick="sendPurring(${o.id}, '${o.email}', '${(o.full_name||'').replace(/'/g,"&apos;")}')">✉️ Send e-post</button>`
-        : `<span style="font-size:0.8rem;opacity:0.6;align-self:center;">Ingen e-post – bruk SMS</span>`}
-    </div>
-  `);
-
-  const fornavn = (o.full_name || '').split(' ')[0];
-  document.getElementById('purreTekst').value =
-`Hei ${fornavn}!
-
-Jeg har ikke registrert betaling for julebestillingen din p\u00e5 ${total} kr.
-
-En bestilling er f\u00f8rst gyldig n\u00e5r den er betalt, s\u00e5 den er dessverre ikke satt opp i produksjonen min enn\u00e5.
-
-Vipps ${total} kr til 90 03 30 39, og merk med navnet ditt. Da ordner det seg.
-
-Har du allerede betalt? Si fra, s\u00e5 sjekker jeg p\u00e5 nytt.
-
-Med vennlig hilsen
-Cecilie \u2013 Kakefrue
-900 33 039`;
-}
-
-function kopierPurring() {
-  const t = document.getElementById('purreTekst').value;
-  const ok = () => { document.getElementById('purreStatus').innerHTML =
-    '<span style="color:var(--sage);">\u2713 Kopiert \u2013 lim inn i meldingsappen</span>'; };
-  navigator.clipboard.writeText(t).then(ok, () => { document.getElementById('purreTekst').select(); ok(); });
-}
-
-async function sendPurring(id, epost, navn) {
-  const btn = document.getElementById('purreSendBtn');
-  btn.disabled = true; btn.textContent = 'Sender...';
-  try {
-    const r = await api('/api/admin/send-email', {
-      method: 'POST',
-      body: JSON.stringify({
-        to: epost, name: navn,
-        subject: 'Manglende betaling – julebestillingen din',
-        message: document.getElementById('purreTekst').value,
-        theme: 'jul'
-      })
-    });
-    if (r.mailto_fallback) throw new Error('E-post ikke satt opp');
-    document.getElementById('purreStatus').innerHTML =
-      '<span style="color:var(--sage);">\u2713 Sendt til ' + epost + '</span>';
-    btn.textContent = '\u2713 Sendt';
-  } catch (e) {
-    document.getElementById('purreStatus').innerHTML = '<span style="color:#C62828;">Feil: ' + e.message + '</span>';
-    btn.disabled = false; btn.textContent = '\u2709\ufe0f Send e-post';
-  }
 }
 
 function aapneHentemelding(o) {
@@ -351,15 +270,19 @@ function aapneHentemelding(o) {
     </div>
     <div class="modal-body">
       ${varslet}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div style="display:grid;grid-template-columns:${levering ? '1fr 1fr 1fr' : '1fr 1fr'};gap:14px;">
         <div class="form-group">
           <label class="form-label">${levering ? 'Leveringsdag' : 'Hentedag'}</label>
           <input class="form-input" id="hentNaar" value="${iMorgen}" oninput="byggHentetekst()">
         </div>
         <div class="form-group">
-          <label class="form-label">Tidspunkt</label>
-          <input class="form-input" id="hentTid" placeholder="${levering ? 'f.eks. ca. kl. 17' : 'f.eks. mellom 16 og 19'}" oninput="byggHentetekst()">
+          <label class="form-label">${levering ? 'Fra kl.' : 'Tidspunkt'}</label>
+          <input class="form-input" id="hentTid" placeholder="${levering ? 'f.eks. 16' : 'f.eks. mellom 16 og 19'}" oninput="byggHentetekst()">
         </div>
+        ${levering ? `<div class="form-group">
+          <label class="form-label">Til kl. <span style="font-weight:300;opacity:.55;">(valgfritt)</span></label>
+          <input class="form-input" id="hentTidTil" placeholder="f.eks. 18" oninput="byggHentetekst()">
+        </div>` : ''}
       </div>
       ${levering
         ? `<div class="form-group">
@@ -410,9 +333,11 @@ function byggHentetekst() {
   const levering = o.delivery === 'levering';
   const naar = ($('hentNaar')?.value || '').trim();
   const tid  = ($('hentTid')?.value || '').trim();
+  const tidTil = ($('hentTidTil')?.value || '').trim();
   const sted = ($('hentSted')?.value || '').trim();
   const fornavn = (o.full_name || '').split(' ')[0];
-  const naarDel = [naar, tid].filter(Boolean).join(' ') || '[fyll inn tidspunkt]';
+  const tidDel = tidTil ? `${tid}–${tidTil}` : tid;
+  const naarDel = [naar, tidDel].filter(Boolean).join(' ') || '[fyll inn tidspunkt]';
   const holdbar = ($('hentHoldbar')?.value || '').trim();
   const holdbarLinje = holdbar ? `\n${holdbar}\n` : '';
   const adresse = sted || (levering ? '[adresse mangler]' : HENTEADRESSE);
@@ -428,8 +353,6 @@ Julebestillingen din er ferdig, og jeg kommer med den ${naarDel}.
 Adresse: ${adresse}
 ${holdbarLinje}${kartLinje}
 
-${AVBESTILLING_UTKAST}
-
 ${PERSONLIG_UTKAST}`
 : `Hei ${fornavn}!
 
@@ -439,9 +362,7 @@ Du kan hente den ${naarDel}.
 Adresse: ${adresse}
 ${holdbarLinje}${kartLinje}
 
-Bestillingen holdes av til deg på hentedagen. Passer ikke tidspunktet, si fra før da, så finner vi en løsning sammen.
-
-${AVBESTILLING_UTKAST}
+Bestillingen holdes av til deg ut hentedagen.
 
 ${PERSONLIG_UTKAST}`;
 }
@@ -624,9 +545,6 @@ async function loadChristmasOrders() {
                 : o.payment_claimed_at
                   ? `<button class="btn btn-primary btn-sm" style="background:#7A9E82;color:#fff;border-color:#7A9E82;" onclick="bekreftBetaling(${o.id})">💰 Bekreft betaling</button>`
                   : `<span style="align-self:center;font-size:0.78rem;opacity:0.5;">Ikke betalt</span>`}
-              ${!o.paid_at && !o.vipps_refunded_at
-                ? `<button class="btn btn-outline btn-sm" style="color:#9B3A52;border-color:rgba(155,58,82,.45);" onclick='aapnePurring(${JSON.stringify(o).replace(/'/g, "&apos;")})'>⚠️ Mangler betaling</button>`
-                : ''}
               ${o.notified_at
                 ? `<button class="btn btn-sm" style="background:#7A9E82;color:#fff;border-color:#7A9E82;" title="Allerede sendt – trykk for å se eller angre" onclick='aapneHentemelding(${JSON.stringify(o).replace(/'/g, "&apos;")})'>✓ ${o.delivery === 'levering' ? 'Levering varslet' : 'Henting varslet'} ${new Date(o.notified_at).toLocaleDateString('nb-NO',{day:'numeric',month:'short'})}</button>`
                 : `<button class="btn btn-primary btn-sm" onclick='aapneHentemelding(${JSON.stringify(o).replace(/'/g, "&apos;")})'>${o.delivery === 'levering' ? '🚗 Varsle om levering' : '📦 Klar til henting'}</button>`}
