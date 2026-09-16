@@ -245,6 +245,14 @@ async function exportJulebestillingerExcel() {
 
 const HENTEADRESSE = 'Snarvegen 8, 3925 Porsgrunn';
 
+// Warm avbestillings- og avslutningstekst for julepost-temaet (se byggHentetekst()).
+const AVBESTILLING_UTKAST = 'Må du avbestille, si fra så fort som mulig – helst noen dager før, så jeg rekker å tilpasse bakingen. Gir du beskjed for sent, må jeg dessverre fakturere bestillingen likevel, siden varene da allerede er laget til deg.';
+const PERSONLIG_UTKAST = 'En varm juleklem sendes deg fra\nKakefrue';
+
+function googleMapsLenke(sted) {
+  return sted ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(sted) : '';
+}
+
 function aapnePurring(o) {
   const varer = (o.products || []).map(p => `${p.name} x${p.qty}`).join(', ');
   const vare = (o.products || []).reduce((s2,p) => s2 + (p.price||0)*(p.qty||1), 0);
@@ -311,7 +319,8 @@ async function sendPurring(id, epost, navn) {
       body: JSON.stringify({
         to: epost, name: navn,
         subject: 'Manglende betaling – julebestillingen din',
-        message: document.getElementById('purreTekst').value
+        message: document.getElementById('purreTekst').value,
+        theme: 'jul'
       })
     });
     if (r.mailto_fallback) throw new Error('E-post ikke satt opp');
@@ -406,33 +415,35 @@ function byggHentetekst() {
   const naarDel = [naar, tid].filter(Boolean).join(' ') || '[fyll inn tidspunkt]';
   const holdbar = ($('hentHoldbar')?.value || '').trim();
   const holdbarLinje = holdbar ? `\n${holdbar}\n` : '';
+  const adresse = sted || (levering ? '[adresse mangler]' : HENTEADRESSE);
+  // Skjult markørlinje - server.js sin julEpostHtml() plukker ut lenken herfra,
+  // gjør "Adresse:"-linjen over til en klikkbar Google Maps-lenke, og fjerner selve markørlinjen fra e-posten.
+  const kartLinje = `\n📍 Åpne i Google Maps: ${googleMapsLenke(adresse)}`;
 
   $('hentTekst').value = levering
 ? `Hei ${fornavn}!
 
 Julebestillingen din er ferdig, og jeg kommer med den ${naarDel}.
 
-Adresse: ${sted || '[adresse mangler]'}
-${holdbarLinje}
-Si fra hvis tidspunktet ikke passer, så finner vi noe annet.
+Adresse: ${adresse}
+${holdbarLinje}${kartLinje}
 
-Med vennlig hilsen
-Cecilie – Kakefrue
-900 33 039`
+${AVBESTILLING_UTKAST}
+
+${PERSONLIG_UTKAST}`
 : `Hei ${fornavn}!
 
 Julebestillingen din er ferdig og klar til henting.
 
 Du kan hente den ${naarDel}.
-Adresse: ${sted || HENTEADRESSE}
+Adresse: ${adresse}
+${holdbarLinje}${kartLinje}
 
-Bestillingen holdes ut hentedagen. Passer ikke tidspunktet, si fra før da, så finner vi en løsning.
-${holdbarLinje}
-Ser frem til å se deg!
+Bestillingen holdes av til deg på hentedagen. Passer ikke tidspunktet, si fra før da, så finner vi en løsning sammen.
 
-Med vennlig hilsen
-Cecilie – Kakefrue
-900 33 039`;
+${AVBESTILLING_UTKAST}
+
+${PERSONLIG_UTKAST}`;
 }
 
 async function settVarslet(id, varslet, via) {
@@ -471,7 +482,8 @@ async function sendHentemelding(id, epost, navn) {
       body: JSON.stringify({
         to: epost, name: navn,
         subject: 'Julebestillingen din er klar',
-        message: $('hentTekst').value
+        message: $('hentTekst').value,
+        theme: 'jul'
       })
     });
     if (r.mailto_fallback) {

@@ -1421,8 +1421,88 @@ app.delete('/api/admin/customers/:id', requireAdmin, async (req, res) => {
 });
 
 // POST /api/admin/send-email
+// Samme julepalett og jul-hero-bildet som suksess-skjermen pa jul.html, sa
+// e-posten matcher det kunden allerede har sett der - bildet gar over HELE
+// eposten (ikke et kort pa en brun side). "Caveat" er en lettere-lest
+// handskrift enn Dancing Script, brukt pa brodteksten; Dancing Script er
+// forbeholdt hilsen/signatur i toppen, som en liten hoytidelig detalj.
+// Meldingsteksten kan inneholde en linje "📍 Åpne i Google Maps: <url>" -
+// den fjernes, og selve adresselinjen ("Adresse: ...") blir i stedet en
+// vanlig, inline tekstlenke til kartet - ingen egen knapp.
+function esc(t) {
+  return String(t == null ? '' : t)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function julEpostHtml(name, message) {
+  const kartRegex = /^📍\s*Åpne i Google Maps:\s*(\S+)\s*$/m;
+  const match = message.match(kartRegex);
+  let before = message, after = '', kartUrl = null;
+  if (match) {
+    kartUrl = match[1];
+    const idx = message.indexOf(match[0]);
+    before = message.slice(0, idx).replace(/\n+$/, '');
+    after = message.slice(idx + match[0].length).replace(/^\n+/, '');
+  }
+  // Gjor selve adressen (etter "Adresse:") til en lenke, inne i teksten.
+  const lenkAdresse = (txt) => !kartUrl ? esc(txt) : esc(txt).replace(
+    /(Adresse:\s*)(.+)/,
+    (m0, label, adr) => `${label}<a href="${kartUrl}" style="color:#F3E9D2; text-decoration:underline;">${adr}</a>`
+  );
+  // Avsnitt-for-avsnitt (delt pa blanke linjer). Forste avsnitt i "before" er
+  // hilsenen, siste avsnitt i "after" er signaturen - begge sentreres og far
+  // Dancing Script; resten star venstrejustert som vanlig brodtekst i Caveat.
+  const paragrafer = (txt, senterForste, senterSiste) => {
+    if (!txt) return '';
+    const deler = txt.split(/\n{2,}/).filter(p => p.trim());
+    return deler.map((p, i) => {
+      const senter = (senterForste && i === 0) || (senterSiste && i === deler.length - 1);
+      const font = senter ? "'Dancing Script',cursive" : "'Caveat',cursive";
+      const storrelse = senter ? '1.7rem' : '1.85rem';
+      const innhold = senter ? esc(p) : lenkAdresse(p);
+      return `<div style="font-family:${font}; font-weight:700; color:#F3E9D2; font-size:${storrelse}; line-height:1.5; white-space:pre-wrap; margin:0 0 28px; text-align:${senter ? 'center' : 'left'};">${innhold}</div>`;
+    }).join('');
+  };
+
+  return `<!DOCTYPE html>
+<html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Dancing+Script:wght@700&family=Caveat:wght@700&display=swap');</style>
+</head><body style="margin:0;">
+  <div style="background-color:#230D0A;
+              background-image:linear-gradient(180deg, rgba(35,13,10,0.30) 0%, rgba(35,13,10,0.55) 35%, rgba(35,13,10,0.68) 100%), url('https://kakefrue.no/assets/jul-hero.jpg');
+              background-size:cover; background-position:center top; background-repeat:no-repeat;
+              padding:40px 20px 36px;">
+    <div style="max-width:500px; margin:0 auto; text-align:center;">
+      <div style="font-size:1.9rem; margin-bottom:14px; line-height:1;">🎄</div>
+      <img src="https://kakefrue.no/assets/kakefrue-logo-circle.png" alt="Kakefrue" width="130" style="width:130px; max-width:55%; height:auto; display:inline-block;">
+      <p style="font-family:'Dancing Script',cursive; color:#DDAD88; font-size:1.6rem; margin:14px 0 0; font-weight:700;">God jul!</p>
+    </div>
+    <div style="max-width:480px; margin:18px auto 0;">
+      ${paragrafer(before, true, false)}
+      ${paragrafer(after, false, true)}
+    </div>
+    <div style="max-width:480px; margin:8px auto 0; text-align:center;">
+      <p style="color:rgba(243,233,210,0.6); font-size:0.76rem; margin:0; font-family:'Lato',Arial,sans-serif;">Porsgrunn · cecilie@kakefrue.no</p>
+    </div>
+  </div>
+</body></html>`;
+}
+
+function standardEpostHtml(name, message) {
+  return `
+    <div style="font-family: 'Lato', sans-serif; max-width: 600px; margin: 0 auto; background: #F5F2EC; padding: 32px; border-radius: 12px;">
+      <h1 style="font-family: 'Playfair Display', serif; color: #2A1E3E; text-align: center;">Kakefrue</h1>
+      <p>Hei ${esc(name || '')},</p>
+      <div style="white-space: pre-wrap; line-height: 1.7; margin: 20px 0;">${esc(message).replace(/\n/g, '<br>')}</div>
+      <div style="text-align: center; margin-top: 32px; color: #7A9E82;">
+        <p>Med kjærlig hilsen,<br><strong>Cecilie – Kakefrue</strong></p>
+        <p style="font-size: 12px;">Porsgrunn · cecilie@kakefrue.no</p>
+      </div>
+    </div>
+  `;
+}
+
 app.post('/api/admin/send-email', requireAdmin, async (req, res) => {
-  const { to, name, subject, message } = req.body;
+  const { to, name, subject, message, theme } = req.body;
   if (!to || !subject || !message) return res.status(400).json({ error: 'Mangler felt' });
 
   // If SMTP not configured, tell client to use mailto fallback
@@ -1431,17 +1511,7 @@ app.post('/api/admin/send-email', requireAdmin, async (req, res) => {
   }
 
   const transporter = createTransporter();
-  const html = `
-    <div style="font-family: 'Lato', sans-serif; max-width: 600px; margin: 0 auto; background: #F5F2EC; padding: 32px; border-radius: 12px;">
-      <h1 style="font-family: 'Playfair Display', serif; color: #2A1E3E; text-align: center;">Kakefrue</h1>
-      <p>Hei ${name || ''},</p>
-      <div style="white-space: pre-wrap; line-height: 1.7; margin: 20px 0;">${message.replace(/\n/g, '<br>')}</div>
-      <div style="text-align: center; margin-top: 32px; color: #7A9E82;">
-        <p>Med kjærlig hilsen,<br><strong>Cecilie – Kakefrue</strong></p>
-        <p style="font-size: 12px;">Porsgrunn · cecilie@kakefrue.no</p>
-      </div>
-    </div>
-  `;
+  const html = theme === 'jul' ? julEpostHtml(name, message) : standardEpostHtml(name, message);
   try {
     await transporter.sendMail({
       from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,

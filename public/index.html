@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kakefrue – Håndlagde kaker i Porsgrunn</title>
   <meta name="description" content="Kakefrue lager unike, håndlagde kaker til dine spesielle anledninger i Porsgrunn. Bryllupskaker, bursdagskaker, konfirmasjonskaker og mer.">
-  <link rel="stylesheet" href="/css/main.css?v=6.0">
+  <link rel="stylesheet" href="/css/main.css?v=6.1">
 </head>
 <body>
 
@@ -73,10 +73,13 @@
     </div>
   </div>
 
-  <!-- Kommende eventer – styres fra admin -> Eventer. Skjult når det ikke er noen. -->
-  <section class="eventer-seksjon" id="eventer" hidden>
+  <!-- Kommende eventer – styres fra admin -> Eventer. Skjult når det ikke er noen.
+       farget-band + egen bakgrunn: unngar den globale --side-foto-hvitoverlayen,
+       #F2E6D2 er bevisst litt morkere enn --cream for kontrast mot resten av forsiden. -->
+  <section class="eventer-seksjon farget-band" id="eventer" hidden style="background:#F2E6D2;">
     <div class="container">
-      <h2 class="section-title">Kommende eventer</h2>
+      <span class="tag tag-gold" style="margin-bottom:12px;">🎄 Kommende eventer</span>
+      <h2 class="section-title">Møt Kakefrue</h2>
       <p class="section-subtitle">Her kan du treffe Kakefrue</p>
       <div class="eventer-liste" id="eventerListe"></div>
     </div>
@@ -344,21 +347,29 @@ fetch('/api/reviews').then(r => r.json()).then(reviews => {
   let eventer = [];
   try { eventer = (await fetch('/api/eventer').then(r => r.json())).filter(e => e.vis_forside); } catch (e) {}
   if (!eventer.length) return;
-  document.getElementById('eventerListe').innerHTML = eventer.map(e => {
+  // Eventer kommer allerede kronologisk sortert fra /api/eventer (ORDER BY dato, fra) -
+  // forste element er derfor alltid det naermeste, og far et "NESTE"-merke.
+  // Julebildet mykes/lysnes med filter sa det passer inn pa den lyse, helarlige forsiden.
+  document.getElementById('eventerListe').innerHTML = eventer.map((e, i) => {
     const d = new Date(e.dato + 'T12:00:00');
     const mnd = d.toLocaleDateString('nb-NO', { month: 'short' }).replace('.', '');
     const ukedag = d.toLocaleDateString('nb-NO', { weekday: 'long' });
     const kart = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([e.sted, e.adresse].filter(Boolean).join(', '));
     const frist = e.frist ? new Date(e.frist).toLocaleString('nb-NO', { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Oslo' }) : '';
-    return `<article class="event-kort">
-      <div class="event-dato"><span class="event-dag">${d.getDate()}</span><span class="event-mnd">${mnd}</span></div>
-      <div class="event-info">
-        <h3>${esc(e.tittel)}</h3>
-        <p class="event-tid">${ukedag.charAt(0).toUpperCase() + ukedag.slice(1)}${e.fra ? ` kl. ${e.fra}–${e.til || ''}` : ''}</p>
-        <p class="event-sted">${esc(e.adresse || e.sted || '')} · <a href="${kart}" target="_blank" rel="noopener">Vis i kart</a></p>
-        ${e.beskrivelse ? `<p class="event-tekst">${esc(e.beskrivelse)}</p>` : ''}
-        ${e.henting && e.bestillbar ? `<a class="btn btn-primary event-knapp" href="/jul.html?marked=${e.id}#bestill">Bestill og hent på markedet</a>${frist ? `<span class="event-frist">Bestill innen ${frist}</span>` : ''}` : ''}
-        ${e.henting && !e.bestillbar ? `<span class="event-frist">Fristen for å bestille til henting er ute, men kom gjerne innom standen!</span>` : ''}
+    const naermest = i === 0;
+    return `<article class="event-kort${naermest ? ' event-naermest' : ''}">
+      ${naermest ? `<span class="event-neste-merke">NESTE</span>` : ''}
+      <div class="event-kort-bilde"></div>
+      <div class="event-kort-rad">
+        <div class="event-dato"><span class="event-dag">${d.getDate()}</span><span class="event-mnd">${mnd}</span></div>
+        <div class="event-info">
+          <h3>${esc(e.tittel)}</h3>
+          <p class="event-tid">${ukedag.charAt(0).toUpperCase() + ukedag.slice(1)}${e.fra ? ` kl. ${e.fra}–${e.til || ''}` : ''}</p>
+          <p class="event-sted">${esc(e.adresse || e.sted || '')} · <a href="${kart}" target="_blank" rel="noopener">Vis i kart</a></p>
+          ${e.beskrivelse ? `<p class="event-tekst">${esc(e.beskrivelse)}</p>` : ''}
+          ${e.henting && e.bestillbar ? `<a class="btn btn-primary event-knapp" href="/jul.html?marked=${e.id}#bestill">Bestill og hent på markedet</a>${frist ? `<span class="event-frist">Bestill innen ${frist}</span>` : ''}` : ''}
+          ${e.henting && !e.bestillbar ? `<span class="event-frist">Fristen for å bestille til henting er ute, men kom gjerne innom standen!</span>` : ''}
+        </div>
       </div>
     </article>`;
   }).join('');
