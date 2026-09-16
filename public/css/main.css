@@ -466,6 +466,36 @@ section { padding: var(--section-padding); }
 .review-stars { color: var(--gold); font-size: 1.2rem; margin-bottom: 12px; }
 .review-text { font-style: italic; margin-bottom: 16px; opacity: 0.85; }
 .review-author { font-weight: 700; font-size: 0.9rem; color: var(--gold); }
+.review-foto-plassholder {
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #F5EDE0, #E8C8A8); font-size: 2.4rem;
+}
+
+/* Mobil (<=480px): ett polaroid-kort om gangen i stedet for smal rullende stripe -
+   pil-knappene tok for mye av den smale bredden og gjorde kortene nesten usynlige. */
+@media (max-width: 480px) {
+  .reviews-carousel-wrap .gallery-nav { display: none; }
+  .reviews-carousel-wrap .reviews-carousel { flex: 1; width: 100%; }
+  .reviews-track {
+    display: grid;
+  }
+  .review-card {
+    grid-column: 1; grid-row: 1;
+    width: 100%; flex: none;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.6s ease;
+    background: #fff;
+    padding: 14px 14px 22px;
+    box-shadow: 0 10px 28px rgba(61, 36, 32, 0.18);
+    transform: rotate(-1deg);
+  }
+  .review-card.vises { opacity: 1; pointer-events: auto; }
+  .review-card img.review-foto,
+  .review-card .review-foto-plassholder {
+    aspect-ratio: 1 / 1;
+    margin-bottom: 18px;
+  }
+}
 
 /* ============================================================
    Badges / Trust Signals
@@ -675,7 +705,7 @@ section { padding: var(--section-padding); }
 }
 @media (max-width: 480px) {
   .gallery-grid { grid-template-columns: 1fr; }
-  .review-card { flex: 0 0 280px; }
+  /* .review-card sin mobil-bredde styres na av polaroid-slideshowet lenger opp i fila. */
 }
 
 /* ── Sidetopp med fotobakgrunn ── */
@@ -865,5 +895,14 @@ html[style*="--side-foto"] body .info-boks {
 .event-pil-dato { font-weight: 700; color: #7A2A3E; }
 .event-pil-tid { font-size: 0.78em; color: rgba(61, 36, 32, 0.6); }
 @media (max-width: 480px) {
-  .eventer-liste { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
+  /* justify-content:center + overflow-x:auto sammen gjør at nettleseren klipper
+     starten av innholdet og ikke lar deg scrolle dit - nærmeste event (forst i
+     lista) ble utilgjengelig og stripen virket "fastlast". flex-start fikser det. */
+  .eventer-liste {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
 }

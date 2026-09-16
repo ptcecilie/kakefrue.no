@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kakefrue – Håndlagde kaker i Porsgrunn</title>
   <meta name="description" content="Kakefrue lager unike, håndlagde kaker til dine spesielle anledninger i Porsgrunn. Bryllupskaker, bursdagskaker, konfirmasjonskaker og mer.">
-  <link rel="stylesheet" href="/css/main.css?v=6.5">
+  <link rel="stylesheet" href="/css/main.css?v=6.6">
 </head>
 <body>
 
@@ -132,7 +132,7 @@
     <div class="container">
       <h2 class="section-title">Hva kundene sier</h2>
       <p class="section-subtitle">Ekte tilbakemeldinger fra glade kunder</p>
-      <div class="gallery-carousel-wrap">
+      <div class="gallery-carousel-wrap reviews-carousel-wrap">
         <button class="gallery-nav gallery-nav-prev" onclick="reviewsNav(-1)" aria-label="Forrige">&#8249;</button>
         <div class="reviews-carousel">
           <div class="reviews-track" id="reviewsTrack">
@@ -373,20 +373,42 @@ if (reviewsCarousel) {
   reviewsCarousel.addEventListener('mouseleave', () => { reviewsPaused = false; });
 }
 
+// Mobil (<=480px): éN anmeldelse om gangen, polaroid-stil, bytter automatisk med
+// god lesetid mellom hver - i stedet for den kontinuerlige rullende stripen som
+// blir for smal/lite lesbar på telefon (Cecilie + mannen hennes sitt forslag).
+let mobilSlideIndex = 0, mobilSlideTimer = null;
+function startMobilAnmeldelser() {
+  const kort = [...document.querySelectorAll('#reviewsTrack .review-card')];
+  if (!kort.length) return;
+  kort[0].classList.add('vises');
+  if (kort.length <= 1) return;
+  mobilSlideTimer = setInterval(() => {
+    kort[mobilSlideIndex].classList.remove('vises');
+    mobilSlideIndex = (mobilSlideIndex + 1) % kort.length;
+    kort[mobilSlideIndex].classList.add('vises');
+  }, 4500);
+}
+
 // Load reviews from API
 fetch('/api/reviews').then(r => r.json()).then(reviews => {
   if (!reviews.length) return;
   const track = document.getElementById('reviewsTrack');
   const kort = r => `
     <div class="review-card">
-      ${r.image_url ? `<img class="review-foto" src="${r.image_url}" alt="Kake fra Kakefrue">` : ''}
+      ${r.image_url
+        ? `<img class="review-foto" src="${r.image_url}" alt="Kake fra Kakefrue">`
+        : `<div class="review-foto review-foto-plassholder">🎂</div>`}
       <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
       <p class="review-text">"${r.review_text}"</p>
       <span class="review-author">— ${r.customer_name}</span>
     </div>`;
   track.innerHTML = reviews.map(kort).join('');
   reviewsCount = reviews.length;
-  if (reviews.length > 2) startReviewsAuto();
+  if (window.matchMedia('(max-width: 480px)').matches) {
+    startMobilAnmeldelser();
+  } else if (reviews.length > 2) {
+    startReviewsAuto();
+  }
 }).catch(() => {});
 </script>
 <script>
