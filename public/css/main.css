@@ -391,9 +391,11 @@ section { padding: var(--section-padding); }
 .gallery-track {
   display: flex;
   gap: 16px;
-  transition: transform 0.3s ease;
   will-change: transform;
 }
+/* Kun ved klikk på pil-knappene (galleryNav) - IKKE under den kontinuerlige
+   auto-rullingen, som ellers krasjer med denne og gir hakkete/ristende bevegelse. */
+.gallery-track.gallery-nav-transition { transition: transform 0.3s ease; }
 .gallery-item {
   flex: 0 0 280px;
   width: 280px;

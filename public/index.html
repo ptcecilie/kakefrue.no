@@ -280,7 +280,7 @@ fetch('/api/about-image').then(r => r.json()).then(data => {
 }).catch(() => {});
 
 // Gallery carousel
-let galleryOffset = 0, galleryItems = [], galleryAutoTimer = null, galleryPaused = false;
+let galleryOffset = 0, galleryItems = [], galleryAutoTimer = null, galleryPaused = false, galleryNavTransitionTimer = null;
 const ITEM_W = 280 + 16; // width + gap
 
 function galleryRender() {
@@ -290,8 +290,12 @@ function galleryRender() {
 }
 function galleryNav(dir) {
   if (!galleryItems.length) return;
+  const track = document.getElementById('photoGallery');
+  track.classList.add('gallery-nav-transition');
   galleryOffset = Math.max(0, Math.min(galleryOffset + dir * ITEM_W, galleryItems.length * ITEM_W - ITEM_W));
   galleryRender();
+  clearTimeout(galleryNavTransitionTimer);
+  galleryNavTransitionTimer = setTimeout(() => track.classList.remove('gallery-nav-transition'), 320);
   resetGalleryAuto();
 }
 function startGalleryAuto() {
@@ -330,14 +334,23 @@ fetch('/api/reviews').then(r => r.json()).then(reviews => {
   const track = document.getElementById('reviewsTrack');
   const kort = r => `
     <div class="review-card">
-      ${r.image_url ? `<img class="review-foto" src="${r.image_url}" alt="Kake fra Kakefrue" loading="lazy">` : ''}
+      ${r.image_url ? `<img class="review-foto" src="${r.image_url}" alt="Kake fra Kakefrue">` : ''}
       <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
       <p class="review-text">"${r.review_text}"</p>
       <span class="review-author">— ${r.customer_name}</span>
     </div>`;
   // Dobbelt sett gjør at båndet kan rulle sømløst rundt
   track.innerHTML = [...reviews, ...reviews].map(kort).join('');
-  if (reviews.length > 2) track.classList.add('ruller');
+  if (reviews.length > 2) {
+    track.classList.add('ruller');
+    // Fast piksel-hastighet uansett antall anmeldelser - varigheten skaleres etter
+    // bredden på ett sett (halve båndet, siden det er duplisert), ikke et fast antall sekunder.
+    requestAnimationFrame(() => {
+      const settBredde = track.scrollWidth / 2;
+      const PX_PER_SEK = 45;
+      track.style.animationDuration = Math.max(20, settBredde / PX_PER_SEK) + 's';
+    });
+  }
 }).catch(() => {});
 </script>
 <script>
