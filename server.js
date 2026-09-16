@@ -561,6 +561,15 @@ async function sendVippsEposter(o) {
   const levering = o.delivery === 'levering' ? 'Leveres til ' + escHtml(o.address || '—')
     : o.delivery === 'marked' ? 'Hentes på ' + escHtml(o.address || 'julemarkedet')
     : 'Hentes i Porsgrunn';
+  // Full event-rad hentes for a vise faktisk dato/klokkeslett i bestillingsbekreftelsen
+  // (o.address inneholder allerede en sammensatt tekst - se bestillingsbekreftelseTekst()).
+  let event = null;
+  if (o.delivery === 'marked' && o.event_id) {
+    try {
+      const [[eventRad]] = await pool.query(`SELECT * FROM eventer WHERE id = ?`, [o.event_id]);
+      event = eventRad || null;
+    } catch (feil) { console.log('[Vipps event-oppslag]', feil.message); }
+  }
   const transporter = createTransporter();
   const fra = `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`;
 
@@ -578,7 +587,7 @@ async function sendVippsEposter(o) {
       await transporter.sendMail({
         from: fra, to: o.email,
         subject: '🎄 Bestillingsbekreftelse fra Kakefrue',
-        html: julEpostHtml(o.full_name, bestillingsbekreftelseTekst(o, total, produktlinjer, o.delivery))
+        html: julEpostHtml(o.full_name, bestillingsbekreftelseTekst(o, total, produktlinjer, o.delivery, event))
       });
     } catch (e) { console.log('[Vipps bekreftelse til kunde]', e.message); }
   }
@@ -787,11 +796,16 @@ app.post('/api/admin/christmas-orders/:id/bekreft-betaling', requireAdmin, async
       try {
         const produktlinjer = products.map(p => `${p.name} × ${p.qty} — ${p.price * p.qty} kr`).join('\n');
         const oForTekst = { full_name, address };
+        let event = null;
+        if (delivery === 'marked' && o.event_id) {
+          const [[eventRad]] = await pool.query(`SELECT * FROM eventer WHERE id = ?`, [o.event_id]);
+          event = eventRad || null;
+        }
         await transporter.sendMail({
           from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
           to: email.trim(),
           subject: `🎄 Bestillingsbekreftelse fra Kakefrue`,
-          html: julEpostHtml(full_name, bestillingsbekreftelseTekst(oForTekst, total, produktlinjer, delivery))
+          html: julEpostHtml(full_name, bestillingsbekreftelseTekst(oForTekst, total, produktlinjer, delivery, event))
         });
       } catch (mailErr) { console.log('[Christmas customer email] Not sent:', mailErr.message); }
     }
@@ -1406,18 +1420,33 @@ function esc(t) {
 // Meldingsteksten til bestillingsbekreftelsen (samme julepost-tema som hentemeldingene).
 // Kun bestillinger med henting/marked (ikke levering) har en fast avhentingsdag -
 // derfor star refusjons-forbeholdet kun der, og adressen far Google Maps-lenke.
+// `event` er den fulle raden fra `eventer`-tabellen nar levering === 'marked' (hentes av
+// kallerne under via o.event_id) - brukes til a vise faktisk dato/klokkeslett for markedet,
+// i stedet for a proppe alt inn i en enkelt "Adresse:"-linje slik det gjorde for.
 const JULEPOST_SIGNATUR = 'En varm juleklem sendes deg fra\nKakefrue';
-function bestillingsbekreftelseTekst(o, total, produktlinjer, levering) {
+const FOR_JUL_FORSIKRING = 'Alt er klart i god tid før jul – du får nøyaktig dag og klokkeslett fra meg nærmere.';
+const IKKE_HJEMME_TEKST = 'Er du ikke hjemme når jeg kommer, setter jeg bestillingen trygt i le, og sender deg beskjed om hvor du finner den.';
+function bestillingsbekreftelseTekst(o, total, produktlinjer, levering, event) {
   const fornavn = (o.full_name || '').trim().split(' ')[0];
   const erHenting = levering === 'henting' || levering === 'marked';
-  const adresse = levering === 'levering' ? (o.address || '')
-    : levering === 'marked' ? (o.address || '') : HENTEADRESSE;
-  // Levering: adressen star allerede i "Leveres til X" - ingen egen Adresse-linje
-  // (var dobbelt opp for). Henting/marked far en egen Adresse-linje siden
-  // "Hentes hos Kakefrue"/"Hentes pa julemarkedet" ikke selv nevner adressen.
-  const leveringstekst = levering === 'levering' ? `Leveres til ${adresse}`
-    : levering === 'marked' ? `Hentes på julemarkedet\nAdresse: ${adresse}` : `Hentes hos Kakefrue\nAdresse: ${adresse}`;
-  const kartLinje = adresse ? `\n📍 Åpne i Google Maps: ${googleMapsLenke(adresse)}` : '';
+  let leveringstekst, adresseLinje, forsikring;
+
+  if (levering === 'marked' && event) {
+    const dag = eventDatoTekst(event);
+    leveringstekst = `Hentes på julemarkedet: ${event.tittel}, ${dag}${event.fra ? ` kl. ${event.fra}–${event.til || ''}` : ''}`;
+    adresseLinje = event.adresse ? `\nAdresse: ${event.adresse}` : '';
+    forsikring = '';
+  } else if (levering === 'levering') {
+    leveringstekst = `Leveres til ${o.address || ''}`;
+    adresseLinje = '';
+    forsikring = `\n${FOR_JUL_FORSIKRING}\n${IKKE_HJEMME_TEKST}`;
+  } else {
+    leveringstekst = `Hentes hos Kakefrue`;
+    adresseLinje = `\nAdresse: ${HENTEADRESSE}`;
+    forsikring = `\n${FOR_JUL_FORSIKRING}`;
+  }
+  const adresseForKart = levering === 'marked' ? (event?.adresse || '') : levering === 'levering' ? (o.address || '') : HENTEADRESSE;
+  const kartLinje = adresseForKart ? `\n📍 Åpne i Google Maps: ${googleMapsLenke(adresseForKart)}` : '';
 
   return `Hei ${fornavn}!
 
@@ -1427,7 +1456,8 @@ Du har bestilt:
 ${produktlinjer}
 Totalt: ${total} kr
 
-${leveringstekst}${kartLinje}
+${leveringstekst}${adresseLinje}${kartLinje}
+${forsikring}
 ${erHenting ? '\nHvis bestillingen ikke hentes innen avtalt hentedag, bortfaller retten til refusjon.' : ''}
 
 ${JULEPOST_SIGNATUR}`;
