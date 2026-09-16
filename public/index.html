@@ -413,6 +413,7 @@ fetch('/api/reviews').then(r => r.json()).then(reviews => {
     return `<a class="event-pil${naermest ? ' event-pil-neste' : ''}" href="${lenke}"${apneNytt} title="${tittelAttr}">
       <span class="event-pil-dato">${d.getDate()}. ${mnd}</span>
       <span class="event-pil-navn">${esc(e.tittel)}</span>
+      ${e.fra ? `<span class="event-pil-tid">kl. ${e.fra}${e.til ? '–' + e.til : ''}</span>` : ''}
     </a>`;
   }).join('');
   document.getElementById('eventer').hidden = false;

@@ -863,6 +863,7 @@ html[style*="--side-foto"] body .info-boks {
 .event-pil:hover { box-shadow: 0 2px 8px rgba(61, 36, 32, 0.15); }
 .event-pil-neste { box-shadow: 0 0 0 2px #C4956A; font-weight: 600; }
 .event-pil-dato { font-weight: 700; color: #7A2A3E; }
+.event-pil-tid { font-size: 0.78em; color: rgba(61, 36, 32, 0.6); }
 @media (max-width: 480px) {
   .eventer-liste { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
 }
