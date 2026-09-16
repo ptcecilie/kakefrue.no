@@ -25,14 +25,23 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.disabled = true;
     submitBtn.textContent = 'Sender...';
 
+    // Kake og fyll velges hver for seg (to nedtrekksmenyer pr. valg), men slas
+    // sammen til én tekst her sa choice_1/2/3-feltene i databasen forblir uendret.
+    const kombiner = (kakeId, fyllId) => {
+      const kake = document.getElementById(kakeId).value;
+      const fyll = document.getElementById(fyllId).value;
+      if (kake && fyll) return `${kake} med ${fyll}`;
+      return kake || fyll || null;
+    };
+
     const data = {
       full_name: document.getElementById('full_name').value.trim(),
       phone: document.getElementById('phone').value.trim(),
       email: document.getElementById('email').value.trim() || null,
       preferred_date: document.getElementById('preferred_date').value || null,
-      choice_1: document.getElementById('choice_1').value || null,
-      choice_2: document.getElementById('choice_2').value || null,
-      choice_3: document.getElementById('choice_3').value || null,
+      choice_1: kombiner('choice_1_kake', 'choice_1_fyll'),
+      choice_2: kombiner('choice_2_kake', 'choice_2_fyll'),
+      choice_3: kombiner('choice_3_kake', 'choice_3_fyll'),
     };
 
     if (!data.full_name) {

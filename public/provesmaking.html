@@ -133,18 +133,19 @@
           <p style="font-size:0.85rem; opacity:0.65; margin-bottom:20px;">Velg opp til 3 smaker du ønsker å prøve</p>
 
           <div class="form-group">
-            <label class="form-label" for="choice_1">1. valg *</label>
-            <select class="form-select" id="choice_1" name="choice_1" required>
-              <option value="">-- Velg smak --</option>
-              <optgroup label="Kakesmak">
+            <label class="form-label">1. valg *</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <select class="form-select" id="choice_1_kake" name="choice_1_kake" required aria-label="1. valg - kakesmak">
+                <option value="">-- Kakesmak --</option>
                 <option>Sjokoladekake</option>
                 <option>Vaniljekake</option>
                 <option>Krydderkake</option>
                 <option>Gulrotkake</option>
                 <option>Sukkerbrødkake</option>
                 <option>Red Velvet</option>
-              </optgroup>
-              <optgroup label="Fyll">
+              </select>
+              <select class="form-select" id="choice_1_fyll" name="choice_1_fyll" aria-label="1. valg - fyll">
+                <option value="">-- Fyll (valgfritt) --</option>
                 <option>Vaniljesmørkrem</option>
                 <option>Karamellkrem</option>
                 <option>Kinderkrem</option>
@@ -153,22 +154,23 @@
                 <option>Oreokrem</option>
                 <option>Bringebærkrem</option>
                 <option>Jordbærkrem</option>
-              </optgroup>
-            </select>
+              </select>
+            </div>
           </div>
           <div class="form-group">
-            <label class="form-label" for="choice_2">2. valg</label>
-            <select class="form-select" id="choice_2" name="choice_2">
-              <option value="">-- Velg smak (valgfritt) --</option>
-              <optgroup label="Kakesmak">
+            <label class="form-label">2. valg</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <select class="form-select" id="choice_2_kake" name="choice_2_kake" aria-label="2. valg - kakesmak">
+                <option value="">-- Kakesmak (valgfritt) --</option>
                 <option>Sjokoladekake</option>
                 <option>Vaniljekake</option>
                 <option>Krydderkake</option>
                 <option>Gulrotkake</option>
                 <option>Sukkerbrødkake</option>
                 <option>Red Velvet</option>
-              </optgroup>
-              <optgroup label="Fyll">
+              </select>
+              <select class="form-select" id="choice_2_fyll" name="choice_2_fyll" aria-label="2. valg - fyll">
+                <option value="">-- Fyll (valgfritt) --</option>
                 <option>Vaniljesmørkrem</option>
                 <option>Karamellkrem</option>
                 <option>Kinderkrem</option>
@@ -177,22 +179,23 @@
                 <option>Oreokrem</option>
                 <option>Bringebærkrem</option>
                 <option>Jordbærkrem</option>
-              </optgroup>
-            </select>
+              </select>
+            </div>
           </div>
           <div class="form-group">
-            <label class="form-label" for="choice_3">3. valg</label>
-            <select class="form-select" id="choice_3" name="choice_3">
-              <option value="">-- Velg smak (valgfritt) --</option>
-              <optgroup label="Kakesmak">
+            <label class="form-label">3. valg</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <select class="form-select" id="choice_3_kake" name="choice_3_kake" aria-label="3. valg - kakesmak">
+                <option value="">-- Kakesmak (valgfritt) --</option>
                 <option>Sjokoladekake</option>
                 <option>Vaniljekake</option>
                 <option>Krydderkake</option>
                 <option>Gulrotkake</option>
                 <option>Sukkerbrødkake</option>
                 <option>Red Velvet</option>
-              </optgroup>
-              <optgroup label="Fyll">
+              </select>
+              <select class="form-select" id="choice_3_fyll" name="choice_3_fyll" aria-label="3. valg - fyll">
+                <option value="">-- Fyll (valgfritt) --</option>
                 <option>Vaniljesmørkrem</option>
                 <option>Karamellkrem</option>
                 <option>Kinderkrem</option>
@@ -201,8 +204,8 @@
                 <option>Oreokrem</option>
                 <option>Bringebærkrem</option>
                 <option>Jordbærkrem</option>
-              </optgroup>
-            </select>
+              </select>
+            </div>
           </div>
 
           <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:8px;" id="submitBtn">
