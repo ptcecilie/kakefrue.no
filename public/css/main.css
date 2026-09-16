@@ -826,18 +826,20 @@ html[style*="--side-foto"] body .info-boks {
 /* ============================================================
    Kommende eventer (forsiden) – innhold fra admin -> Eventer
    ============================================================ */
+.eventer-innhold { max-width: 340px; }
+.eventer-innhold .section-title,
+.eventer-innhold .section-subtitle { text-align: left; }
+.eventer-innhold .section-subtitle { margin-bottom: 28px; }
 .eventer-liste {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  max-width: 640px;
-  margin: 0 auto;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 .event-kort {
   position: relative;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.94);
+  background: #F2E6D2;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -845,20 +847,20 @@ html[style*="--side-foto"] body .info-boks {
 .event-naermest { box-shadow: 0 0 0 2px #C4956A, var(--shadow); }
 .event-neste-merke {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 8px;
+  right: 8px;
   z-index: 2;
-  padding: 3px 10px;
+  padding: 2px 9px;
   border-radius: 999px;
   background: #C4956A;
   color: #fff;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .event-kort-bilde {
-  height: 84px;
+  height: 56px;
   background-image: url('/assets/jul-hero.jpg');
   background-size: cover;
   background-position: center;
@@ -866,33 +868,31 @@ html[style*="--side-foto"] body .info-boks {
 }
 .event-kort-rad {
   display: flex;
-  gap: 14px;
+  gap: 10px;
   align-items: flex-start;
-  padding: 16px;
+  padding: 12px;
 }
 .event-dato {
   flex-shrink: 0;
-  width: 52px;
-  padding: 8px 0 7px;
-  border-radius: 10px;
+  width: 42px;
+  padding: 6px 0 5px;
+  border-radius: 8px;
   background: #7A2A3E;
   color: #fff;
   text-align: center;
   line-height: 1;
 }
-.event-dag { display: block; font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; }
-.event-mnd { display: block; margin-top: 4px; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.event-dag { display: block; font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; }
+.event-mnd { display: block; margin-top: 3px; font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; }
 .event-info { min-width: 0; }
-.event-info h3 { font-size: 1rem; margin-bottom: 3px; text-wrap: balance; }
-.event-info p { margin-bottom: 3px; font-size: 0.82rem; }
+.event-info h3 { font-size: 0.86rem; margin-bottom: 2px; text-wrap: balance; }
+.event-info p { margin-bottom: 2px; font-size: 0.72rem; }
 .event-tid { font-weight: 700; }
 .event-sted { color: rgba(61, 36, 32, 0.72); }
 .event-sted a { color: #9B3A52; font-weight: 700; }
-.event-tekst { margin-top: 6px !important; }
-.event-knapp { margin-top: 10px; font-size: 0.85rem; padding: 8px 16px; }
-.event-frist { display: block; margin-top: 6px; font-size: 0.72rem; color: rgba(61, 36, 32, 0.62); }
+.event-tekst { margin-top: 4px !important; }
+.event-knapp { margin-top: 8px; font-size: 0.74rem; padding: 6px 12px; }
+.event-frist { display: block; margin-top: 4px; font-size: 0.64rem; color: rgba(61, 36, 32, 0.62); }
 @media (max-width: 480px) {
-  .eventer-liste { grid-template-columns: 1fr; }
-  .event-kort-rad { padding: 14px; gap: 12px; }
-  .event-dato { width: 48px; }
+  .eventer-innhold { max-width: none; }
 }

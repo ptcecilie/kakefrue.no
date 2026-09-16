@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kakefrue – Håndlagde kaker i Porsgrunn</title>
   <meta name="description" content="Kakefrue lager unike, håndlagde kaker til dine spesielle anledninger i Porsgrunn. Bryllupskaker, bursdagskaker, konfirmasjonskaker og mer.">
-  <link rel="stylesheet" href="/css/main.css?v=6.1">
+  <link rel="stylesheet" href="/css/main.css?v=6.2">
 </head>
 <body>
 
@@ -74,14 +74,15 @@
   </div>
 
   <!-- Kommende eventer – styres fra admin -> Eventer. Skjult når det ikke er noen.
-       farget-band + egen bakgrunn: unngar den globale --side-foto-hvitoverlayen,
-       #F2E6D2 er bevisst litt morkere enn --cream for kontrast mot resten av forsiden. -->
-  <section class="eventer-seksjon farget-band" id="eventer" hidden style="background:#F2E6D2;">
+       farget-band + egen bakgrunn: unngar den globale --side-foto-hvitoverlayen. -->
+  <section class="eventer-seksjon farget-band" id="eventer" hidden style="background:var(--cream);">
     <div class="container">
-      <span class="tag tag-gold" style="margin-bottom:12px;">🎄 Kommende eventer</span>
-      <h2 class="section-title">Møt Kakefrue</h2>
-      <p class="section-subtitle">Her kan du treffe Kakefrue</p>
-      <div class="eventer-liste" id="eventerListe"></div>
+      <div class="eventer-innhold">
+        <span class="tag tag-gold" style="margin-bottom:12px;">🎄 Kommende eventer</span>
+        <h2 class="section-title">Møt Kakefrue</h2>
+        <p class="section-subtitle">Her kan du treffe Kakefrue</p>
+        <div class="eventer-liste" id="eventerListe"></div>
+      </div>
     </div>
   </section>
 
