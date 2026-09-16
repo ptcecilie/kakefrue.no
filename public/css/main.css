@@ -434,37 +434,22 @@ section { padding: var(--section-padding); }
 .gallery-nav:hover { background: var(--rose); transform: scale(1.08); }
 
 /* ============================================================
-   Reviews Carousel
+   Reviews Carousel - samme pil+auto-rulle-system som bilde-galleriet
+   (JS-drevet transform, se reviewsNav()/startReviewsAuto() i index.html)
    ============================================================ */
 .reviews-carousel {
   position: relative;
   overflow: hidden;
+  flex: 1;
 }
 .reviews-track {
   display: flex;
   gap: 24px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  padding-bottom: 8px;
+  will-change: transform;
 }
-.reviews-track::-webkit-scrollbar { display: none; }
-
-/* Rullende bånd – settes på av JS når anbefalingene er lastet */
-.reviews-track.ruller {
-  overflow: hidden;
-  scroll-snap-type: none;
-  width: max-content;
-  animation: anbefalingRull 70s linear infinite;
-}
-.reviews-carousel:hover .reviews-track.ruller { animation-play-state: paused; }
-@keyframes anbefalingRull {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .reviews-track.ruller { animation: none; overflow-x: auto; width: auto; }
-}
+/* Kun ved klikk pa pil-knappene - IKKE under auto-rullingen, se samme
+   fix som .gallery-track for a unnga hakkete/ristende bevegelse. */
+.reviews-track.reviews-nav-transition { transition: transform 0.3s ease; }
 /* Bilde i anbefalingskort på forsiden */
 .review-card img.review-foto {
   width: 100%; aspect-ratio: 4/3; object-fit: cover;
@@ -831,33 +816,47 @@ html[style*="--side-foto"] body .info-boks {
    ============================================================ */
 .eventer-strip {
   display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+}
+.eventer-strip-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 12px 16px;
+  gap: 4px 10px;
 }
 .eventer-strip-label {
   flex-shrink: 0;
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.98rem;
   color: var(--gold-dark);
+}
+.eventer-strip-hint {
+  font-size: 0.78rem;
+  color: rgba(61, 36, 32, 0.55);
 }
 .eventer-liste {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
   min-width: 0;
 }
 .event-pil {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 13px;
+  gap: 8px;
+  padding: 8px 16px;
   border-radius: 999px;
   background: #F2E6D2;
   color: var(--brown);
   text-decoration: none;
-  font-size: 0.76rem;
+  font-size: 0.86rem;
   white-space: nowrap;
   transition: box-shadow 0.15s;
 }

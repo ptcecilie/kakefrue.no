@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kakefrue – Håndlagde kaker i Porsgrunn</title>
   <meta name="description" content="Kakefrue lager unike, håndlagde kaker til dine spesielle anledninger i Porsgrunn. Bryllupskaker, bursdagskaker, konfirmasjonskaker og mer.">
-  <link rel="stylesheet" href="/css/main.css?v=6.3">
+  <link rel="stylesheet" href="/css/main.css?v=6.5">
 </head>
 <body>
 
@@ -76,9 +76,12 @@
   <!-- Kommende eventer – styres fra admin -> Eventer. Skjult når det ikke er noen.
        Smal stripe med pills (dato+navn) - skal ta minst mulig plass over resten av forsiden.
        farget-band + egen bakgrunn: unngar den globale --side-foto-hvitoverlayen. -->
-  <section class="eventer-seksjon farget-band" id="eventer" hidden style="background:var(--cream); padding:22px 24px;">
+  <section class="eventer-seksjon farget-band" id="eventer" hidden style="background:var(--cream); padding:26px 24px;">
     <div class="container eventer-strip">
-      <span class="eventer-strip-label">🎄 Kommende eventer</span>
+      <div class="eventer-strip-heading">
+        <span class="eventer-strip-label">🎄 Kommende eventer</span>
+        <span class="eventer-strip-hint">Trykk på et marked for å bestille til henting der</span>
+      </div>
       <div class="eventer-liste" id="eventerListe"></div>
     </div>
   </section>
@@ -129,25 +132,29 @@
     <div class="container">
       <h2 class="section-title">Hva kundene sier</h2>
       <p class="section-subtitle">Ekte tilbakemeldinger fra glade kunder</p>
-      <div class="reviews-carousel">
-        <div class="reviews-track" id="reviewsTrack">
-          <!-- Loaded from API -->
-          <div class="review-card">
-            <div class="review-stars">★★★★★</div>
-            <p class="review-text">"Bryllupskaken var både en fryd og se på, og smakte like god som den så ut 🤤 Denne dama er helt rå! Lytter til det kunden ønsker og kan virkelig levere!"</p>
-            <span class="review-author">— Christine</span>
-          </div>
-          <div class="review-card">
-            <div class="review-stars">★★★★★</div>
-            <p class="review-text">"Veldig fornøyd med kaken vi bestilte til sønnen min sin konfirmasjon🤩 Vi sa hva vi ønsket av dekor og KakeFrue satt sammen et lite kunstverk❤️"</p>
-            <span class="review-author">— Elise</span>
-          </div>
-          <div class="review-card">
-            <div class="review-stars">★★★★★</div>
-            <p class="review-text">"Kakefrue bakte en 6-trinns bryllupskake til oss, som både så og smakte helt vidunderlig 🥰 Kan varmt anbefales."</p>
-            <span class="review-author">— Synne</span>
+      <div class="gallery-carousel-wrap">
+        <button class="gallery-nav gallery-nav-prev" onclick="reviewsNav(-1)" aria-label="Forrige">&#8249;</button>
+        <div class="reviews-carousel">
+          <div class="reviews-track" id="reviewsTrack">
+            <!-- Loaded from API -->
+            <div class="review-card">
+              <div class="review-stars">★★★★★</div>
+              <p class="review-text">"Bryllupskaken var både en fryd og se på, og smakte like god som den så ut 🤤 Denne dama er helt rå! Lytter til det kunden ønsker og kan virkelig levere!"</p>
+              <span class="review-author">— Christine</span>
+            </div>
+            <div class="review-card">
+              <div class="review-stars">★★★★★</div>
+              <p class="review-text">"Veldig fornøyd med kaken vi bestilte til sønnen min sin konfirmasjon🤩 Vi sa hva vi ønsket av dekor og KakeFrue satt sammen et lite kunstverk❤️"</p>
+              <span class="review-author">— Elise</span>
+            </div>
+            <div class="review-card">
+              <div class="review-stars">★★★★★</div>
+              <p class="review-text">"Kakefrue bakte en 6-trinns bryllupskake til oss, som både så og smakte helt vidunderlig 🥰 Kan varmt anbefales."</p>
+              <span class="review-author">— Synne</span>
+            </div>
           </div>
         </div>
+        <button class="gallery-nav gallery-nav-next" onclick="reviewsNav(1)" aria-label="Neste">&#8250;</button>
       </div>
       <div style="text-align:center; margin-top:32px;">
         <a href="/anbefalinger.html" class="btn btn-outline">Se alle anbefalinger</a>
@@ -325,6 +332,47 @@ fetch('/api/photos').then(r => r.json()).then(photos => {
   startGalleryAuto();
 }).catch(() => {});
 
+// Reviews carousel - samme JS-drevne pil+auto-rulle-system som bilde-galleriet
+// over (galleryNav/startGalleryAuto), inkludert samme fix mot hakkete bevegelse
+// (transition kun ved pil-klikk, ikke under den kontinuerlige auto-rullingen).
+let reviewsOffset = 0, reviewsCount = 0, reviewsAutoTimer = null, reviewsPaused = false, reviewsNavTransitionTimer = null;
+const REVIEW_ITEM_W = 340 + 24; // bredde + gap
+
+function reviewsRender() {
+  const track = document.getElementById('reviewsTrack');
+  if (!track) return;
+  track.style.transform = `translateX(${-reviewsOffset}px)`;
+}
+function reviewsNav(dir) {
+  if (!reviewsCount) return;
+  const track = document.getElementById('reviewsTrack');
+  track.classList.add('reviews-nav-transition');
+  reviewsOffset = Math.max(0, Math.min(reviewsOffset + dir * REVIEW_ITEM_W, reviewsCount * REVIEW_ITEM_W - REVIEW_ITEM_W));
+  reviewsRender();
+  clearTimeout(reviewsNavTransitionTimer);
+  reviewsNavTransitionTimer = setTimeout(() => track.classList.remove('reviews-nav-transition'), 320);
+  resetReviewsAuto();
+}
+function startReviewsAuto() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  reviewsAutoTimer = setInterval(() => {
+    if (reviewsPaused || !reviewsCount) return;
+    reviewsOffset += 1;
+    const maxOffset = reviewsCount * REVIEW_ITEM_W - REVIEW_ITEM_W;
+    if (reviewsOffset >= maxOffset) reviewsOffset = 0;
+    reviewsRender();
+  }, 20);
+}
+function resetReviewsAuto() {
+  clearInterval(reviewsAutoTimer);
+  setTimeout(startReviewsAuto, 2000);
+}
+const reviewsCarousel = document.querySelector('.reviews-carousel');
+if (reviewsCarousel) {
+  reviewsCarousel.addEventListener('mouseenter', () => { reviewsPaused = true; });
+  reviewsCarousel.addEventListener('mouseleave', () => { reviewsPaused = false; });
+}
+
 // Load reviews from API
 fetch('/api/reviews').then(r => r.json()).then(reviews => {
   if (!reviews.length) return;
@@ -336,18 +384,9 @@ fetch('/api/reviews').then(r => r.json()).then(reviews => {
       <p class="review-text">"${r.review_text}"</p>
       <span class="review-author">— ${r.customer_name}</span>
     </div>`;
-  // Dobbelt sett gjør at båndet kan rulle sømløst rundt
-  track.innerHTML = [...reviews, ...reviews].map(kort).join('');
-  if (reviews.length > 2) {
-    track.classList.add('ruller');
-    // Fast piksel-hastighet uansett antall anmeldelser - varigheten skaleres etter
-    // bredden på ett sett (halve båndet, siden det er duplisert), ikke et fast antall sekunder.
-    requestAnimationFrame(() => {
-      const settBredde = track.scrollWidth / 2;
-      const PX_PER_SEK = 45;
-      track.style.animationDuration = Math.max(20, settBredde / PX_PER_SEK) + 's';
-    });
-  }
+  track.innerHTML = reviews.map(kort).join('');
+  reviewsCount = reviews.length;
+  if (reviews.length > 2) startReviewsAuto();
 }).catch(() => {});
 </script>
 <script>
