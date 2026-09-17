@@ -289,6 +289,7 @@
       <div class="admin-nav-item" data-panel="etiketter"><span class="icon">🏷️</span> Etiketter</div>
       <div class="admin-nav-item" data-panel="bilder"><span class="icon">🖼️</span> Bilder</div>
       <div class="admin-nav-item" data-panel="statistikk"><span class="icon">📈</span> Statistikk</div>
+      <div class="admin-nav-item" data-panel="naring"><span class="icon">🧮</span> Næringskalkulator</div>
       <div class="admin-nav-item" data-panel="innstillinger"><span class="icon">⚙️</span> Innstillinger</div>
     </nav>
     <div class="admin-sidebar-footer">© 2026 Kakefrue</div>
@@ -651,6 +652,45 @@
         <div style="background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px;">
           <h3 style="margin-bottom:20px;">Designnivå</h3>
           <div id="chartDesign"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-panel" id="panel-naring">
+      <div class="section-header"><h2>🧮 Næringskalkulator</h2></div>
+      <p style="font-size:0.85rem;opacity:0.65;margin-bottom:24px;max-width:640px;line-height:1.6;">
+        Legg inn en hel oppskrift med mengder, og få næringsinnholdet regnet ut per 100 g og per stykk/emne.
+        Ingrediensene under er forhåndsutfylt med vanlige, standard næringsverdier – juster gjerne til det som står på din egen emballasje for nøyaktig deklarasjon.
+      </p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
+        <!-- Ingrediensbibliotek -->
+        <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 26px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h3 style="margin:0;">Ingrediensbibliotek</h3>
+            <button class="btn btn-outline btn-sm" onclick="visNyIngrediensSkjema()">+ Ny ingrediens</button>
+          </div>
+          <p style="font-size:0.78rem;opacity:0.55;margin-bottom:14px;">Verdier per 100 g. Trykk på en ingrediens for å endre eller slette.</p>
+          <div id="ingrediensSkjema" class="hidden" style="background:rgba(201,168,132,0.08);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px;"></div>
+          <div id="ingrediensListe" style="max-height:420px;overflow-y:auto;"></div>
+        </div>
+
+        <!-- Beregn oppskrift -->
+        <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 26px;">
+          <h3 style="margin-bottom:14px;">Beregn oppskrift</h3>
+          <div class="form-group">
+            <label class="form-label">Navn på oppskrift <span style="font-weight:300;opacity:.55;">(valgfritt, for egen referanse)</span></label>
+            <input class="form-input" id="naringOppskriftNavn" placeholder="f.eks. Kling">
+          </div>
+          <div id="naringRader"></div>
+          <button class="btn btn-outline btn-sm" onclick="leggTilNaringRad()" style="margin-top:4px;">+ Legg til ingrediens</button>
+
+          <div class="form-group" style="margin-top:18px;">
+            <label class="form-label">Antall stykker/emner oppskriften gir</label>
+            <input class="form-input" type="number" id="naringAntallStk" min="1" value="1" oninput="beregnNaring()">
+          </div>
+
+          <div id="naringResultat" style="margin-top:20px;"></div>
         </div>
       </div>
     </div>

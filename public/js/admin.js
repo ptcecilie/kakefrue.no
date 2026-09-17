@@ -128,6 +128,7 @@ function loadPanel(panel) {
     case 'spesial': loadSpesial(); break;
     case 'etiketter': loadEtiketter(); break;
     case 'statistikk': loadStatistikk(); break;
+    case 'naring': loadNaringskalkulator(); break;
     case 'innstillinger': loadSettings(); break;
   }
 }
@@ -2867,4 +2868,233 @@ async function slettSpesial(id) {
     await api('/api/admin/special-requests/' + id, { method: 'DELETE' });
     loadSpesial();
   } catch (e) { alert('Kunne ikke slette: ' + e.message); }
+}
+
+// ── Næringskalkulator ─────────────────────────────────────
+// Ingrediensbiblioteket lagres i settings (samme generiske mønster som
+// etikett_produkter/jul_produkter). Selve oppskrift-beregningen i et gitt
+// øyeblikk lagres IKKE mellom besøk - bruk "Kopier som tekst" for å ta vare
+// på et resultat. Standardverdiene under er vanlige, generelle næringstall
+// (ikke fra en spesifikk kilde) - Cecilie bør justere til egen emballasje
+// for en presis deklarasjon.
+let naringIngredienser = [];
+let naringRaderState = [];
+
+const NARING_STANDARD_INGREDIENSER = [
+  { navn: 'Hvetemel', kcal: 340, fett: 1, mettet: 0.2, karbo: 70, sukker: 0.3, protein: 10, salt: 0 },
+  { navn: 'Sukker (hvitt)', kcal: 400, fett: 0, mettet: 0, karbo: 100, sukker: 100, protein: 0, salt: 0 },
+  { navn: 'Smør', kcal: 720, fett: 80, mettet: 51, karbo: 0.5, sukker: 0.5, protein: 0.5, salt: 0.02 },
+  { navn: 'Egg', kcal: 155, fett: 11, mettet: 3.3, karbo: 1.1, sukker: 1.1, protein: 13, salt: 0.3 },
+  { navn: 'Helmelk', kcal: 61, fett: 3.3, mettet: 2.1, karbo: 4.7, sukker: 4.7, protein: 3.2, salt: 0.1 },
+  { navn: 'Kremfløte (36%)', kcal: 340, fett: 36, mettet: 23, karbo: 2.7, sukker: 2.7, protein: 2.1, salt: 0.05 },
+  { navn: 'Kremost naturell', kcal: 245, fett: 23, mettet: 15, karbo: 4, sukker: 3.5, protein: 5.9, salt: 0.7 },
+  { navn: 'Melkesjokolade', kcal: 535, fett: 30, mettet: 18, karbo: 57, sukker: 56, protein: 7.6, salt: 0.2 },
+  { navn: 'Mørk sjokolade', kcal: 546, fett: 31, mettet: 19, karbo: 61, sukker: 47, protein: 4.9, salt: 0.02 },
+  { navn: 'Bakepulver', kcal: 53, fett: 0, mettet: 0, karbo: 28, sukker: 0, protein: 0, salt: 1.5 },
+  { navn: 'Vaniljesukker', kcal: 390, fett: 0, mettet: 0, karbo: 98, sukker: 95, protein: 0, salt: 0 },
+  { navn: 'Gulrot', kcal: 41, fett: 0.2, mettet: 0, karbo: 10, sukker: 4.7, protein: 0.9, salt: 0.07 },
+  { navn: 'Valnøtter', kcal: 654, fett: 65, mettet: 6, karbo: 14, sukker: 2.6, protein: 15, salt: 0 },
+  { navn: 'Marsipan', kcal: 435, fett: 18, mettet: 1.6, karbo: 63, sukker: 60, protein: 6.9, salt: 0.05 },
+  { navn: 'Rømme (35%)', kcal: 335, fett: 35, mettet: 22, karbo: 3.5, sukker: 3.5, protein: 2.3, salt: 0.05 }
+];
+
+async function loadNaringskalkulator() {
+  try {
+    const s = await api('/api/admin/settings');
+    naringIngredienser = s.naring_ingredienser ? JSON.parse(s.naring_ingredienser) : null;
+    if (!naringIngredienser || !naringIngredienser.length) {
+      naringIngredienser = NARING_STANDARD_INGREDIENSER.slice();
+      await lagreNaringIngredienser();
+    }
+  } catch (e) {
+    naringIngredienser = NARING_STANDARD_INGREDIENSER.slice();
+  }
+  renderIngrediensListe();
+  if (!naringRaderState.length) leggTilNaringRad();
+  beregnNaring();
+}
+
+async function lagreNaringIngredienser() {
+  await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ naring_ingredienser: JSON.stringify(naringIngredienser) }) });
+}
+
+function renderIngrediensListe() {
+  $('ingrediensListe').innerHTML = naringIngredienser.map((ing, i) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.06);font-size:0.85rem;">
+      <div>
+        <strong>${ing.navn}</strong>
+        <div style="opacity:0.55;font-size:0.78rem;">${ing.kcal} kcal · ${ing.fett}g fett · ${ing.karbo}g karbo · ${ing.protein}g protein</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="btn btn-outline btn-sm" style="padding:3px 9px;" onclick="visNyIngrediensSkjema(${i})">Rediger</button>
+        <button class="photo-delete-btn" style="padding:3px 9px;" onclick="slettIngrediens(${i})">🗑</button>
+      </div>
+    </div>`).join('');
+  renderNaringRader();
+}
+
+function visNyIngrediensSkjema(redigerIndex) {
+  const redigering = typeof redigerIndex === 'number';
+  const ing = redigering ? naringIngredienser[redigerIndex] : { navn: '', kcal: '', fett: '', mettet: '', karbo: '', sukker: '', protein: '', salt: '' };
+  const felt = (label, key, verdi) => `
+    <div class="form-group" style="margin-bottom:8px;">
+      <label class="form-label" style="font-size:0.75rem;">${label}</label>
+      <input class="form-input" id="ningF_${key}" type="${key === 'navn' ? 'text' : 'number'}" step="0.1" value="${verdi}">
+    </div>`;
+  $('ingrediensSkjema').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;">
+      ${felt('Navn', 'navn', ing.navn)}
+      ${felt('Kcal per 100g', 'kcal', ing.kcal)}
+      ${felt('Fett (g)', 'fett', ing.fett)}
+      ${felt('- hvorav mettet (g)', 'mettet', ing.mettet)}
+      ${felt('Karbohydrat (g)', 'karbo', ing.karbo)}
+      ${felt('- hvorav sukker (g)', 'sukker', ing.sukker)}
+      ${felt('Protein (g)', 'protein', ing.protein)}
+      ${felt('Salt (g)', 'salt', ing.salt)}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn btn-primary btn-sm" onclick="lagreNyIngrediens(${redigering ? redigerIndex : 'null'})">Lagre</button>
+      <button class="btn btn-outline btn-sm" onclick="$('ingrediensSkjema').classList.add('hidden')">Avbryt</button>
+    </div>`;
+  $('ingrediensSkjema').classList.remove('hidden');
+}
+
+async function lagreNyIngrediens(redigerIndex) {
+  const les = key => parseFloat($('ningF_' + key).value) || 0;
+  const navn = $('ningF_navn').value.trim();
+  if (!navn) { alert('Skriv inn et navn'); return; }
+  const nyIng = { navn, kcal: les('kcal'), fett: les('fett'), mettet: les('mettet'), karbo: les('karbo'), sukker: les('sukker'), protein: les('protein'), salt: les('salt') };
+  if (redigerIndex !== null && redigerIndex !== undefined) {
+    const gammelNavn = naringIngredienser[redigerIndex].navn;
+    naringIngredienser[redigerIndex] = nyIng;
+    naringRaderState.forEach(rad => { if (rad.ingrediensNavn === gammelNavn) rad.ingrediensNavn = navn; });
+  } else {
+    naringIngredienser.push(nyIng);
+  }
+  await lagreNaringIngredienser();
+  $('ingrediensSkjema').classList.add('hidden');
+  renderIngrediensListe();
+  beregnNaring();
+}
+
+async function slettIngrediens(i) {
+  if (!confirm('Slette ' + naringIngredienser[i].navn + ' fra biblioteket?')) return;
+  naringIngredienser.splice(i, 1);
+  await lagreNaringIngredienser();
+  renderIngrediensListe();
+  beregnNaring();
+}
+
+function leggTilNaringRad() {
+  naringRaderState.push({ ingrediensNavn: naringIngredienser[0]?.navn || '', gram: '' });
+  renderNaringRader();
+}
+function fjernNaringRad(i) {
+  naringRaderState.splice(i, 1);
+  renderNaringRader();
+  beregnNaring();
+}
+function oppdaterNaringRad(i, felt, verdi) {
+  naringRaderState[i][felt] = verdi;
+  beregnNaring();
+}
+function renderNaringRader() {
+  naringRaderState.forEach(rad => {
+    if (!naringIngredienser.find(ing => ing.navn === rad.ingrediensNavn)) {
+      rad.ingrediensNavn = naringIngredienser[0]?.navn || '';
+    }
+  });
+  $('naringRader').innerHTML = naringRaderState.map((rad, i) => `
+    <div style="display:grid;grid-template-columns:1fr 90px 28px;gap:8px;margin-bottom:8px;align-items:center;">
+      <select class="form-input" onchange="oppdaterNaringRad(${i}, 'ingrediensNavn', this.value)">
+        ${naringIngredienser.map(ing => `<option value="${ing.navn}" ${ing.navn === rad.ingrediensNavn ? 'selected' : ''}>${ing.navn}</option>`).join('')}
+      </select>
+      <input class="form-input" type="number" min="0" placeholder="gram" value="${rad.gram}" oninput="oppdaterNaringRad(${i}, 'gram', this.value)">
+      <button class="photo-delete-btn" style="padding:6px;" onclick="fjernNaringRad(${i})">✕</button>
+    </div>`).join('');
+}
+
+function naringTotals() {
+  const totals = { vekt: 0, kcal: 0, fett: 0, mettet: 0, karbo: 0, sukker: 0, protein: 0, salt: 0 };
+  naringRaderState.forEach(rad => {
+    const ing = naringIngredienser.find(x => x.navn === rad.ingrediensNavn);
+    const gram = parseFloat(rad.gram) || 0;
+    if (!ing || !gram) return;
+    const faktor = gram / 100;
+    totals.vekt += gram;
+    totals.kcal += ing.kcal * faktor;
+    totals.fett += ing.fett * faktor;
+    totals.mettet += ing.mettet * faktor;
+    totals.karbo += ing.karbo * faktor;
+    totals.sukker += ing.sukker * faktor;
+    totals.protein += ing.protein * faktor;
+    totals.salt += ing.salt * faktor;
+  });
+  return totals;
+}
+
+function beregnNaring() {
+  const totals = naringTotals();
+  const antallStk = parseInt($('naringAntallStk')?.value) || 1;
+  const rund = n => Math.round(n * 10) / 10;
+  const kJ = kcal => Math.round(kcal * 4.184);
+
+  if (!totals.vekt) {
+    $('naringResultat').innerHTML = '<p style="opacity:0.5;font-size:0.85rem;">Legg til ingredienser med mengde for å se beregningen.</p>';
+    return;
+  }
+  const per100 = f => totals[f] / totals.vekt * 100;
+  const perStk = f => totals[f] / antallStk;
+  const rad = (label, felt, enhet) => `
+    <tr>
+      <td style="padding:5px 0;">${label}</td>
+      <td style="text-align:right;padding:5px 0;">${rund(per100(felt))}${enhet}</td>
+      <td style="text-align:right;padding:5px 0;">${rund(perStk(felt))}${enhet}</td>
+    </tr>`;
+
+  $('naringResultat').innerHTML = `
+    <div style="background:rgba(201,168,132,0.08);border-radius:var(--radius-sm);padding:16px 18px;">
+      <p style="font-size:0.82rem;opacity:0.7;margin-bottom:10px;">Total vekt: <strong>${rund(totals.vekt)} g</strong> · ca. ${rund(totals.vekt / antallStk)} g per stykk</p>
+      <table style="width:100%;font-size:0.85rem;border-collapse:collapse;">
+        <tr style="border-bottom:1px solid rgba(0,0,0,0.12);font-weight:700;">
+          <td style="padding:5px 0;">Næringsinnhold</td>
+          <td style="text-align:right;padding:5px 0;">per 100 g</td>
+          <td style="text-align:right;padding:5px 0;">per stk</td>
+        </tr>
+        <tr>
+          <td style="padding:5px 0;">Energi</td>
+          <td style="text-align:right;padding:5px 0;">${kJ(per100('kcal'))} kJ / ${rund(per100('kcal'))} kcal</td>
+          <td style="text-align:right;padding:5px 0;">${kJ(perStk('kcal'))} kJ / ${rund(perStk('kcal'))} kcal</td>
+        </tr>
+        ${rad('Fett', 'fett', ' g')}
+        ${rad('- hvorav mettede fettsyrer', 'mettet', ' g')}
+        ${rad('Karbohydrater', 'karbo', ' g')}
+        ${rad('- hvorav sukkerarter', 'sukker', ' g')}
+        ${rad('Protein', 'protein', ' g')}
+        ${rad('Salt', 'salt', ' g')}
+      </table>
+      <button class="btn btn-outline btn-sm" style="margin-top:14px;" onclick="kopierNaringstekst()">📋 Kopier som tekst</button>
+      <span id="naringKopiStatus" style="font-size:0.8rem;margin-left:8px;"></span>
+    </div>`;
+}
+
+function kopierNaringstekst() {
+  const totals = naringTotals();
+  if (!totals.vekt) return;
+  const per100 = f => totals[f] / totals.vekt * 100;
+  const rund = n => Math.round(n * 10) / 10;
+  const kJ = kcal => Math.round(kcal * 4.184);
+  const navn = $('naringOppskriftNavn').value.trim() || 'Produkt';
+  const tekst = `${navn} – Næringsinnhold per 100 g:
+Energi: ${kJ(per100('kcal'))} kJ / ${rund(per100('kcal'))} kcal
+Fett: ${rund(per100('fett'))} g
+  hvorav mettede fettsyrer: ${rund(per100('mettet'))} g
+Karbohydrater: ${rund(per100('karbo'))} g
+  hvorav sukkerarter: ${rund(per100('sukker'))} g
+Protein: ${rund(per100('protein'))} g
+Salt: ${rund(per100('salt'))} g`;
+  navigator.clipboard.writeText(tekst).then(() => {
+    $('naringKopiStatus').textContent = '✓ Kopiert';
+    setTimeout(() => { $('naringKopiStatus').textContent = ''; }, 2000);
+  });
 }
