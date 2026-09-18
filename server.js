@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { pool, initDB } = require('./db');
 const { createSumUpCheckout, getSumUpCheckoutStatus, handlePaymentSuccess } = require('./payments');
-const { sendTastingConfirmation, sendCourseConfirmation, createTransporter } = require('./email');
+const { sendTastingConfirmation, sendCourseConfirmation, createTransporter, absoluttBilde } = require('./email');
 const crypto = require('crypto');
 const {
   vippsAktiv, opprettBetaling, hentBetaling, trekkBetaling,
@@ -395,25 +395,20 @@ app.post('/api/course-interests', async (req, res) => {
     );
 
     try {
-      const [courseRows] = await pool.query(`SELECT title FROM courses WHERE id = ?`, [course_id]);
-      const courseTitle = courseRows[0]?.title || 'Ukjent kurs';
+      const [courseRows] = await pool.query(`SELECT title, image_url FROM courses WHERE id = ?`, [course_id]);
+      const c = courseRows[0] || {};
+      const courseTitle = c.title || 'Ukjent kurs';
+      const bilde = absoluttBilde(c.image_url, `${nettstedUrl()}/assets/kurs-hero.jpg`);
       const transporter = createTransporter();
       await transporter.sendMail({
         from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
         to: 'cecilie@kakefrue.no',
         subject: `💭 Ny interesse for kurs – ${courseTitle}`,
-        html: `
-          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
-            <h2 style="color:#3D2B5A;">Noen har meldt interesse for et kurs!</h2>
-            <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-              <tr><td style="padding:6px 0;opacity:0.6;width:120px;">Kurs</td><td><strong>${courseTitle}</strong></td></tr>
-              <tr><td style="padding:6px 0;opacity:0.6;">Navn</td><td><strong>${full_name.trim()}</strong></td></tr>
-              <tr><td style="padding:6px 0;opacity:0.6;">Telefon</td><td>${phone.trim()}</td></tr>
-            </table>
-            <p><a href="https://www.kakefrue.no/admin.html" style="color:#8B72BE;">Gå til adminpanelet →</a></p>
-            <p style="font-size:0.8rem;opacity:0.4;margin-top:24px;">– Kakefrue varslingssystem</p>
-          </div>
-        `
+        html: internVarselBildeHtml(bilde, '💭', 'Noen har meldt interesse for et kurs!', `
+          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;width:110px;">Kurs</td><td><strong>${courseTitle}</strong></td></tr>
+          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Navn</td><td><strong>${full_name.trim()}</strong></td></tr>
+          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Telefon</td><td>${phone.trim()}</td></tr>
+        `)
       });
     } catch (mailErr) { console.log('[Course interest notify] Email not sent:', mailErr.message); }
 
@@ -477,26 +472,20 @@ app.post('/api/course-registrations', async (req, res) => {
     try { await sendCourseConfirmation(course, { full_name, email }); } catch (e) {}
 
     try {
+      const bilde = absoluttBilde(course.image_url, `${nettstedUrl()}/assets/kurs-hero.jpg`);
       const transporter = createTransporter();
       await transporter.sendMail({
         from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
         to: 'cecilie@kakefrue.no',
         subject: `👩‍🍳 Ny kurspåmelding – ${course.title}`,
-        html: `
-          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
-            <h2 style="color:#3D2B5A;">Ny kurspåmelding!</h2>
-            <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-              <tr><td style="padding:6px 0;opacity:0.6;width:120px;">Kurs</td><td><strong>${course.title}</strong></td></tr>
-              <tr><td style="padding:6px 0;opacity:0.6;">Dato</td><td>${new Date(course.date).toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td></tr>
-              <tr><td style="padding:6px 0;opacity:0.6;">Navn</td><td><strong>${full_name.trim()}</strong></td></tr>
-              <tr><td style="padding:6px 0;opacity:0.6;">Telefon</td><td>${phone.trim()}</td></tr>
-              <tr><td style="padding:6px 0;opacity:0.6;">E-post</td><td>${email.trim()}</td></tr>
-              <tr><td style="padding:6px 0;opacity:0.6;">Plasser</td><td>${course.current_participants + 1} av ${course.max_participants}</td></tr>
-            </table>
-            <p><a href="https://www.kakefrue.no/admin.html" style="color:#8B72BE;">Gå til adminpanelet →</a></p>
-            <p style="font-size:0.8rem;opacity:0.4;margin-top:24px;">– Kakefrue varslingssystem</p>
-          </div>
-        `
+        html: internVarselBildeHtml(bilde, '👩‍🍳', 'Ny kurspåmelding!', `
+          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;width:110px;">Kurs</td><td><strong>${course.title}</strong></td></tr>
+          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Dato</td><td>${new Date(course.date).toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td></tr>
+          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Navn</td><td><strong>${full_name.trim()}</strong></td></tr>
+          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Telefon</td><td>${phone.trim()}</td></tr>
+          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">E-post</td><td>${email.trim()}</td></tr>
+          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Plasser</td><td>${course.current_participants + 1} av ${course.max_participants}</td></tr>
+        `)
       });
     } catch (mailErr) { console.log('[Course registration notify] Email not sent:', mailErr.message); }
 
@@ -523,27 +512,21 @@ app.post('/api/tastings', async (req, res) => {
     }
 
     try {
+      const bilde = `${nettstedUrl()}/assets/provesmaking-hero.jpg`;
       const transporter = createTransporter();
       await transporter.sendMail({
         from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
         to: 'cecilie@kakefrue.no',
         subject: `🍰 Ny prøvesmaking – ${full_name.trim()}`,
-        html: `
-          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
-            <h2 style="color:#3D2B5A;">Ny forespørsel om prøvesmaking!</h2>
-            <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-              <tr><td style="padding:6px 0;opacity:0.6;width:120px;">Navn</td><td><strong>${full_name.trim()}</strong></td></tr>
-              <tr><td style="padding:6px 0;opacity:0.6;">Telefon</td><td>${phone.trim()}</td></tr>
-              ${email ? `<tr><td style="padding:6px 0;opacity:0.6;">E-post</td><td>${email.trim()}</td></tr>` : ''}
-              <tr><td style="padding:6px 0;opacity:0.6;">Ønsket dato</td><td>${preferred_date ? new Date(preferred_date).toLocaleDateString('nb-NO') : 'Fleksibel'}</td></tr>
-              ${choice_1 ? `<tr><td style="padding:6px 0;opacity:0.6;">1. valg</td><td>${choice_1}</td></tr>` : ''}
-              ${choice_2 ? `<tr><td style="padding:6px 0;opacity:0.6;">2. valg</td><td>${choice_2}</td></tr>` : ''}
-              ${choice_3 ? `<tr><td style="padding:6px 0;opacity:0.6;">3. valg</td><td>${choice_3}</td></tr>` : ''}
-            </table>
-            <p><a href="https://www.kakefrue.no/admin.html" style="color:#8B72BE;">Gå til adminpanelet →</a></p>
-            <p style="font-size:0.8rem;opacity:0.4;margin-top:24px;">– Kakefrue varslingssystem</p>
-          </div>
-        `
+        html: internVarselBildeHtml(bilde, '🍰', 'Ny forespørsel om prøvesmaking!', `
+          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;width:110px;">Navn</td><td><strong>${full_name.trim()}</strong></td></tr>
+          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Telefon</td><td>${phone.trim()}</td></tr>
+          ${email ? `<tr><td style="padding:5px 8px 5px 0;opacity:0.65;">E-post</td><td>${email.trim()}</td></tr>` : ''}
+          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Ønsket dato</td><td>${preferred_date ? new Date(preferred_date).toLocaleDateString('nb-NO') : 'Fleksibel'}</td></tr>
+          ${choice_1 ? `<tr><td style="padding:5px 8px 5px 0;opacity:0.65;">1. valg</td><td>${choice_1}</td></tr>` : ''}
+          ${choice_2 ? `<tr><td style="padding:5px 8px 5px 0;opacity:0.65;">2. valg</td><td>${choice_2}</td></tr>` : ''}
+          ${choice_3 ? `<tr><td style="padding:5px 8px 5px 0;opacity:0.65;">3. valg</td><td>${choice_3}</td></tr>` : ''}
+        `)
       });
     } catch (mailErr) { console.log('[Tasting notify] Email not sent:', mailErr.message); }
 
@@ -1616,6 +1599,33 @@ function internVarselJulHtml(o, total, produktlisteHtml, leveringstekst) {
     </div>
     <div style="max-width:460px; margin:18px auto 0; text-align:center;">
       <a href="${nettstedUrl()}/admin.html" style="color:#F3E9D2; text-decoration:underline; font-size:0.9rem;">Se i adminpanelet →</a>
+    </div>
+  </div>
+</body></html>`;
+}
+
+// Delt mal for de andre interne varslene (kurspameldning, kurs-interesse,
+// provesmaking) - samme "bilde + mork gradient"-stil som julevarselet over,
+// men med det aktuelle sidens eget bilde i stedet for jul-hero.jpg.
+function internVarselBildeHtml(bilde, emoji, tittel, radHtml) {
+  return `<!DOCTYPE html>
+<html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
+</head><body style="margin:0;">
+  <div style="background-color:#2A1B14;
+              background-image:linear-gradient(180deg, rgba(42,27,20,0.55) 0%, rgba(42,27,20,0.72) 40%, rgba(42,27,20,0.85) 100%), url('${bilde}');
+              background-size:cover; background-position:center; background-repeat:no-repeat;
+              padding:36px 20px 32px; font-family:'Lato',Arial,sans-serif;">
+    <div style="max-width:480px; margin:0 auto; text-align:center;">
+      <div style="font-size:1.6rem; margin-bottom:10px; line-height:1;">${emoji}</div>
+      <img src="${nettstedUrl()}/assets/kakefrue-logo-circle.png" alt="Kakefrue" width="90" style="width:90px; max-width:40%; height:auto; display:inline-block;">
+    </div>
+    <div style="max-width:460px; margin:20px auto 0; background:rgba(42,27,20,0.4); border:1px solid rgba(250,247,244,0.18); border-radius:12px; padding:22px 24px;">
+      <p style="font-family:'Playfair Display',serif; font-weight:700; color:#FAF7F4; font-size:1.2rem; margin:0 0 14px;">${tittel}</p>
+      <table style="width:100%; border-collapse:collapse; color:#FAF7F4; font-size:0.92rem;">${radHtml}</table>
+    </div>
+    <div style="max-width:460px; margin:18px auto 0; text-align:center;">
+      <a href="${nettstedUrl()}/admin.html" style="color:#FAF7F4; text-decoration:underline; font-size:0.9rem;">Se i adminpanelet →</a>
     </div>
   </div>
 </body></html>`;
