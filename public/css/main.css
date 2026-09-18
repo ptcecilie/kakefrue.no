@@ -31,6 +31,10 @@ body {
   color: var(--brown);
   line-height: 1.7;
   font-size: 16px;
+  /* Uten denne "lekker" brede indre elementer (f.eks. eventer-stripen sin
+     horisontalt scrollbare pille-liste) ut og gjør HELE siden dragbar
+     sidelengs, i stedet for at scrollen fanges der den skal - internt. */
+  overflow-x: hidden;
 }
 img { max-width: 100%; display: block; }
 a { color: var(--gold); text-decoration: none; }
@@ -905,4 +909,9 @@ html[style*="--side-foto"] body .info-boks {
     -webkit-overflow-scrolling: touch;
     padding-bottom: 2px;
   }
+  /* Instagram/Facebook-knappene stablet under hverandre pa smale skjermer
+     (flex-wrap:wrap matte plass mangle) - gjort kompakte sa de alltid
+     star ved siden av hverandre pa én linje i stedet. */
+  .social-bar-label { display: none; }
+  .social-bar-lenke { padding: 7px 13px !important; font-size: 0.78rem !important; gap: 6px !important; }
 }

@@ -364,15 +364,12 @@ async function initDB() {
       ('standard', 'kransekake', 'Kransekake (18 ringer)', 850, 'Klassisk kransekake')
     `);
 
-    // Seed interest courses
-    await conn.query(`
-      INSERT IGNORE INTO courses (id, title, description, active) VALUES
-      (1, 'Klingkurs', 'Lær å lage kling fra bunnen av – den tradisjonelle og elskverdige julesnacken. Vi går gjennom deig, steking og servering.', TRUE),
-      (2, 'Fondant og dekorering', 'Lær å jobbe med fondant og lag vakre detaljer og figurer til kaker. Passer for alle nivåer.', TRUE),
-      (3, 'Smørkrem og rosetter', 'Bli kjent med pipingteknikker og lag vakre roser, rosetter og border med smørkrem.', TRUE),
-      (4, 'Kransekake', 'Lag en hel klassisk kransekake fra bunnen – perfekt til bursdager og høytider.', TRUE),
-      (5, 'Cupcakes for nybegynnere', 'Stek og dekorer egne cupcakes med smørkrem og enkel pynt. Lavterskel og gøy!', TRUE)
-    `);
+    // FJERNET 2026-09-18: gammel eksempeldata-seed (INSERT IGNORE med faste id-er 1-5)
+    // gjenopprettet stille "Fondant og dekorering" / "Smørkrem og rosetter" / "Kransekake" /
+    // "Cupcakes for nybegynnere" ved HVER server-omstart sa fort Cecilie slettet dem i admin -
+    // id-en ble ledig igjen, og INSERT IGNORE fylte den pa nytt neste deploy. Engangsopprydding
+    // av det de allerede har rukket a komme tilbake som (trygt a la sta - blir en no-op etterpa).
+    try { await conn.query(`DELETE FROM courses WHERE title IN ('Fondant og dekorering', 'Smørkrem og rosetter', 'Kransekake', 'Cupcakes for nybegynnere')`); } catch (e) {}
 
     console.log('Database initialized successfully');
   } finally {
