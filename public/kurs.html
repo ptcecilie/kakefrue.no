@@ -224,7 +224,6 @@ fetch('/api/courses')
             <div class="course-meta-item"><span>⏱</span> ${c.duration_hours} timer</div>
             ${c.price ? `<div class="course-meta-item"><span>💰</span> ${Math.round(c.price)} kr</div>` : ''}
           </div>
-          ${spotsLabel(c)}
 
           <div class="reg-form" id="interestForm-${c.id}">
             <div id="interestSuccess-${c.id}" class="alert alert-success hidden">Takk! Jeg tar kontakt når kurset er klart. 🎂</div>
