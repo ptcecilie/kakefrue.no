@@ -58,6 +58,18 @@
     <p>Finn den perfekte smaken til din store dag. Smak deg frem – jeg hjelper deg med resten.</p>
   </div>
 
+  <!-- Vipps retur -->
+  <section id="vippsRetur" style="display:none; background: var(--white);">
+    <div class="container" style="max-width:520px; text-align:center;">
+      <div style="font-size:3rem; margin-bottom:16px;" id="vippsReturIkon">⏳</div>
+      <h2 id="vippsReturTittel">Sjekker betalingen …</h2>
+      <p style="opacity:0.7; margin-top:12px; line-height:1.7;" id="vippsReturTekst">Et øyeblikk, jeg spør Vipps.</p>
+      <button class="btn btn-primary" id="vippsProvIgjen" style="display:none; margin-top:20px;" onclick="provVippsIgjen()">Prøv å betale igjen</button>
+      <a href="/provesmaking.html" class="btn btn-outline" style="margin-top:20px;">Tilbake til siden</a>
+    </div>
+  </section>
+
+  <div id="proveInnhold">
   <!-- How it works -->
   <section style="background: var(--white);">
     <div class="container" style="max-width: 860px;">
@@ -102,7 +114,7 @@
       <p class="section-subtitle">Jeg tar kontakt for å bekrefte tidspunkt</p>
 
       <div id="formSuccess" class="alert alert-success hidden">
-        <strong>Forespørsel mottatt!</strong> Jeg tar kontakt for å bekrefte din prøvesmakingstid. Gleder meg til å møte deg!
+        <strong>Åpner Vipps …</strong>
       </div>
       <div id="formError" class="alert alert-error hidden"></div>
 
@@ -118,8 +130,8 @@
               <input class="form-input" type="tel" id="phone" name="phone" placeholder="Ditt mobilnummer" required>
             </div>
             <div class="form-group">
-              <label class="form-label" for="email">E-post</label>
-              <input class="form-input" type="email" id="email" name="email" placeholder="din@epost.no">
+              <label class="form-label" for="email">E-post *</label>
+              <input class="form-input" type="email" id="email" name="email" placeholder="din@epost.no" required>
             </div>
             <div class="form-group" style="grid-column:1/-1;">
               <label class="form-label" for="preferred_date">Ønsket dato</label>
@@ -209,13 +221,14 @@
           </div>
 
           <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:8px;" id="submitBtn">
-            Send forespørsel
+            Gå til betaling – 500 kr
           </button>
-          <p style="text-align:center; font-size:0.8rem; opacity:0.5; margin-top:12px;">Jeg tar kontakt innen 1–2 virkedager for å bekrefte tid og sende betalingslenke.</p>
+          <p style="text-align:center; font-size:0.8rem; opacity:0.5; margin-top:12px;">Du betaler 500,- via Vipps for å sikre tiden. Beløpet trekkes fra bryllupskaken din.</p>
         </form>
       </div>
     </div>
   </section>
+  </div>
 
 </div>
 
@@ -233,6 +246,52 @@
 const hamburger = document.getElementById('hamburger');
 const mobileMenu = document.getElementById('mobileMenu');
 hamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+
+/* Kunden kommer tilbake fra Vipps med ?betaling=<referanse> */
+const _vippsRef = new URLSearchParams(location.search).get('betaling');
+async function visVippsRetur(forsok = 0) {
+  const $v = id => document.getElementById(id);
+  document.getElementById('proveInnhold').style.display = 'none';
+  const side = $v('vippsRetur');
+  side.style.display = 'block';
+  if (forsok === 0) side.scrollIntoView({ behavior: 'smooth' });
+  try {
+    const res = await fetch('/api/tastings/vipps/' + encodeURIComponent(_vippsRef));
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error);
+    if (d.state === 'AUTHORIZED') {
+      $v('vippsReturIkon').textContent = '🎂';
+      $v('vippsReturTittel').textContent = `Tusen takk, ${d.fornavn}!`;
+      $v('vippsReturTekst').innerHTML = `Betalingen på <strong>${d.total} kr</strong> er godkjent, og prøvesmakingen din er bekreftet.` +
+        (d.epost ? `<br>Bekreftelse er sendt til ${d.epost}.` : '');
+      $v('vippsProvIgjen').style.display = 'none';
+    } else if (d.state === 'CREATED' && forsok < 5) {
+      setTimeout(() => visVippsRetur(forsok + 1), 2000);
+    } else {
+      $v('vippsReturIkon').textContent = '🧾';
+      $v('vippsReturTittel').textContent = 'Betalingen ble ikke fullført';
+      $v('vippsReturTekst').textContent = 'Forespørselen din er lagret, men den er ikke betalt ennå. Prøv igjen, eller ta kontakt så ordner vi det.';
+      $v('vippsProvIgjen').style.display = 'inline-flex';
+    }
+  } catch (e) {
+    $v('vippsReturIkon').textContent = '📞';
+    $v('vippsReturTittel').textContent = 'Fikk ikke sjekket betalingen';
+    $v('vippsReturTekst').textContent = 'Har du godkjent i Vipps, er alt i orden, og du får bekreftelse. Er du usikker, ta kontakt med Kakefrue.';
+  }
+}
+async function provVippsIgjen() {
+  const k = document.getElementById('vippsProvIgjen');
+  k.disabled = true; k.textContent = 'Åpner Vipps...';
+  try {
+    const d = await fetch('/api/tastings/vipps/' + encodeURIComponent(_vippsRef) + '/ny', { method: 'POST' }).then(r => r.json());
+    if (d.vippsUrl) { location.href = d.vippsUrl; return; }
+    visVippsRetur();
+  } catch (e) {
+    k.disabled = false; k.textContent = 'Prøv å betale igjen';
+    alert('Fikk ikke åpnet Vipps. Prøv igjen om litt.');
+  }
+}
+if (_vippsRef) visVippsRetur();
 </script>
 </body>
 </html>

@@ -44,25 +44,33 @@ document.addEventListener('DOMContentLoaded', () => {
       choice_3: kombiner('choice_3_kake', 'choice_3_fyll'),
     };
 
+    const gammelTekst = 'Gå til betaling – 500 kr';
     if (!data.full_name) {
       formError.textContent = 'Vennligst fyll inn navnet ditt.';
       formError.classList.remove('hidden');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Send forespørsel';
+      submitBtn.textContent = gammelTekst;
       return;
     }
     if (!data.phone) {
       formError.textContent = 'Vennligst fyll inn telefonnummeret ditt.';
       formError.classList.remove('hidden');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Send forespørsel';
+      submitBtn.textContent = gammelTekst;
+      return;
+    }
+    if (!data.email) {
+      formError.textContent = 'Vennligst fyll inn e-postadressen din.';
+      formError.classList.remove('hidden');
+      submitBtn.disabled = false;
+      submitBtn.textContent = gammelTekst;
       return;
     }
     if (!data.choice_1) {
       formError.textContent = 'Velg minst ett smaksønske.';
       formError.classList.remove('hidden');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Send forespørsel';
+      submitBtn.textContent = gammelTekst;
       return;
     }
 
@@ -75,14 +83,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Noe gikk galt');
 
-      formWrap.style.display = 'none';
-      formSuccess.classList.remove('hidden');
-      formSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (json.vippsUrl) {
+        submitBtn.textContent = 'Åpner Vipps...';
+        formSuccess.classList.remove('hidden');
+        window.location.href = json.vippsUrl;
+        return;
+      }
+      throw new Error('Fikk ikke startet Vipps-betalingen');
     } catch (err) {
       formError.textContent = err.message;
       formError.classList.remove('hidden');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Send forespørsel';
+      submitBtn.textContent = gammelTekst;
     }
   });
 });

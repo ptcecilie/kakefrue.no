@@ -614,44 +614,136 @@ app.post('/api/course-registrations/vipps/:ref/ny', async (req, res) => {
   }
 });
 
+// Sender bekreftelse til kunden + varsel til Cecilie - kalles KUN forste gang en
+// provesmaking faktisk er betalt (fra synkVippsProve under).
+async function sendProveVippsEposter(tasting) {
+  try { await sendTastingConfirmation(tasting); } catch (e) {}
+  try {
+    const bilde = `${nettstedUrl()}/assets/provesmaking-hero.jpg`;
+    const transporter = createTransporter();
+    await transporter.sendMail({
+      from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
+      to: 'cecilie@kakefrue.no',
+      subject: `🍰 Ny prøvesmaking betalt – ${tasting.full_name}`,
+      html: internVarselBildeHtml(bilde, '🍰', 'Ny prøvesmaking betalt med Vipps!', `
+        <tr><td style="padding:5px 8px 5px 0;opacity:0.65;width:110px;">Navn</td><td><strong>${escHtml(tasting.full_name)}</strong></td></tr>
+        <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Telefon</td><td>${escHtml(tasting.phone)}</td></tr>
+        <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">E-post</td><td>${escHtml(tasting.email)}</td></tr>
+        <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Ønsket dato</td><td>${tasting.preferred_date ? new Date(tasting.preferred_date).toLocaleDateString('nb-NO') : 'Fleksibel'}</td></tr>
+        ${tasting.choice_1 ? `<tr><td style="padding:5px 8px 5px 0;opacity:0.65;">1. valg</td><td>${tasting.choice_1}</td></tr>` : ''}
+        ${tasting.choice_2 ? `<tr><td style="padding:5px 8px 5px 0;opacity:0.65;">2. valg</td><td>${tasting.choice_2}</td></tr>` : ''}
+        ${tasting.choice_3 ? `<tr><td style="padding:5px 8px 5px 0;opacity:0.65;">3. valg</td><td>${tasting.choice_3}</td></tr>` : ''}
+        <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Betalt</td><td><strong>${tasting.belop} kr</strong></td></tr>
+      `)
+    });
+  } catch (mailErr) { console.log('[Tasting notify] Email not sent:', mailErr.message); }
+}
+
+async function provesmakingPris() {
+  const [rows] = await pool.query(`SELECT v FROM settings WHERE k = 'tasting_price'`);
+  const p = parseInt(rows[0]?.v, 10);
+  return p > 0 ? p : 500;
+}
+
+async function startVippsBetalingProve(tasting, belop) {
+  const reference = `kfprove-${tasting.id}-${crypto.randomBytes(6).toString('hex')}`;
+  const svar = await opprettBetaling({
+    reference,
+    belopKr: belop,
+    beskrivelse: `Prøvesmaking – Kakefrue`,
+    returnUrl: `${nettstedUrl()}/provesmaking.html?betaling=${reference}`,
+    telefon: tasting.phone
+  });
+  await pool.query(`UPDATE tastings SET vipps_reference = ?, vipps_state = 'CREATED' WHERE id = ?`, [reference, tasting.id]);
+  return svar.redirectUrl;
+}
+
+// Samme monster som synkVippsKurs - trekker belopet med en gang det er godkjent,
+// og sender bekreftelse+varsel forste (og eneste) gang, atomisk garantert.
+async function synkVippsProve(tasting) {
+  const b = await hentBetaling(tasting.vipps_reference);
+  let trukket = (b.aggregate?.capturedAmount?.value || 0) > 0;
+  const refundert = (b.aggregate?.refundedAmount?.value || 0) > 0;
+  if (b.state === 'AUTHORIZED' && !trukket && !refundert && !tasting.vipps_refunded_at &&
+      !((b.aggregate?.cancelledAmount?.value || 0) > 0)) {
+    try {
+      await trekkBetaling(tasting.vipps_reference, b.amount.value);
+      trukket = true;
+    } catch (e) {
+      console.log('[Vipps prøve] Automatisk trekk feilet:', vippsFeiltekst(e));
+    }
+  }
+  await pool.query(
+    `UPDATE tastings SET vipps_state = ?,
+       vipps_refunded_at = IF(? AND vipps_refunded_at IS NULL, NOW(), vipps_refunded_at)
+     WHERE id = ?`,
+    [b.state, refundert, tasting.id]
+  );
+  if (trukket && !refundert) {
+    const [r] = await pool.query(`UPDATE tastings SET vipps_captured_at = NOW() WHERE id = ? AND vipps_captured_at IS NULL`, [tasting.id]);
+    if (r.affectedRows) {
+      await sendProveVippsEposter({ ...tasting, belop: Math.round((b.amount?.value || 0) / 100) });
+    }
+  }
+  return b.state;
+}
+
 // POST /api/tastings
 app.post('/api/tastings', async (req, res) => {
   const { full_name, phone, email, preferred_date, choice_1, choice_2, choice_3 } = req.body;
   if (!full_name || !phone) return res.status(400).json({ error: 'Navn og telefon er påkrevd' });
+  if (!email) return res.status(400).json({ error: 'E-post er påkrevd for betaling og bekreftelse' });
 
   try {
     const [result] = await pool.query(
       `INSERT INTO tastings (full_name, phone, email, preferred_date, choice_1, choice_2, choice_3) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [full_name.trim(), phone.trim(), email?.trim() || null, preferred_date || null, choice_1 || null, choice_2 || null, choice_3 || null]
+      [full_name.trim(), phone.trim(), email.trim(), preferred_date || null, choice_1 || null, choice_2 || null, choice_3 || null]
     );
-
-    if (email) {
-      try { await sendTastingConfirmation({ full_name, email, preferred_date, choice_1, choice_2, choice_3 }); } catch (e) {}
-    }
+    const tasting = { id: result.insertId, phone: phone.trim() };
+    const belop = await provesmakingPris();
 
     try {
-      const bilde = `${nettstedUrl()}/assets/provesmaking-hero.jpg`;
-      const transporter = createTransporter();
-      await transporter.sendMail({
-        from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
-        to: 'cecilie@kakefrue.no',
-        subject: `🍰 Ny prøvesmaking – ${full_name.trim()}`,
-        html: internVarselBildeHtml(bilde, '🍰', 'Ny forespørsel om prøvesmaking!', `
-          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;width:110px;">Navn</td><td><strong>${full_name.trim()}</strong></td></tr>
-          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Telefon</td><td>${phone.trim()}</td></tr>
-          ${email ? `<tr><td style="padding:5px 8px 5px 0;opacity:0.65;">E-post</td><td>${email.trim()}</td></tr>` : ''}
-          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Ønsket dato</td><td>${preferred_date ? new Date(preferred_date).toLocaleDateString('nb-NO') : 'Fleksibel'}</td></tr>
-          ${choice_1 ? `<tr><td style="padding:5px 8px 5px 0;opacity:0.65;">1. valg</td><td>${choice_1}</td></tr>` : ''}
-          ${choice_2 ? `<tr><td style="padding:5px 8px 5px 0;opacity:0.65;">2. valg</td><td>${choice_2}</td></tr>` : ''}
-          ${choice_3 ? `<tr><td style="padding:5px 8px 5px 0;opacity:0.65;">3. valg</td><td>${choice_3}</td></tr>` : ''}
-        `)
-      });
-    } catch (mailErr) { console.log('[Tasting notify] Email not sent:', mailErr.message); }
-
-    res.json({ tasting_id: result.insertId });
+      if (!vippsAktiv()) throw new Error('Vipps-nøkler mangler i Coolify');
+      const vippsUrl = await startVippsBetalingProve(tasting, belop);
+      return res.json({ ok: true, tasting_id: tasting.id, total: belop, vippsUrl });
+    } catch (err) {
+      console.error('[Vipps prøve] Kunne ikke starte betaling:', vippsFeiltekst(err));
+      await pool.query(`DELETE FROM tastings WHERE id = ?`, [tasting.id]);
+      return res.status(503).json({ error: 'Vipps-betalingen kunne ikke startes akkurat nå. Prøv igjen om litt.' });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// GET /api/tastings/vipps/:ref – kunden er tilbake fra Vipps
+app.get('/api/tastings/vipps/:ref', async (req, res) => {
+  try {
+    const [[tasting]] = await pool.query(`SELECT * FROM tastings WHERE vipps_reference = ?`, [req.params.ref]);
+    if (!tasting) return res.status(404).json({ error: 'Fant ikke betalingen' });
+    const state = await synkVippsProve(tasting);
+    const belop = await provesmakingPris();
+    res.json({ state, id: tasting.id, total: belop, epost: tasting.email || null, fornavn: tasting.full_name.split(' ')[0] });
+  } catch (err) {
+    console.error('[Vipps prøve] Statussjekk feilet:', vippsFeiltekst(err));
+    res.status(502).json({ error: 'Fikk ikke svar fra Vipps' });
+  }
+});
+
+// POST /api/tastings/vipps/:ref/ny – kunden avbrøt og vil prøve igjen
+app.post('/api/tastings/vipps/:ref/ny', async (req, res) => {
+  try {
+    const [[tasting]] = await pool.query(`SELECT * FROM tastings WHERE vipps_reference = ?`, [req.params.ref]);
+    if (!tasting) return res.status(404).json({ error: 'Fant ikke prøvesmakingen' });
+    const state = await synkVippsProve(tasting);
+    if (state === 'AUTHORIZED') return res.json({ state });
+    if (state === 'CREATED') await kansellerBetaling(tasting.vipps_reference).catch(() => {});
+    const belop = await provesmakingPris();
+    res.json({ vippsUrl: await startVippsBetalingProve(tasting, belop) });
+  } catch (err) {
+    console.error('[Vipps prøve] Ny betaling feilet:', vippsFeiltekst(err));
+    res.status(502).json({ error: 'Fikk ikke startet Vipps' });
   }
 });
 
@@ -1849,6 +1941,50 @@ app.delete('/api/admin/tastings/:id', requireAdmin, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+async function trekkVippsProve(tasting, belop) {
+  if (!tasting.vipps_reference || tasting.vipps_captured_at) return false;
+  const state = await synkVippsProve(tasting);
+  if (state !== 'AUTHORIZED') return false;
+  const [[fersk]] = await pool.query(`SELECT vipps_captured_at FROM tastings WHERE id = ?`, [tasting.id]);
+  if (fersk.vipps_captured_at) return true;
+  await trekkBetaling(tasting.vipps_reference, Math.round(belop * 100));
+  await pool.query(`UPDATE tastings SET vipps_captured_at = NOW() WHERE id = ?`, [tasting.id]);
+  return true;
+}
+
+// POST /api/admin/tastings/:id/vipps-trekk
+app.post('/api/admin/tastings/:id/vipps-trekk', requireAdmin, async (req, res) => {
+  try {
+    const [[tasting]] = await pool.query(`SELECT * FROM tastings WHERE id = ?`, [req.params.id]);
+    if (!tasting?.vipps_reference) return res.status(404).json({ error: 'Prøvesmakingen er ikke betalt med Vipps' });
+    const belop = await provesmakingPris();
+    const trukket = await trekkVippsProve(tasting, belop);
+    res.json({ ok: true, trukket });
+  } catch (err) {
+    res.status(502).json({ error: 'Vipps: ' + vippsFeiltekst(err) });
+  }
+});
+
+// POST /api/admin/tastings/:id/vipps-refunder
+app.post('/api/admin/tastings/:id/vipps-refunder', requireAdmin, async (req, res) => {
+  try {
+    const [[tasting]] = await pool.query(`SELECT * FROM tastings WHERE id = ?`, [req.params.id]);
+    if (!tasting?.vipps_reference) return res.status(404).json({ error: 'Prøvesmakingen er ikke betalt med Vipps' });
+    if (tasting.vipps_refunded_at) return res.json({ ok: true });
+    const belop = await provesmakingPris();
+    const belopOre = Math.round(belop * 100);
+    if (tasting.vipps_captured_at) {
+      await refunderBetaling(tasting.vipps_reference, belopOre);
+    } else {
+      await kansellerBetaling(tasting.vipps_reference);
+    }
+    await pool.query(`UPDATE tastings SET vipps_refunded_at = NOW() WHERE id = ?`, [tasting.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(502).json({ error: 'Vipps: ' + vippsFeiltekst(err) });
   }
 });
 

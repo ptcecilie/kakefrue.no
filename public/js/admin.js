@@ -1636,6 +1636,46 @@ async function sendEmail() {
 }
 
 // ── Tastings ───────────────────────────────────────────────
+function proveVippsMerke(r) {
+  const pille = (bg, farge, tekst) =>
+    `<span style="align-self:center;background:${bg};color:${farge};border-radius:100px;padding:5px 11px;font-size:0.76rem;font-weight:700;white-space:nowrap;">${tekst}</span>`;
+  if (!r.vipps_reference) return pille('rgba(0,0,0,.05)', '#8A6858', 'Ikke betalt');
+  if (r.vipps_refunded_at) return pille('rgba(0,0,0,.06)', '#6B5040', '↩️ Refundert');
+  if (r.vipps_captured_at) return pille('rgba(122,158,130,.2)', '#4A7A5A', '💰 Betalt') +
+    `<button class="btn btn-outline btn-sm" onclick="proveVippsRefunder(${r.id}, this)">Refunder</button>`;
+  if (r.vipps_state === 'AUTHORIZED') return pille('rgba(255,91,36,.12)', '#C2410C', '🔒 Reservert') +
+    `<button class="btn btn-primary btn-sm" style="background:#FF5B24;border-color:#FF5B24;color:#fff;" onclick="proveVippsTrekk(${r.id}, this)">Trekk beløpet</button>` +
+    `<button class="btn btn-outline btn-sm" onclick="proveVippsRefunder(${r.id}, this)">Frigjør</button>`;
+  if (['ABORTED', 'EXPIRED', 'TERMINATED'].includes(r.vipps_state)) return pille('rgba(196,120,138,.16)', '#9B3A52', 'Avbrutt – ikke betalt');
+  return pille('rgba(0,0,0,.05)', '#8A6858', 'Venter på Vipps');
+}
+
+async function proveVippsTrekk(id, btn) {
+  if (!confirm('Trekke beløpet fra kunden nå?')) return;
+  btn.disabled = true;
+  try {
+    const r = await api('/api/admin/tastings/' + id + '/vipps-trekk', { method: 'POST' });
+    showAlert(r.trukket ? 'Beløpet er trukket' : 'Ingenting å trekke – betalingen er ikke godkjent eller allerede trukket', r.trukket ? 'success' : 'info');
+    loadTastings();
+  } catch (e) {
+    alert('Kunne ikke trekke beløpet: ' + e.message);
+    btn.disabled = false;
+  }
+}
+
+async function proveVippsRefunder(id, btn) {
+  if (!confirm('Refundere/frigjøre denne prøvesmakingen i Vipps?\n\nDette kan ikke angres.')) return;
+  btn.disabled = true;
+  try {
+    await api('/api/admin/tastings/' + id + '/vipps-refunder', { method: 'POST' });
+    showAlert('Refundert/frigjort i Vipps', 'success');
+    loadTastings();
+  } catch (e) {
+    alert('Vipps sa nei: ' + e.message);
+    btn.disabled = false;
+  }
+}
+
 async function loadTastings() {
   try {
     const rows = await api('/api/admin/tastings');
@@ -1652,7 +1692,7 @@ async function loadTastings() {
         <td>${formatDate(r.preferred_date)}</td>
         <td>${r.choice_1 || '—'}</td>
         <td>${statusBadge(r.status)}</td>
-        <td>${r.paid ? '<span style="color:var(--sage);">✓</span>' : '—'}</td>
+        <td><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">${proveVippsMerke(r)}</div></td>
         <td style="display:flex;gap:6px;">
           <button class="btn btn-outline btn-sm" onclick="openTastingModal(${JSON.stringify(r).replace(/"/g,'&quot;')})">Rediger</button>
           <button class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828;" onclick="deleteTasting(${r.id})">Slett</button>

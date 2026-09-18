@@ -29,7 +29,7 @@ async function sendBookingConfirmation(booking, customer) {
       <h1 style="font-family: 'Playfair Display', serif; color: #4A3728; text-align: center;">Kakefrue</h1>
       <h2 style="color: #C9A884;">Bestilling bekreftet!</h2>
       <p>Hei ${customer.full_name},</p>
-      <p>Tusen takk for din bestilling! Vi er så glade for at du har valgt Kakefrue til din spesielle anledning.</p>
+      <p>Tusen takk for din bestilling! Jeg er så glad for at du har valgt Kakefrue til din spesielle anledning.</p>
 
       <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3 style="color: #4A3728;">Bestillingsdetaljer</h3>
@@ -40,8 +40,8 @@ async function sendBookingConfirmation(booking, customer) {
         ${booking.deposit_amount ? `<p><strong>Depositum betalt:</strong> kr ${booking.deposit_amount},-</p>` : ''}
       </div>
 
-      <p>Vi tar kontakt med deg nærmere datoen for å bekrefte detaljer og eventuell leveringsadresse.</p>
-      <p>Har du spørsmål, send oss gjerne en melding på Instagram eller e-post.</p>
+      <p>Jeg tar kontakt med deg nærmere datoen for å bekrefte detaljer og eventuell leveringsadresse.</p>
+      <p>Har du spørsmål, send meg gjerne en melding på Instagram eller e-post.</p>
 
       <div style="text-align: center; margin-top: 32px; color: #8B9E7A;">
         <p>Med kjærlig hilsen,<br><strong>Kakefrue</strong></p>
@@ -109,7 +109,7 @@ async function sendCourseConfirmation(course, registration) {
       ${course.what_to_bring ? `<p style="color:#3D2420; font-size:0.95rem; margin:0;"><strong>Ta med:</strong> ${course.what_to_bring}</p>` : ''}
     </div>
     <div style="max-width:480px; margin:24px auto 0; text-align:center; text-shadow:0 1px 10px rgba(255,252,247,0.6);">
-      <p style="font-family:'Playfair Display',serif; color:#3D2420; font-size:1.05rem; margin:0;">Vi ses snart!</p>
+      <p style="font-family:'Playfair Display',serif; color:#3D2420; font-size:1.05rem; margin:0;">Ses snart!</p>
       ${kontaktfelt()}
     </div>
   </div>
@@ -144,7 +144,7 @@ async function sendTastingConfirmation(tasting) {
     </div>
     <div style="max-width:480px; margin:22px auto 0; color:#3D2420; font-size:1rem; line-height:1.75; text-shadow:0 1px 10px rgba(255,252,247,0.6);">
       <p style="margin:0 0 18px;">Hei ${tasting.full_name},</p>
-      <p style="margin:0;">Din forespørsel om prøvesmaking er mottatt! Vi tar kontakt for å bekrefte tid.</p>
+      <p style="margin:0;">Din forespørsel om prøvesmaking er mottatt! Jeg tar kontakt for å bekrefte tid.</p>
     </div>
     <div style="max-width:480px; margin:22px auto 0; background:rgba(255,255,255,0.88); border:1px solid rgba(196,149,106,0.3); border-radius:12px; padding:22px 24px;">
       <p style="font-family:'Playfair Display',serif; font-weight:700; color:#3D2420; font-size:1.15rem; margin:0 0 12px;">Detaljer</p>
