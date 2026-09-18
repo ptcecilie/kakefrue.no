@@ -65,6 +65,18 @@ function absoluttBilde(sti, fallback) {
   return sti.startsWith('/') ? `https://kakefrue.no${sti}` : sti;
 }
 
+// Lys, varm bilde-bakgrunn - matcher hvordan bakgrunnsbildet faktisk ser ut pa
+// selve siden (kurs.html/provesmaking.html sin --side-foto/ph-slor, se main.css),
+// IKKE den morke julebestilling-stemningen. Mork tekst (--brown) pa lys krem-slor.
+function kontaktfelt() {
+  return `
+      <p style="color:rgba(61,36,32,0.6); font-size:0.8rem; margin:16px 0 6px;">Porsgrunn · cecilie@kakefrue.no · 900 33 039</p>
+      <p style="margin:0;">
+        <a href="https://instagram.com/kakefrue90" style="color:#7A5230; text-decoration:none; font-size:0.85rem; margin:0 8px;">Instagram</a>
+        <a href="https://www.facebook.com/kakefrue" style="color:#7A5230; text-decoration:none; font-size:0.85rem; margin:0 8px;">Facebook</a>
+      </p>`;
+}
+
 async function sendCourseConfirmation(course, registration) {
   const transporter = createTransporter();
   const bilde = absoluttBilde(course.image_url, 'https://kakefrue.no/assets/kurs-hero.jpg');
@@ -72,29 +84,32 @@ async function sendCourseConfirmation(course, registration) {
 <html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
 </head><body style="margin:0;">
-  <div style="background-color:#2A1B14;
-              background-image:linear-gradient(180deg, rgba(42,27,20,0.38) 0%, rgba(42,27,20,0.62) 40%, rgba(42,27,20,0.82) 100%), url('${bilde}');
+  <div style="background-color:#FAF7F4;
+              background-image:
+                radial-gradient(ellipse 70% 55% at 50% 12%, rgba(255,251,245,0.88) 0%, rgba(255,250,243,0.6) 50%, transparent 85%),
+                linear-gradient(180deg, rgba(255,252,247,0.5) 0%, rgba(255,252,247,0.2) 22%, rgba(250,247,244,0.3) 65%, rgba(250,247,244,0.94) 100%),
+                url('${bilde}');
               background-size:cover; background-position:center; background-repeat:no-repeat;
               padding:40px 20px 36px; font-family:'Lato',Arial,sans-serif;">
     <div style="max-width:480px; margin:0 auto; text-align:center;">
       <img src="https://kakefrue.no/assets/kakefrue-logo-circle.png" alt="Kakefrue" width="110" style="width:110px; max-width:50%; height:auto; display:inline-block;">
-      <p style="font-family:'Playfair Display',serif; font-weight:700; color:#FAF7F4; font-size:1.5rem; margin:16px 0 0;">Kursplass bekreftet!</p>
+      <p style="font-family:'Playfair Display',serif; font-weight:700; color:#3D2420; font-size:1.5rem; margin:16px 0 0; text-shadow:0 1px 14px rgba(255,252,247,0.9);">Kursplass bekreftet!</p>
     </div>
-    <div style="max-width:480px; margin:22px auto 0; color:#FAF7F4; font-size:1rem; line-height:1.75;">
+    <div style="max-width:480px; margin:22px auto 0; color:#3D2420; font-size:1rem; line-height:1.75; text-shadow:0 1px 10px rgba(255,252,247,0.6);">
       <p style="margin:0 0 18px;">Hei ${registration.full_name},</p>
       <p style="margin:0;">Din påmelding til kurset er bekreftet. Gleder meg til å se deg!</p>
     </div>
-    <div style="max-width:480px; margin:22px auto 0; background:rgba(42,27,20,0.4); border:1px solid rgba(250,247,244,0.18); border-radius:12px; padding:22px 24px;">
-      <p style="font-family:'Playfair Display',serif; font-weight:700; color:#FAF7F4; font-size:1.15rem; margin:0 0 12px;">${course.title}</p>
-      <p style="color:#FAF7F4; font-size:0.95rem; margin:0 0 6px;"><strong>Dato:</strong> ${new Date(course.date).toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-      <p style="color:#FAF7F4; font-size:0.95rem; margin:0 0 6px;"><strong>Tid:</strong> ${course.time_start ? course.time_start.substring(0, 5) : 'Avklares'}</p>
-      <p style="color:#FAF7F4; font-size:0.95rem; margin:0 0 6px;"><strong>Varighet:</strong> ${course.duration_hours} timer</p>
-      ${course.address ? `<p style="color:#FAF7F4; font-size:0.95rem; margin:0${course.what_to_bring ? ' 0 6px' : ''};"><strong>Adresse:</strong> <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(course.address)}" style="color:#FAF7F4; text-decoration:underline;">${course.address}</a></p>` : ''}
-      ${course.what_to_bring ? `<p style="color:#FAF7F4; font-size:0.95rem; margin:0;"><strong>Ta med:</strong> ${course.what_to_bring}</p>` : ''}
+    <div style="max-width:480px; margin:22px auto 0; background:rgba(255,255,255,0.88); border:1px solid rgba(196,149,106,0.3); border-radius:12px; padding:22px 24px;">
+      <p style="font-family:'Playfair Display',serif; font-weight:700; color:#3D2420; font-size:1.15rem; margin:0 0 12px;">${course.title}</p>
+      <p style="color:#3D2420; font-size:0.95rem; margin:0 0 6px;"><strong>Dato:</strong> ${new Date(course.date).toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      <p style="color:#3D2420; font-size:0.95rem; margin:0 0 6px;"><strong>Tid:</strong> ${course.time_start ? course.time_start.substring(0, 5) : 'Avklares'}</p>
+      <p style="color:#3D2420; font-size:0.95rem; margin:0 0 6px;"><strong>Varighet:</strong> ${course.duration_hours} timer</p>
+      ${course.address ? `<p style="color:#3D2420; font-size:0.95rem; margin:0${course.what_to_bring ? ' 0 6px' : ''};"><strong>Adresse:</strong> <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(course.address)}" style="color:#7A5230; text-decoration:underline;">${course.address}</a></p>` : ''}
+      ${course.what_to_bring ? `<p style="color:#3D2420; font-size:0.95rem; margin:0;"><strong>Ta med:</strong> ${course.what_to_bring}</p>` : ''}
     </div>
-    <div style="max-width:480px; margin:24px auto 0; text-align:center;">
-      <p style="font-family:'Playfair Display',serif; color:#FAF7F4; font-size:1.05rem; margin:0;">Vi ses snart!</p>
-      <p style="color:rgba(250,247,244,0.55); font-size:0.76rem; margin:16px 0 0;">Porsgrunn · cecilie@kakefrue.no</p>
+    <div style="max-width:480px; margin:24px auto 0; text-align:center; text-shadow:0 1px 10px rgba(255,252,247,0.6);">
+      <p style="font-family:'Playfair Display',serif; color:#3D2420; font-size:1.05rem; margin:0;">Vi ses snart!</p>
+      ${kontaktfelt()}
     </div>
   </div>
 </body></html>`;
@@ -114,29 +129,32 @@ async function sendTastingConfirmation(tasting) {
 <html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
 </head><body style="margin:0;">
-  <div style="background-color:#2A1B14;
-              background-image:linear-gradient(180deg, rgba(42,27,20,0.38) 0%, rgba(42,27,20,0.62) 40%, rgba(42,27,20,0.82) 100%), url('${bilde}');
+  <div style="background-color:#FAF7F4;
+              background-image:
+                radial-gradient(ellipse 70% 55% at 50% 12%, rgba(255,251,245,0.88) 0%, rgba(255,250,243,0.6) 50%, transparent 85%),
+                linear-gradient(180deg, rgba(255,252,247,0.5) 0%, rgba(255,252,247,0.2) 22%, rgba(250,247,244,0.3) 65%, rgba(250,247,244,0.94) 100%),
+                url('${bilde}');
               background-size:cover; background-position:center; background-repeat:no-repeat;
               padding:40px 20px 36px; font-family:'Lato',Arial,sans-serif;">
     <div style="max-width:480px; margin:0 auto; text-align:center;">
       <img src="https://kakefrue.no/assets/kakefrue-logo-circle.png" alt="Kakefrue" width="110" style="width:110px; max-width:50%; height:auto; display:inline-block;">
-      <p style="font-family:'Playfair Display',serif; font-weight:700; color:#FAF7F4; font-size:1.5rem; margin:16px 0 0;">Prøvesmaking registrert!</p>
+      <p style="font-family:'Playfair Display',serif; font-weight:700; color:#3D2420; font-size:1.5rem; margin:16px 0 0; text-shadow:0 1px 14px rgba(255,252,247,0.9);">Prøvesmaking registrert!</p>
     </div>
-    <div style="max-width:480px; margin:22px auto 0; color:#FAF7F4; font-size:1rem; line-height:1.75;">
+    <div style="max-width:480px; margin:22px auto 0; color:#3D2420; font-size:1rem; line-height:1.75; text-shadow:0 1px 10px rgba(255,252,247,0.6);">
       <p style="margin:0 0 18px;">Hei ${tasting.full_name},</p>
       <p style="margin:0;">Din forespørsel om prøvesmaking er mottatt! Vi tar kontakt for å bekrefte tid.</p>
     </div>
-    <div style="max-width:480px; margin:22px auto 0; background:rgba(42,27,20,0.4); border:1px solid rgba(250,247,244,0.18); border-radius:12px; padding:22px 24px;">
-      <p style="font-family:'Playfair Display',serif; font-weight:700; color:#FAF7F4; font-size:1.15rem; margin:0 0 12px;">Detaljer</p>
-      <p style="color:#FAF7F4; font-size:0.95rem; margin:0 0 6px;"><strong>Ønsket dato:</strong> ${tasting.preferred_date ? new Date(tasting.preferred_date).toLocaleDateString('nb-NO') : 'Fleksibelt'}</p>
-      ${tasting.choice_1 ? `<p style="color:#FAF7F4; font-size:0.95rem; margin:0 0 6px;"><strong>1. valg:</strong> ${tasting.choice_1}</p>` : ''}
-      ${tasting.choice_2 ? `<p style="color:#FAF7F4; font-size:0.95rem; margin:0 0 6px;"><strong>2. valg:</strong> ${tasting.choice_2}</p>` : ''}
-      ${tasting.choice_3 ? `<p style="color:#FAF7F4; font-size:0.95rem; margin:0 0 6px;"><strong>3. valg:</strong> ${tasting.choice_3}</p>` : ''}
-      <p style="color:#FAF7F4; font-size:0.95rem; margin:0;"><strong>Pris:</strong> kr 400,- (trekkes fra bryllupskake)</p>
+    <div style="max-width:480px; margin:22px auto 0; background:rgba(255,255,255,0.88); border:1px solid rgba(196,149,106,0.3); border-radius:12px; padding:22px 24px;">
+      <p style="font-family:'Playfair Display',serif; font-weight:700; color:#3D2420; font-size:1.15rem; margin:0 0 12px;">Detaljer</p>
+      <p style="color:#3D2420; font-size:0.95rem; margin:0 0 6px;"><strong>Ønsket dato:</strong> ${tasting.preferred_date ? new Date(tasting.preferred_date).toLocaleDateString('nb-NO') : 'Fleksibelt'}</p>
+      ${tasting.choice_1 ? `<p style="color:#3D2420; font-size:0.95rem; margin:0 0 6px;"><strong>1. valg:</strong> ${tasting.choice_1}</p>` : ''}
+      ${tasting.choice_2 ? `<p style="color:#3D2420; font-size:0.95rem; margin:0 0 6px;"><strong>2. valg:</strong> ${tasting.choice_2}</p>` : ''}
+      ${tasting.choice_3 ? `<p style="color:#3D2420; font-size:0.95rem; margin:0 0 6px;"><strong>3. valg:</strong> ${tasting.choice_3}</p>` : ''}
+      <p style="color:#3D2420; font-size:0.95rem; margin:0;"><strong>Pris:</strong> kr 400,- (trekkes fra bryllupskake)</p>
     </div>
-    <div style="max-width:480px; margin:24px auto 0; text-align:center;">
-      <p style="font-family:'Playfair Display',serif; color:#FAF7F4; font-size:1.05rem; margin:0;">Gleder meg til å møte deg!</p>
-      <p style="color:rgba(250,247,244,0.55); font-size:0.76rem; margin:16px 0 0;">Porsgrunn · cecilie@kakefrue.no</p>
+    <div style="max-width:480px; margin:24px auto 0; text-align:center; text-shadow:0 1px 10px rgba(255,252,247,0.6);">
+      <p style="font-family:'Playfair Display',serif; color:#3D2420; font-size:1.05rem; margin:0;">Gleder meg til å møte deg!</p>
+      ${kontaktfelt()}
     </div>
   </div>
 </body></html>`;

@@ -162,6 +162,7 @@ async function initDB() {
 
     // Hvor kurset foregar - manglet helt, sto derfor heller ikke i bekreftelses-e-postene.
     try { await conn.query(`ALTER TABLE courses ADD COLUMN address VARCHAR(255) NULL`); } catch (e) {}
+    try { await conn.query(`UPDATE courses SET address = 'Snarvegen 8, 3925 Porsgrunn' WHERE title IN ('Klingkurs - dagtid', 'Klingkurs - kveldstid') AND address IS NULL`); } catch (e) {}
 
     // Vipps ePayment for kurspåmelding - samme mønster som christmas_orders under.
     try { await conn.query(`ALTER TABLE course_registrations ADD COLUMN vipps_reference VARCHAR(64) NULL`); } catch (e) {}

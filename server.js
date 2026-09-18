@@ -1730,20 +1730,23 @@ function internVarselBildeHtml(bilde, emoji, tittel, radHtml) {
 <html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
 </head><body style="margin:0;">
-  <div style="background-color:#2A1B14;
-              background-image:linear-gradient(180deg, rgba(42,27,20,0.55) 0%, rgba(42,27,20,0.72) 40%, rgba(42,27,20,0.85) 100%), url('${bilde}');
+  <div style="background-color:#FAF7F4;
+              background-image:
+                radial-gradient(ellipse 70% 55% at 50% 12%, rgba(255,251,245,0.88) 0%, rgba(255,250,243,0.6) 50%, transparent 85%),
+                linear-gradient(180deg, rgba(255,252,247,0.5) 0%, rgba(255,252,247,0.2) 22%, rgba(250,247,244,0.3) 65%, rgba(250,247,244,0.94) 100%),
+                url('${bilde}');
               background-size:cover; background-position:center; background-repeat:no-repeat;
               padding:36px 20px 32px; font-family:'Lato',Arial,sans-serif;">
     <div style="max-width:480px; margin:0 auto; text-align:center;">
       <div style="font-size:1.6rem; margin-bottom:10px; line-height:1;">${emoji}</div>
       <img src="${nettstedUrl()}/assets/kakefrue-logo-circle.png" alt="Kakefrue" width="90" style="width:90px; max-width:40%; height:auto; display:inline-block;">
     </div>
-    <div style="max-width:460px; margin:20px auto 0; background:rgba(42,27,20,0.4); border:1px solid rgba(250,247,244,0.18); border-radius:12px; padding:22px 24px;">
-      <p style="font-family:'Playfair Display',serif; font-weight:700; color:#FAF7F4; font-size:1.2rem; margin:0 0 14px;">${tittel}</p>
-      <table style="width:100%; border-collapse:collapse; color:#FAF7F4; font-size:0.92rem;">${radHtml}</table>
+    <div style="max-width:460px; margin:20px auto 0; background:rgba(255,255,255,0.88); border:1px solid rgba(196,149,106,0.3); border-radius:12px; padding:22px 24px;">
+      <p style="font-family:'Playfair Display',serif; font-weight:700; color:#3D2420; font-size:1.2rem; margin:0 0 14px;">${tittel}</p>
+      <table style="width:100%; border-collapse:collapse; color:#3D2420; font-size:0.92rem;">${radHtml}</table>
     </div>
     <div style="max-width:460px; margin:18px auto 0; text-align:center;">
-      <a href="${nettstedUrl()}/admin.html" style="color:#FAF7F4; text-decoration:underline; font-size:0.9rem;">Se i adminpanelet →</a>
+      <a href="${nettstedUrl()}/admin.html" style="color:#7A5230; text-decoration:underline; font-size:0.9rem;">Se i adminpanelet →</a>
     </div>
   </div>
 </body></html>`;
