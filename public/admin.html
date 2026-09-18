@@ -686,8 +686,8 @@
           <button class="btn btn-outline btn-sm" onclick="leggTilNaringRad()" style="margin-top:4px;">+ Legg til ingrediens</button>
 
           <div class="form-group" style="margin-top:18px;">
-            <label class="form-label">Antall stykker/emner oppskriften gir</label>
-            <input class="form-input" type="number" id="naringAntallStk" min="1" value="1" oninput="beregnNaring()">
+            <label class="form-label">Vekt per stykke/emne (gram) <span style="font-weight:300;opacity:.55;">– f.eks. det du veier hvert emne til</span></label>
+            <input class="form-input" type="number" id="naringGramPerStk" min="1" placeholder="f.eks. 35" oninput="beregnNaring()">
           </div>
 
           <div id="naringResultat" style="margin-top:20px;"></div>

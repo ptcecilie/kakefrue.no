@@ -1644,12 +1644,12 @@ app.get('/api/admin/courses', requireAdmin, async (req, res) => {
 });
 
 app.post('/api/admin/courses', requireAdmin, async (req, res) => {
-  const { title, description, date, time_start, duration_hours, price, max_participants, what_to_bring } = req.body;
+  const { title, description, date, time_start, duration_hours, price, max_participants, what_to_bring, image_url } = req.body;
   if (!title) return res.status(400).json({ error: 'Tittel er påkrevd' });
   try {
     const [result] = await pool.query(
-      `INSERT INTO courses (title, description, date, time_start, duration_hours, price, max_participants, what_to_bring) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [title, description || null, date || null, time_start || null, duration_hours || 3, price || null, max_participants || 8, what_to_bring || null]
+      `INSERT INTO courses (title, description, date, time_start, duration_hours, price, max_participants, what_to_bring, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [title, description || null, date || null, time_start || null, duration_hours || 3, price || null, max_participants || 8, what_to_bring || null, image_url || null]
     );
     res.json({ id: result.insertId });
   } catch (err) {
@@ -1658,11 +1658,11 @@ app.post('/api/admin/courses', requireAdmin, async (req, res) => {
 });
 
 app.put('/api/admin/courses/:id', requireAdmin, async (req, res) => {
-  const { title, description, date, time_start, duration_hours, price, max_participants, what_to_bring, active } = req.body;
+  const { title, description, date, time_start, duration_hours, price, max_participants, what_to_bring, active, image_url } = req.body;
   try {
     await pool.query(
-      `UPDATE courses SET title=?, description=?, date=?, time_start=?, duration_hours=?, price=?, max_participants=?, what_to_bring=?, active=? WHERE id=?`,
-      [title, description || null, date || null, time_start || null, duration_hours || 3, price || null, max_participants || 8, what_to_bring || null, active !== false, req.params.id]
+      `UPDATE courses SET title=?, description=?, date=?, time_start=?, duration_hours=?, price=?, max_participants=?, what_to_bring=?, active=?, image_url=? WHERE id=?`,
+      [title, description || null, date || null, time_start || null, duration_hours || 3, price || null, max_participants || 8, what_to_bring || null, active !== false, image_url || null, req.params.id]
     );
     res.json({ success: true });
   } catch (err) {

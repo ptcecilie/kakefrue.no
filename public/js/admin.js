@@ -1357,7 +1357,8 @@ function openEditDateModal(d) {
       <div class="form-group"><label class="form-label" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="m-delivery" ${d.allows_delivery ? 'checked' : ''}> Levering tillatt</label></div>
       <div class="form-group"><label class="form-label">Notater</label><input class="form-input" type="text" id="m-notes" value="${d.notes || ''}"></div>
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="flex-wrap:wrap;gap:8px;">
+      <button class="btn btn-outline" style="color:#C62828;border-color:#C62828;" onclick="deleteDate(${d.id})">🗑 Slett dato</button>
       <button class="btn btn-outline" onclick="closeModal()">Avbryt</button>
       <button class="btn btn-primary" onclick="saveDate()">Oppdater</button>
     </div>
@@ -1748,9 +1749,12 @@ async function deleteCourseInterest(id) {
   } catch (e) { console.error(e); }
 }
 
+let _alleKurs = []; // cache - unngar a proppe hele kursobjektet (inkl. evt. base64-bilde) inn i et onclick-attributt
+
 async function loadCourses() {
   try {
     const courses = await api('/api/admin/courses');
+    _alleKurs = courses;
     const container = $('coursesList');
     if (!courses.length) {
       container.innerHTML = '<div style="text-align:center;padding:48px;opacity:0.5;background:var(--white);border-radius:var(--radius);">Ingen kurs ennå. Opprett et nytt kurs!</div>';
@@ -1765,7 +1769,7 @@ async function loadCourses() {
           </div>
           <div style="display:flex;gap:8px;">
             <button class="btn btn-outline btn-sm" onclick="viewRegistrations(${c.id}, '${c.title.replace(/'/g,"\\'")}')">Påmeldinger (${c.current_participants})</button>
-            <button class="btn btn-outline btn-sm" onclick="openCourseModal(${JSON.stringify(c).replace(/"/g,'&quot;')})">Rediger</button>
+            <button class="btn btn-outline btn-sm" onclick="openCourseModal(${c.id})">Rediger</button>
             <button class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828;" onclick="deleteCourse(${c.id})">Slett</button>
           </div>
         </div>
@@ -1775,13 +1779,32 @@ async function loadCourses() {
   } catch {}
 }
 
-function openCourseModal(c = null) {
+let _kursBildeData = null; // {data, mimeType} for nylig valgt/komprimert bilde, 'FJERNET' for eksplisitt fjernet, null = ikke endret
+let _kursRedigeres = null; // kurset som redigeres, sa saveCourse() finner eksisterende image_url
+
+function openCourseModal(id = null) {
+  const c = id ? _alleKurs.find(x => x.id === id) : null;
+  _kursBildeData = null;
+  _kursRedigeres = c;
   openModal(`
     <div class="modal-header"><h3>${c ? 'Rediger kurs' : 'Nytt kurs'}</h3><button class="modal-close" onclick="closeModal()">×</button></div>
     <div class="modal-body">
       <div id="courseModalErr" class="alert alert-error hidden"></div>
       <div class="form-group"><label class="form-label">Tittel *</label><input class="form-input" id="m-c-title" type="text" value="${c ? c.title : ''}"></div>
       <div class="form-group"><label class="form-label">Beskrivelse</label><textarea class="form-textarea" id="m-c-desc" rows="3">${c ? (c.description||'') : ''}</textarea></div>
+      <div class="form-group">
+        <label class="form-label">Bilde</label>
+        <div id="kursBildePreview" style="margin-bottom:8px;">
+          ${c && c.image_url ? `<img src="${c.image_url}" alt="" style="width:100%;max-height:160px;object-fit:cover;border-radius:var(--radius-sm);">` : '<p style="font-size:0.8rem;opacity:0.5;margin:0;">Ingen bilde valgt</p>'}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <label class="btn btn-outline btn-sm" style="cursor:pointer;">
+            ${c && c.image_url ? '🔄 Bytt bilde' : '📷 Legg til bilde'}
+            <input type="file" accept="image/*" style="display:none;" onchange="velgKursBilde(this)">
+          </label>
+          ${c && c.image_url ? `<button type="button" class="btn btn-outline btn-sm" onclick="fjernKursBilde()">✕ Fjern bilde</button>` : ''}
+        </div>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
         <div class="form-group"><label class="form-label">Dato</label><input class="form-input" id="m-c-date" type="date" value="${c && c.date ? c.date.substring(0,10) : ''}"></div>
         <div class="form-group"><label class="form-label">Starttid</label><input class="form-input" id="m-c-time" type="time" value="${c && c.time_start ? c.time_start.substring(0,5) : ''}"></div>
@@ -1799,9 +1822,27 @@ function openCourseModal(c = null) {
   `);
 }
 
+async function velgKursBilde(input) {
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    const { data, mimeType } = await compressImage(file, 1600, 0.82);
+    _kursBildeData = { data, mimeType };
+    $('kursBildePreview').innerHTML = `<img src="data:${mimeType};base64,${data}" alt="" style="width:100%;max-height:160px;object-fit:cover;border-radius:var(--radius-sm);">`;
+  } catch (e) { alert('Kunne ikke lese bildet: ' + e.message); }
+}
+function fjernKursBilde() {
+  _kursBildeData = 'FJERNET';
+  $('kursBildePreview').innerHTML = '<p style="font-size:0.8rem;opacity:0.5;margin:0;">Ingen bilde valgt</p>';
+}
+
 async function saveCourse(id) {
   const title = $('m-c-title').value.trim();
   if (!title) { $('courseModalErr').textContent='Tittel er påkrevd'; $('courseModalErr').classList.remove('hidden'); return; }
+  let image_url;
+  if (_kursBildeData === 'FJERNET') image_url = null;
+  else if (_kursBildeData) image_url = `data:${_kursBildeData.mimeType};base64,${_kursBildeData.data}`;
+  else image_url = _kursRedigeres ? (_kursRedigeres.image_url || null) : null;
   const body = {
     title, description: $('m-c-desc').value,
     date: $('m-c-date').value || null,
@@ -1810,7 +1851,8 @@ async function saveCourse(id) {
     price: parseFloat($('m-c-price').value) || null,
     max_participants: parseInt($('m-c-max').value) || 4,
     what_to_bring: $('m-c-bring').value || null,
-    active: $('m-c-active') ? $('m-c-active').checked : true
+    active: $('m-c-active') ? $('m-c-active').checked : true,
+    image_url
   };
   try {
     if (id) await api('/api/admin/courses/' + id, { method: 'PUT', body: JSON.stringify(body) });
@@ -3035,7 +3077,9 @@ function naringTotals() {
 
 function beregnNaring() {
   const totals = naringTotals();
-  const antallStk = parseInt($('naringAntallStk')?.value) || 1;
+  // Hun veier emnene sine i stedet for a telle antall - sa per-stk regnes na direkte
+  // ut fra oppgitt gram per emne (skalert fra per-100g), ikke fra total/antall.
+  const gramPerStk = parseFloat($('naringGramPerStk')?.value) || 0;
   const rund = n => Math.round(n * 10) / 10;
   const kJ = kcal => Math.round(kcal * 4.184);
 
@@ -3044,27 +3088,28 @@ function beregnNaring() {
     return;
   }
   const per100 = f => totals[f] / totals.vekt * 100;
-  const perStk = f => totals[f] / antallStk;
+  const perStk = f => per100(f) * gramPerStk / 100;
   const rad = (label, felt, enhet) => `
     <tr>
       <td style="padding:5px 0;">${label}</td>
       <td style="text-align:right;padding:5px 0;">${rund(per100(felt))}${enhet}</td>
-      <td style="text-align:right;padding:5px 0;">${rund(perStk(felt))}${enhet}</td>
+      ${gramPerStk ? `<td style="text-align:right;padding:5px 0;">${rund(perStk(felt))}${enhet}</td>` : ''}
     </tr>`;
 
+  const antallEmner = gramPerStk ? Math.round(totals.vekt / gramPerStk * 10) / 10 : null;
   $('naringResultat').innerHTML = `
     <div style="background:rgba(201,168,132,0.08);border-radius:var(--radius-sm);padding:16px 18px;">
-      <p style="font-size:0.82rem;opacity:0.7;margin-bottom:10px;">Total vekt: <strong>${rund(totals.vekt)} g</strong> · ca. ${rund(totals.vekt / antallStk)} g per stykk</p>
+      <p style="font-size:0.82rem;opacity:0.7;margin-bottom:10px;">Total vekt: <strong>${rund(totals.vekt)} g</strong>${gramPerStk ? ` · gir ca. ${antallEmner} emner à ${gramPerStk} g` : ''}</p>
       <table style="width:100%;font-size:0.85rem;border-collapse:collapse;">
         <tr style="border-bottom:1px solid rgba(0,0,0,0.12);font-weight:700;">
           <td style="padding:5px 0;">Næringsinnhold</td>
           <td style="text-align:right;padding:5px 0;">per 100 g</td>
-          <td style="text-align:right;padding:5px 0;">per stk</td>
+          ${gramPerStk ? `<td style="text-align:right;padding:5px 0;">per emne (${gramPerStk} g)</td>` : ''}
         </tr>
         <tr>
           <td style="padding:5px 0;">Energi</td>
           <td style="text-align:right;padding:5px 0;">${kJ(per100('kcal'))} kJ / ${rund(per100('kcal'))} kcal</td>
-          <td style="text-align:right;padding:5px 0;">${kJ(perStk('kcal'))} kJ / ${rund(perStk('kcal'))} kcal</td>
+          ${gramPerStk ? `<td style="text-align:right;padding:5px 0;">${kJ(perStk('kcal'))} kJ / ${rund(perStk('kcal'))} kcal</td>` : ''}
         </tr>
         ${rad('Fett', 'fett', ' g')}
         ${rad('- hvorav mettede fettsyrer', 'mettet', ' g')}
@@ -3073,6 +3118,7 @@ function beregnNaring() {
         ${rad('Protein', 'protein', ' g')}
         ${rad('Salt', 'salt', ' g')}
       </table>
+      ${!gramPerStk ? '<p style="font-size:0.78rem;opacity:0.55;margin-top:8px;">Fyll inn vekt per emne over for å også se næringsinnhold per stykke.</p>' : ''}
       <button class="btn btn-outline btn-sm" style="margin-top:14px;" onclick="kopierNaringstekst()">📋 Kopier som tekst</button>
       <span id="naringKopiStatus" style="font-size:0.8rem;margin-left:8px;"></span>
     </div>`;

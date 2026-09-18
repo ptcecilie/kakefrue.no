@@ -150,6 +150,15 @@ async function initDB() {
     try { await conn.query(`ALTER TABLE reviews ADD COLUMN sort_order INT DEFAULT 0`); } catch (e) { /* column already exists */ }
     // TEXT rommer bare 64 kB – for lite til et bilde i base64
     try { await conn.query(`ALTER TABLE reviews MODIFY COLUMN image_url MEDIUMTEXT`); } catch (e) {}
+    // Bilde per kurs (f.eks. eget bilde for "Klingkurs - dagtid" vs "- kveldstid") -
+    // enten en /assets/-sti til en fil i repoet, eller en base64 data-URL fra admin.
+    try { await conn.query(`ALTER TABLE courses ADD COLUMN image_url MEDIUMTEXT`); } catch (e) {}
+    // Setter kun bildet naar det ikke allerede er valgt et (Cecilie kan bytte fritt i
+    // admin etterpa uten at denne overskriver igjen ved neste oppstart).
+    try {
+      await conn.query(`UPDATE courses SET image_url = '/assets/klingkurs-hero.jpg' WHERE title = 'Klingkurs - dagtid' AND image_url IS NULL`);
+      await conn.query(`UPDATE courses SET image_url = '/assets/klingkurs-kveld-hero.jpg' WHERE title = 'Klingkurs - kveldstid' AND image_url IS NULL`);
+    } catch (e) {}
 
     await conn.query(`
       CREATE TABLE IF NOT EXISTS christmas_orders (
