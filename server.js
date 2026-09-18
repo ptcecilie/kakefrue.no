@@ -393,6 +393,30 @@ app.post('/api/course-interests', async (req, res) => {
       `INSERT INTO course_interests (course_id, full_name, phone) VALUES (?, ?, ?)`,
       [course_id, full_name.trim(), phone.trim()]
     );
+
+    try {
+      const [courseRows] = await pool.query(`SELECT title FROM courses WHERE id = ?`, [course_id]);
+      const courseTitle = courseRows[0]?.title || 'Ukjent kurs';
+      const transporter = createTransporter();
+      await transporter.sendMail({
+        from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
+        to: 'cecilie@kakefrue.no',
+        subject: `💭 Ny interesse for kurs – ${courseTitle}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
+            <h2 style="color:#3D2B5A;">Noen har meldt interesse for et kurs!</h2>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+              <tr><td style="padding:6px 0;opacity:0.6;width:120px;">Kurs</td><td><strong>${courseTitle}</strong></td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Navn</td><td><strong>${full_name.trim()}</strong></td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Telefon</td><td>${phone.trim()}</td></tr>
+            </table>
+            <p><a href="https://www.kakefrue.no/admin.html" style="color:#8B72BE;">Gå til adminpanelet →</a></p>
+            <p style="font-size:0.8rem;opacity:0.4;margin-top:24px;">– Kakefrue varslingssystem</p>
+          </div>
+        `
+      });
+    } catch (mailErr) { console.log('[Course interest notify] Email not sent:', mailErr.message); }
+
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
@@ -452,6 +476,30 @@ app.post('/api/course-registrations', async (req, res) => {
 
     try { await sendCourseConfirmation(course, { full_name, email }); } catch (e) {}
 
+    try {
+      const transporter = createTransporter();
+      await transporter.sendMail({
+        from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
+        to: 'cecilie@kakefrue.no',
+        subject: `👩‍🍳 Ny kurspåmelding – ${course.title}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
+            <h2 style="color:#3D2B5A;">Ny kurspåmelding!</h2>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+              <tr><td style="padding:6px 0;opacity:0.6;width:120px;">Kurs</td><td><strong>${course.title}</strong></td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Dato</td><td>${new Date(course.date).toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Navn</td><td><strong>${full_name.trim()}</strong></td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Telefon</td><td>${phone.trim()}</td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">E-post</td><td>${email.trim()}</td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Plasser</td><td>${course.current_participants + 1} av ${course.max_participants}</td></tr>
+            </table>
+            <p><a href="https://www.kakefrue.no/admin.html" style="color:#8B72BE;">Gå til adminpanelet →</a></p>
+            <p style="font-size:0.8rem;opacity:0.4;margin-top:24px;">– Kakefrue varslingssystem</p>
+          </div>
+        `
+      });
+    } catch (mailErr) { console.log('[Course registration notify] Email not sent:', mailErr.message); }
+
     res.json({ registration_id: result.insertId });
   } catch (err) {
     console.error(err);
@@ -473,6 +521,31 @@ app.post('/api/tastings', async (req, res) => {
     if (email) {
       try { await sendTastingConfirmation({ full_name, email, preferred_date, choice_1, choice_2, choice_3 }); } catch (e) {}
     }
+
+    try {
+      const transporter = createTransporter();
+      await transporter.sendMail({
+        from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
+        to: 'cecilie@kakefrue.no',
+        subject: `🍰 Ny prøvesmaking – ${full_name.trim()}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6F0;padding:32px;border-radius:12px;">
+            <h2 style="color:#3D2B5A;">Ny forespørsel om prøvesmaking!</h2>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+              <tr><td style="padding:6px 0;opacity:0.6;width:120px;">Navn</td><td><strong>${full_name.trim()}</strong></td></tr>
+              <tr><td style="padding:6px 0;opacity:0.6;">Telefon</td><td>${phone.trim()}</td></tr>
+              ${email ? `<tr><td style="padding:6px 0;opacity:0.6;">E-post</td><td>${email.trim()}</td></tr>` : ''}
+              <tr><td style="padding:6px 0;opacity:0.6;">Ønsket dato</td><td>${preferred_date ? new Date(preferred_date).toLocaleDateString('nb-NO') : 'Fleksibel'}</td></tr>
+              ${choice_1 ? `<tr><td style="padding:6px 0;opacity:0.6;">1. valg</td><td>${choice_1}</td></tr>` : ''}
+              ${choice_2 ? `<tr><td style="padding:6px 0;opacity:0.6;">2. valg</td><td>${choice_2}</td></tr>` : ''}
+              ${choice_3 ? `<tr><td style="padding:6px 0;opacity:0.6;">3. valg</td><td>${choice_3}</td></tr>` : ''}
+            </table>
+            <p><a href="https://www.kakefrue.no/admin.html" style="color:#8B72BE;">Gå til adminpanelet →</a></p>
+            <p style="font-size:0.8rem;opacity:0.4;margin-top:24px;">– Kakefrue varslingssystem</p>
+          </div>
+        `
+      });
+    } catch (mailErr) { console.log('[Tasting notify] Email not sent:', mailErr.message); }
 
     res.json({ tasting_id: result.insertId });
   } catch (err) {
