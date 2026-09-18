@@ -213,10 +213,18 @@ fetch('/api/courses')
           <div>
             <h3 style="margin-bottom:8px;">${c.title}</h3>
           </div>
-          <button class="btn btn-primary btn-sm" style="flex-shrink:0;" onclick="toggleInterest(${c.id}, this)">Meld interesse</button>
+          <button class="btn btn-primary btn-sm" style="flex-shrink:0;" onclick="toggleInterest(${c.id}, this)">Meld deg på</button>
         </div>
         <div class="course-body">
           ${c.description ? `<p style="opacity:0.75; margin-bottom:0;">${c.description}</p>` : ''}
+
+          <div class="course-meta">
+            <div class="course-meta-item"><span>📅</span> ${formatDate(c.date)}</div>
+            ${c.time_start ? `<div class="course-meta-item"><span>🕐</span> kl. ${c.time_start.substring(0,5)}</div>` : ''}
+            <div class="course-meta-item"><span>⏱</span> ${c.duration_hours} timer</div>
+            ${c.price ? `<div class="course-meta-item"><span>💰</span> ${Math.round(c.price)} kr</div>` : ''}
+          </div>
+          ${spotsLabel(c)}
 
           <div class="reg-form" id="interestForm-${c.id}">
             <div id="interestSuccess-${c.id}" class="alert alert-success hidden">Takk! Jeg tar kontakt når kurset er klart. 🎂</div>
@@ -232,7 +240,13 @@ fetch('/api/courses')
                   <input class="form-input" name="phone" type="tel" placeholder="Mobilnummer" required>
                 </div>
               </div>
-              <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:4px;">Send interesse ✓</button>
+              <ul style="font-style:italic; font-size:0.8rem; opacity:0.65; margin:14px 0 16px; padding-left:20px; line-height:1.6;">
+                <li>Kursplass bekreftes ved betaling.</li>
+                <li>Avbestilling mer enn 7 dager før kursdato gir full refusjon.</li>
+                <li>Avbestilling mindre enn 7 dager før kursdato gir ingen refusjon, men plassen kan overføres til en annen person.</li>
+                <li>Kakefrue forbeholder seg retten til å avlyse kurs ved for få påmeldte, med full refusjon til deltakerne.</li>
+              </ul>
+              <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:4px;">Meld meg på</button>
             </form>
           </div>
         </div>
@@ -248,7 +262,7 @@ function toggleInterest(courseId, btn) {
   const form = document.getElementById('interestForm-' + courseId);
   const isOpen = form.classList.contains('open');
   form.classList.toggle('open');
-  btn.textContent = isOpen ? 'Meld interesse' : 'Avbryt';
+  btn.textContent = isOpen ? 'Meld deg på' : 'Avbryt';
 }
 
 async function submitInterest(e, courseId) {
