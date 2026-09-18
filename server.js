@@ -443,6 +443,74 @@ app.delete('/api/admin/course-interests/:id', requireAdmin, async (req, res) => 
   }
 });
 
+// Sender bekreftelse til kunden + varsel til Cecilie - kalles KUN forste gang en
+// kurspamelding faktisk er betalt (fra synkVippsKurs under), ikke ved selve pameldingen.
+async function sendKursVippsEposter(course, reg) {
+  try { await sendCourseConfirmation(course, { full_name: reg.full_name, email: reg.email }); } catch (e) {}
+  try {
+    const bilde = absoluttBilde(course.image_url, `${nettstedUrl()}/assets/kurs-hero.jpg`);
+    const transporter = createTransporter();
+    await transporter.sendMail({
+      from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
+      to: 'cecilie@kakefrue.no',
+      subject: `👩‍🍳 Ny kurspåmelding betalt – ${course.title}`,
+      html: internVarselBildeHtml(bilde, '👩‍🍳', 'Ny kurspåmelding betalt med Vipps!', `
+        <tr><td style="padding:5px 8px 5px 0;opacity:0.65;width:110px;">Kurs</td><td><strong>${course.title}</strong></td></tr>
+        <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Dato</td><td>${new Date(course.date).toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td></tr>
+        <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Navn</td><td><strong>${escHtml(reg.full_name)}</strong></td></tr>
+        <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Telefon</td><td>${escHtml(reg.phone)}</td></tr>
+        <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">E-post</td><td>${escHtml(reg.email)}</td></tr>
+        <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Betalt</td><td><strong>${Math.round(course.price)} kr</strong></td></tr>
+      `)
+    });
+  } catch (mailErr) { console.log('[Course registration notify] Email not sent:', mailErr.message); }
+}
+
+async function startVippsBetalingKurs(reg, course) {
+  const reference = `kfkurs-${reg.id}-${crypto.randomBytes(6).toString('hex')}`;
+  const svar = await opprettBetaling({
+    reference,
+    belopKr: course.price,
+    beskrivelse: `${course.title} – Kakefrue`,
+    returnUrl: `${nettstedUrl()}/kurs.html?betaling=${reference}`,
+    telefon: reg.phone
+  });
+  await pool.query(`UPDATE course_registrations SET vipps_reference = ?, vipps_state = 'CREATED' WHERE id = ?`, [reference, reg.id]);
+  return svar.redirectUrl;
+}
+
+// Henter status fra Vipps og oppdaterer pameldingen. Trekker belopet med en
+// gang det er godkjent (samme som julebestilling), og sender bekreftelse +
+// varsel forste (og eneste) gang - garantert av den atomiske UPDATE under.
+async function synkVippsKurs(reg) {
+  const b = await hentBetaling(reg.vipps_reference);
+  let trukket = (b.aggregate?.capturedAmount?.value || 0) > 0;
+  const refundert = (b.aggregate?.refundedAmount?.value || 0) > 0;
+  if (b.state === 'AUTHORIZED' && !trukket && !refundert && !reg.vipps_refunded_at &&
+      !((b.aggregate?.cancelledAmount?.value || 0) > 0)) {
+    try {
+      await trekkBetaling(reg.vipps_reference, b.amount.value);
+      trukket = true;
+    } catch (e) {
+      console.log('[Vipps kurs] Automatisk trekk feilet:', vippsFeiltekst(e));
+    }
+  }
+  await pool.query(
+    `UPDATE course_registrations SET vipps_state = ?,
+       vipps_refunded_at = IF(? AND vipps_refunded_at IS NULL, NOW(), vipps_refunded_at)
+     WHERE id = ?`,
+    [b.state, refundert, reg.id]
+  );
+  if (trukket && !refundert) {
+    const [r] = await pool.query(`UPDATE course_registrations SET vipps_captured_at = NOW() WHERE id = ? AND vipps_captured_at IS NULL`, [reg.id]);
+    if (r.affectedRows) {
+      const [[course]] = await pool.query(`SELECT * FROM courses WHERE id = ?`, [reg.course_id]);
+      if (course) await sendKursVippsEposter(course, reg);
+    }
+  }
+  return b.state;
+}
+
 // POST /api/course-registrations
 app.post('/api/course-registrations', async (req, res) => {
   const { course_id, full_name, phone, email } = req.body;
@@ -458,41 +526,60 @@ app.post('/api/course-registrations', async (req, res) => {
     if (course.current_participants >= course.max_participants) {
       return res.status(400).json({ error: 'Kurset er fullt' });
     }
+    if (!course.price) return res.status(400).json({ error: 'Kurset mangler pris - kontakt Kakefrue' });
 
     const [result] = await pool.query(
       `INSERT INTO course_registrations (course_id, full_name, phone, email) VALUES (?, ?, ?, ?)`,
       [course_id, full_name.trim(), phone.trim(), email.trim()]
     );
-
-    await pool.query(
-      `UPDATE courses SET current_participants = current_participants + 1 WHERE id = ?`,
-      [course_id]
-    );
-
-    try { await sendCourseConfirmation(course, { full_name, email }); } catch (e) {}
+    await pool.query(`UPDATE courses SET current_participants = current_participants + 1 WHERE id = ?`, [course_id]);
+    const reg = { id: result.insertId, phone: phone.trim() };
 
     try {
-      const bilde = absoluttBilde(course.image_url, `${nettstedUrl()}/assets/kurs-hero.jpg`);
-      const transporter = createTransporter();
-      await transporter.sendMail({
-        from: `"Kakefrue" <${process.env.SMTP_FROM || 'cecilie@kakefrue.no'}>`,
-        to: 'cecilie@kakefrue.no',
-        subject: `👩‍🍳 Ny kurspåmelding – ${course.title}`,
-        html: internVarselBildeHtml(bilde, '👩‍🍳', 'Ny kurspåmelding!', `
-          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;width:110px;">Kurs</td><td><strong>${course.title}</strong></td></tr>
-          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Dato</td><td>${new Date(course.date).toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td></tr>
-          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Navn</td><td><strong>${full_name.trim()}</strong></td></tr>
-          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Telefon</td><td>${phone.trim()}</td></tr>
-          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">E-post</td><td>${email.trim()}</td></tr>
-          <tr><td style="padding:5px 8px 5px 0;opacity:0.65;">Plasser</td><td>${course.current_participants + 1} av ${course.max_participants}</td></tr>
-        `)
-      });
-    } catch (mailErr) { console.log('[Course registration notify] Email not sent:', mailErr.message); }
-
-    res.json({ registration_id: result.insertId });
+      if (!vippsAktiv()) throw new Error('Vipps-nøkler mangler i Coolify');
+      const vippsUrl = await startVippsBetalingKurs(reg, course);
+      return res.json({ ok: true, registration_id: reg.id, total: course.price, vippsUrl });
+    } catch (err) {
+      console.error('[Vipps kurs] Kunne ikke starte betaling:', vippsFeiltekst(err));
+      // Ingen halvferdig pamelding i admin nar kunden ikke fikk betalt
+      await pool.query(`DELETE FROM course_registrations WHERE id = ?`, [reg.id]);
+      await pool.query(`UPDATE courses SET current_participants = GREATEST(current_participants - 1, 0) WHERE id = ?`, [course_id]);
+      return res.status(503).json({ error: 'Vipps-betalingen kunne ikke startes akkurat nå. Prøv igjen om litt.' });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// GET /api/course-registrations/vipps/:ref – kunden er tilbake fra Vipps
+app.get('/api/course-registrations/vipps/:ref', async (req, res) => {
+  try {
+    const [[reg]] = await pool.query(`SELECT * FROM course_registrations WHERE vipps_reference = ?`, [req.params.ref]);
+    if (!reg) return res.status(404).json({ error: 'Fant ikke betalingen' });
+    const state = await synkVippsKurs(reg);
+    const [[course]] = await pool.query(`SELECT title, price FROM courses WHERE id = ?`, [reg.course_id]);
+    res.json({ state, id: reg.id, total: course?.price || null, epost: reg.email || null, fornavn: reg.full_name.split(' ')[0], kurs: course?.title || '' });
+  } catch (err) {
+    console.error('[Vipps kurs] Statussjekk feilet:', vippsFeiltekst(err));
+    res.status(502).json({ error: 'Fikk ikke svar fra Vipps' });
+  }
+});
+
+// POST /api/course-registrations/vipps/:ref/ny – kunden avbrøt og vil prøve igjen
+app.post('/api/course-registrations/vipps/:ref/ny', async (req, res) => {
+  try {
+    const [[reg]] = await pool.query(`SELECT * FROM course_registrations WHERE vipps_reference = ?`, [req.params.ref]);
+    if (!reg) return res.status(404).json({ error: 'Fant ikke påmeldingen' });
+    const state = await synkVippsKurs(reg);
+    if (state === 'AUTHORIZED') return res.json({ state });
+    if (state === 'CREATED') await kansellerBetaling(reg.vipps_reference).catch(() => {});
+    const [[course]] = await pool.query(`SELECT * FROM courses WHERE id = ?`, [reg.course_id]);
+    if (!course) return res.status(404).json({ error: 'Kurset finnes ikke lenger' });
+    res.json({ vippsUrl: await startVippsBetalingKurs(reg, course) });
+  } catch (err) {
+    console.error('[Vipps kurs] Ny betaling feilet:', vippsFeiltekst(err));
+    res.status(502).json({ error: 'Fikk ikke startet Vipps' });
   }
 });
 
@@ -1781,6 +1868,52 @@ app.get('/api/admin/courses/:id/registrations', requireAdmin, async (req, res) =
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+async function trekkVippsKurs(reg, course) {
+  if (!reg.vipps_reference || reg.vipps_captured_at) return false;
+  const state = await synkVippsKurs(reg);
+  if (state !== 'AUTHORIZED') return false;
+  const [[fersk]] = await pool.query(`SELECT vipps_captured_at FROM course_registrations WHERE id = ?`, [reg.id]);
+  if (fersk.vipps_captured_at) return true; // synkVippsKurs fikk trukket det allerede
+  await trekkBetaling(reg.vipps_reference, Math.round(course.price * 100));
+  await pool.query(`UPDATE course_registrations SET vipps_captured_at = NOW() WHERE id = ?`, [reg.id]);
+  return true;
+}
+
+// POST /api/admin/course-registrations/:id/vipps-trekk
+app.post('/api/admin/course-registrations/:id/vipps-trekk', requireAdmin, async (req, res) => {
+  try {
+    const [[reg]] = await pool.query(`SELECT * FROM course_registrations WHERE id = ?`, [req.params.id]);
+    if (!reg?.vipps_reference) return res.status(404).json({ error: 'Påmeldingen er ikke betalt med Vipps' });
+    const [[course]] = await pool.query(`SELECT price FROM courses WHERE id = ?`, [reg.course_id]);
+    const trukket = await trekkVippsKurs(reg, course || {});
+    res.json({ ok: true, trukket });
+  } catch (err) {
+    res.status(502).json({ error: 'Vipps: ' + vippsFeiltekst(err) });
+  }
+});
+
+// POST /api/admin/course-registrations/:id/vipps-refunder – hele belopet tilbake,
+// og pameldingens plass frigjores igjen (current_participants telles ned).
+app.post('/api/admin/course-registrations/:id/vipps-refunder', requireAdmin, async (req, res) => {
+  try {
+    const [[reg]] = await pool.query(`SELECT * FROM course_registrations WHERE id = ?`, [req.params.id]);
+    if (!reg?.vipps_reference) return res.status(404).json({ error: 'Påmeldingen er ikke betalt med Vipps' });
+    if (reg.vipps_refunded_at) return res.json({ ok: true });
+    const [[course]] = await pool.query(`SELECT price FROM courses WHERE id = ?`, [reg.course_id]);
+    const belopOre = Math.round((course?.price || 0) * 100);
+    if (reg.vipps_captured_at) {
+      await refunderBetaling(reg.vipps_reference, belopOre);
+    } else {
+      await kansellerBetaling(reg.vipps_reference);
+    }
+    await pool.query(`UPDATE course_registrations SET vipps_refunded_at = NOW() WHERE id = ?`, [reg.id]);
+    await pool.query(`UPDATE courses SET current_participants = GREATEST(current_participants - 1, 0) WHERE id = ?`, [reg.course_id]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(502).json({ error: 'Vipps: ' + vippsFeiltekst(err) });
   }
 });
 

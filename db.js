@@ -160,6 +160,12 @@ async function initDB() {
       await conn.query(`UPDATE courses SET image_url = '/assets/klingkurs-kveld-hero.jpg' WHERE title = 'Klingkurs - kveldstid' AND image_url IS NULL`);
     } catch (e) {}
 
+    // Vipps ePayment for kurspåmelding - samme mønster som christmas_orders under.
+    try { await conn.query(`ALTER TABLE course_registrations ADD COLUMN vipps_reference VARCHAR(64) NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE course_registrations ADD COLUMN vipps_state VARCHAR(20) NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE course_registrations ADD COLUMN vipps_captured_at DATETIME NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE course_registrations ADD COLUMN vipps_refunded_at DATETIME NULL`); } catch (e) {}
+
     await conn.query(`
       CREATE TABLE IF NOT EXISTS christmas_orders (
         id INT PRIMARY KEY AUTO_INCREMENT,

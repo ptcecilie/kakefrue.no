@@ -110,6 +110,18 @@
     <p>Bli med på et hyggelig kurs og lær å lage bakst hjemme. Passer for alle nivåer.</p>
   </div>
 
+  <!-- Vipps retur -->
+  <section id="vippsRetur" style="display:none; background: var(--white);">
+    <div class="container" style="max-width:520px; text-align:center;">
+      <div style="font-size:3rem; margin-bottom:16px;" id="vippsReturIkon">⏳</div>
+      <h2 id="vippsReturTittel">Sjekker betalingen …</h2>
+      <p style="opacity:0.7; margin-top:12px; line-height:1.7;" id="vippsReturTekst">Et øyeblikk, jeg spør Vipps.</p>
+      <button class="btn btn-primary" id="vippsProvIgjen" style="display:none; margin-top:20px;" onclick="provVippsIgjen()">Prøv å betale igjen</button>
+      <a href="/kurs.html" class="btn btn-outline" style="margin-top:20px;">Tilbake til kurssiden</a>
+    </div>
+  </section>
+
+  <div id="kursInnhold">
   <!-- Why take a course -->
   <section style="background: var(--white);">
     <div class="container" style="max-width:860px;">
@@ -142,7 +154,7 @@
   <section>
     <div class="container" style="max-width: 820px;">
       <h2 class="section-title">Kommende kurs</h2>
-      <p class="section-subtitle">Meld din interesse for å sikre deg en plass – få plasser per kurs</p>
+      <p class="section-subtitle">Meld deg på for å sikre deg en plass – få plasser per kurs</p>
 
       <div id="coursesLoading" style="text-align:center; padding:48px;">
         <div class="spinner"></div>
@@ -169,6 +181,7 @@
       <a href="https://instagram.com/kakefrue90" target="_blank" class="btn btn-primary" style="margin-top:24px;">@kakefrue90 på Instagram</a>
     </div>
   </section>
+  </div>
 
 </div>
 
@@ -190,12 +203,6 @@ function formatDate(d) {
   if (!d) return 'Dato annonseres';
   return new Date(d).toLocaleDateString('nb-NO', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 }
-function spotsLabel(course) {
-  const left = course.max_participants - course.current_participants;
-  if (left <= 0) return `<span class="course-spots spots-full">Fullt</span>`;
-  if (left <= 2) return `<span class="course-spots spots-few">Kun ${left} plasser igjen!</span>`;
-  return `<span class="course-spots spots-ok">${left} av ${course.max_participants} plasser ledig</span>`;
-}
 
 fetch('/api/courses')
   .then(r => r.json())
@@ -206,14 +213,18 @@ fetch('/api/courses')
       return;
     }
     const list = document.getElementById('coursesList');
-    list.innerHTML = courses.map(c => `
+    list.innerHTML = courses.map(c => {
+      const fullt = c.current_participants >= c.max_participants;
+      return `
       <div class="course-card">
         ${c.image_url ? `<img src="${c.image_url}" alt="" class="course-bilde">` : ''}
         <div class="course-header">
           <div>
             <h3 style="margin-bottom:8px;">${c.title}</h3>
           </div>
-          <button class="btn btn-primary btn-sm" style="flex-shrink:0;" onclick="toggleInterest(${c.id}, this)">Meld deg på</button>
+          ${fullt
+            ? `<span class="btn btn-outline btn-sm" style="flex-shrink:0; opacity:0.6; pointer-events:none;">Fullt</span>`
+            : `<button class="btn btn-primary btn-sm" style="flex-shrink:0;" onclick="toggleReg(${c.id}, this)">Meld deg på</button>`}
         </div>
         <div class="course-body">
           ${c.description ? `<p style="opacity:0.75; margin-bottom:0;">${c.description}</p>` : ''}
@@ -225,10 +236,10 @@ fetch('/api/courses')
             ${c.price ? `<div class="course-meta-item"><span>💰</span> ${Math.round(c.price)} kr</div>` : ''}
           </div>
 
-          <div class="reg-form" id="interestForm-${c.id}">
-            <div id="interestSuccess-${c.id}" class="alert alert-success hidden">Takk! Jeg tar kontakt når kurset er klart. 🎂</div>
-            <div id="interestError-${c.id}" class="alert alert-error hidden"></div>
-            <form onsubmit="submitInterest(event, ${c.id})">
+          <div class="reg-form" id="regForm-${c.id}">
+            <div id="regSuccess-${c.id}" class="alert alert-success hidden">Åpner Vipps …</div>
+            <div id="regError-${c.id}" class="alert alert-error hidden"></div>
+            <form onsubmit="submitRegistration(event, ${c.id})">
               <div class="reg-grid">
                 <div class="form-group">
                   <label class="form-label">Navn *</label>
@@ -238,6 +249,10 @@ fetch('/api/courses')
                   <label class="form-label">Telefon *</label>
                   <input class="form-input" name="phone" type="tel" placeholder="Mobilnummer" required>
                 </div>
+                <div class="form-group" style="grid-column:1/-1;">
+                  <label class="form-label">E-post *</label>
+                  <input class="form-input" name="email" type="email" placeholder="din@epost.no" required>
+                </div>
               </div>
               <ul style="font-style:italic; font-size:0.8rem; opacity:0.65; margin:14px 0 16px; padding-left:20px; line-height:1.6;">
                 <li>Kursplass bekreftes ved betaling.</li>
@@ -245,48 +260,105 @@ fetch('/api/courses')
                 <li>Avbestilling mindre enn 7 dager før kursdato gir ingen refusjon, men plassen kan overføres til en annen person.</li>
                 <li>Kakefrue forbeholder seg retten til å avlyse kurs ved for få påmeldte, med full refusjon til deltakerne.</li>
               </ul>
-              <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:4px;">Meld meg på</button>
+              <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:4px;">Meld meg på${c.price ? ' – ' + Math.round(c.price) + ' kr' : ''}</button>
             </form>
           </div>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
   })
   .catch(() => {
     document.getElementById('coursesLoading').style.display = 'none';
     document.getElementById('coursesEmpty').classList.remove('hidden');
   });
 
-function toggleInterest(courseId, btn) {
-  const form = document.getElementById('interestForm-' + courseId);
+function toggleReg(courseId, btn) {
+  const form = document.getElementById('regForm-' + courseId);
   const isOpen = form.classList.contains('open');
   form.classList.toggle('open');
   btn.textContent = isOpen ? 'Meld deg på' : 'Avbryt';
 }
 
-async function submitInterest(e, courseId) {
+async function submitRegistration(e, courseId) {
   e.preventDefault();
   const form = e.target;
-  const successEl = document.getElementById('interestSuccess-' + courseId);
-  const errorEl = document.getElementById('interestError-' + courseId);
+  const knapp = form.querySelector('button[type="submit"]');
+  const successEl = document.getElementById('regSuccess-' + courseId);
+  const errorEl = document.getElementById('regError-' + courseId);
   successEl.classList.add('hidden');
   errorEl.classList.add('hidden');
+  knapp.disabled = true;
+  const gammelTekst = knapp.textContent;
+  knapp.textContent = 'Registrerer...';
   try {
-    const res = await fetch('/api/course-interests', {
+    const res = await fetch('/api/course-registrations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ course_id: courseId, full_name: form.full_name.value, phone: form.phone.value })
+      body: JSON.stringify({ course_id: courseId, full_name: form.full_name.value, phone: form.phone.value, email: form.email.value })
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Noe gikk galt');
-    successEl.classList.remove('hidden');
-    form.reset();
-    form.closest('.reg-form').querySelector('form').style.display = 'none';
+    if (json.vippsUrl) {
+      knapp.textContent = 'Åpner Vipps...';
+      successEl.classList.remove('hidden');
+      window.location.href = json.vippsUrl;
+      return;
+    }
+    throw new Error('Fikk ikke startet Vipps-betalingen');
   } catch (err) {
     errorEl.textContent = err.message;
     errorEl.classList.remove('hidden');
+    knapp.disabled = false;
+    knapp.textContent = gammelTekst;
   }
 }
+
+/* Kunden kommer tilbake fra Vipps med ?betaling=<referanse> */
+const _vippsRef = new URLSearchParams(location.search).get('betaling');
+async function visVippsRetur(forsok = 0) {
+  const $v = id => document.getElementById(id);
+  document.getElementById('kursInnhold').style.display = 'none';
+  const side = $v('vippsRetur');
+  side.style.display = 'block';
+  if (forsok === 0) side.scrollIntoView({ behavior: 'smooth' });
+  try {
+    const res = await fetch('/api/course-registrations/vipps/' + encodeURIComponent(_vippsRef));
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error);
+    if (d.state === 'AUTHORIZED') {
+      $v('vippsReturIkon').textContent = '🎂';
+      $v('vippsReturTittel').textContent = `Tusen takk, ${d.fornavn}!`;
+      $v('vippsReturTekst').innerHTML = `Betalingen på <strong>${d.total} kr</strong> er godkjent, og påmeldingen din til <strong>${d.kurs}</strong> er bekreftet.` +
+        (d.epost ? `<br>Bekreftelse er sendt til ${d.epost}.` : '');
+      $v('vippsProvIgjen').style.display = 'none';
+    } else if (d.state === 'CREATED' && forsok < 5) {
+      setTimeout(() => visVippsRetur(forsok + 1), 2000);
+    } else {
+      $v('vippsReturIkon').textContent = '🧾';
+      $v('vippsReturTittel').textContent = 'Betalingen ble ikke fullført';
+      $v('vippsReturTekst').textContent = 'Påmeldingen din er lagret, men den er ikke betalt ennå. Prøv igjen, eller ta kontakt så ordner vi det.';
+      $v('vippsProvIgjen').style.display = 'inline-flex';
+    }
+  } catch (e) {
+    $v('vippsReturIkon').textContent = '📞';
+    $v('vippsReturTittel').textContent = 'Fikk ikke sjekket betalingen';
+    $v('vippsReturTekst').textContent = 'Har du godkjent i Vipps, er alt i orden, og du får bekreftelse. Er du usikker, ta kontakt med Kakefrue.';
+  }
+}
+async function provVippsIgjen() {
+  const k = document.getElementById('vippsProvIgjen');
+  k.disabled = true; k.textContent = 'Åpner Vipps...';
+  try {
+    const d = await fetch('/api/course-registrations/vipps/' + encodeURIComponent(_vippsRef) + '/ny', { method: 'POST' }).then(r => r.json());
+    if (d.vippsUrl) { location.href = d.vippsUrl; return; }
+    visVippsRetur();
+  } catch (e) {
+    k.disabled = false; k.textContent = 'Prøv å betale igjen';
+    alert('Fikk ikke åpnet Vipps. Prøv igjen om litt.');
+  }
+}
+if (_vippsRef) visVippsRetur();
 </script>
 </body>
 </html>

@@ -1871,7 +1871,50 @@ async function deleteCourse(id) {
   }
 }
 
+function kursVippsMerke(r) {
+  const pille = (bg, farge, tekst) =>
+    `<span style="align-self:center;background:${bg};color:${farge};border-radius:100px;padding:5px 11px;font-size:0.76rem;font-weight:700;white-space:nowrap;">${tekst}</span>`;
+  if (!r.vipps_reference) return pille('rgba(0,0,0,.05)', '#8A6858', 'Ikke betalt');
+  if (r.vipps_refunded_at) return pille('rgba(0,0,0,.06)', '#6B5040', '↩️ Refundert');
+  if (r.vipps_captured_at) return pille('rgba(122,158,130,.2)', '#4A7A5A', '💰 Betalt') +
+    `<button class="btn btn-outline btn-sm" onclick="kursVippsRefunder(${r.id}, this)">Refunder</button>`;
+  if (r.vipps_state === 'AUTHORIZED') return pille('rgba(255,91,36,.12)', '#C2410C', '🔒 Reservert') +
+    `<button class="btn btn-primary btn-sm" style="background:#FF5B24;border-color:#FF5B24;color:#fff;" onclick="kursVippsTrekk(${r.id}, this)">Trekk beløpet</button>` +
+    `<button class="btn btn-outline btn-sm" onclick="kursVippsRefunder(${r.id}, this)">Frigjør</button>`;
+  if (['ABORTED', 'EXPIRED', 'TERMINATED'].includes(r.vipps_state)) return pille('rgba(196,120,138,.16)', '#9B3A52', 'Avbrutt – ikke betalt');
+  return pille('rgba(0,0,0,.05)', '#8A6858', 'Venter på Vipps');
+}
+
+async function kursVippsTrekk(id, btn) {
+  if (!confirm('Trekke beløpet fra kunden nå?')) return;
+  btn.disabled = true;
+  try {
+    const r = await api('/api/admin/course-registrations/' + id + '/vipps-trekk', { method: 'POST' });
+    showAlert(r.trukket ? 'Beløpet er trukket' : 'Ingenting å trekke – betalingen er ikke godkjent eller allerede trukket', r.trukket ? 'success' : 'info');
+    if (window._kursRegModalId) viewRegistrations(window._kursRegModalId, window._kursRegModalTitle);
+  } catch (e) {
+    alert('Kunne ikke trekke beløpet: ' + e.message);
+    btn.disabled = false;
+  }
+}
+
+async function kursVippsRefunder(id, btn) {
+  if (!confirm('Refundere/frigjøre denne påmeldingen i Vipps?\n\nKunden mister plassen sin, og dette kan ikke angres.')) return;
+  btn.disabled = true;
+  try {
+    await api('/api/admin/course-registrations/' + id + '/vipps-refunder', { method: 'POST' });
+    showAlert('Refundert/frigjort i Vipps', 'success');
+    if (window._kursRegModalId) viewRegistrations(window._kursRegModalId, window._kursRegModalTitle);
+    loadCourses();
+  } catch (e) {
+    alert('Vipps sa nei: ' + e.message);
+    btn.disabled = false;
+  }
+}
+
 async function viewRegistrations(courseId, title) {
+  window._kursRegModalId = courseId;
+  window._kursRegModalTitle = title;
   try {
     const regs = await api('/api/admin/courses/' + courseId + '/registrations');
     openModal(`
@@ -1879,8 +1922,8 @@ async function viewRegistrations(courseId, title) {
       <div class="modal-body">
         ${regs.length ? `
           <table class="data-table" style="width:100%;">
-            <thead><tr><th>Navn</th><th>Telefon</th><th>E-post</th><th>Betalt</th><th>Dato</th></tr></thead>
-            <tbody>${regs.map(r => `<tr><td>${r.full_name}</td><td>${r.phone}</td><td>${r.email}</td><td>${r.paid?'✓':'—'}</td><td>${formatDate(r.created_at)}</td></tr>`).join('')}</tbody>
+            <thead><tr><th>Navn</th><th>Telefon</th><th>E-post</th><th>Betaling</th><th>Dato</th></tr></thead>
+            <tbody>${regs.map(r => `<tr><td>${r.full_name}</td><td>${r.phone}</td><td>${r.email}</td><td><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">${kursVippsMerke(r)}</div></td><td>${formatDate(r.created_at)}</td></tr>`).join('')}</tbody>
           </table>` : '<p style="text-align:center;opacity:0.5;padding:24px;">Ingen påmeldinger ennå</p>'}
       </div>
       <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">Lukk</button></div>
