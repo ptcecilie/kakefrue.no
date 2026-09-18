@@ -413,28 +413,47 @@ fetch('/api/reviews').then(r => r.json()).then(reviews => {
 </script>
 <script>
 /* Kommende eventer fra admin. Julemarkeder med henting får bestill-knapp
-   som sender kunden rett til julesiden med markedet valgt. */
+   som sender kunden rett til julesiden med markedet valgt. Kurs (fra
+   /api/courses) flettes inn i samme kronologiske stripe - lenker til
+   kurssiden i stedet for kart/bestilling, siden de ikke har henting/frist. */
 (async () => {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const leggTilTimer = (tid, timer) => {
+    const [t, m] = tid.split(':').map(Number);
+    const total = t * 60 + m + timer * 60;
+    return String(Math.floor(total / 60) % 24).padStart(2, '0') + ':' + String(total % 60).padStart(2, '0');
+  };
   let eventer = [];
   try { eventer = (await fetch('/api/eventer').then(r => r.json())).filter(e => e.vis_forside); } catch (e) {}
-  if (!eventer.length) return;
-  // Eventer kommer allerede kronologisk sortert fra /api/eventer (ORDER BY dato, fra) -
-  // forste element er derfor alltid det naermeste, og far et uthevet "pil"-utseende.
-  // Smal stripe med kompakte pills i stedet for kort - skal ta minst mulig plass over
-  // resten av forsiden. Bestillbare eventer lenker rett til bestilling, resten til kart.
-  document.getElementById('eventerListe').innerHTML = eventer.map((e, i) => {
+  let kurs = [];
+  try { kurs = await fetch('/api/courses').then(r => r.json()); } catch (e) {}
+  const kursSomEventer = kurs.map(k => ({
+    id: k.id, tittel: k.title, erKurs: true,
+    dato: (k.date || '').slice(0, 10),
+    fra: k.time_start ? k.time_start.slice(0, 5) : null,
+    til: (k.time_start && k.duration_hours) ? leggTilTimer(k.time_start.slice(0, 5), k.duration_hours) : null
+  }));
+  // Bade eventer og kurs er sortert hver for seg fra API-ene, men den flettede
+  // lista ma sorteres pa nytt her sa "naermest"-merket havner rett.
+  const alle = [...eventer, ...kursSomEventer].sort((a, b) => (a.dato + (a.fra || '')).localeCompare(b.dato + (b.fra || '')));
+  if (!alle.length) return;
+  document.getElementById('eventerListe').innerHTML = alle.map((e, i) => {
     const d = new Date(e.dato + 'T12:00:00');
     const mnd = d.toLocaleDateString('nb-NO', { month: 'short' }).replace('.', '');
     const ukedag = d.toLocaleDateString('nb-NO', { weekday: 'long' });
-    const kart = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([e.sted, e.adresse].filter(Boolean).join(', '));
     const naermest = i === 0;
-    const lenke = (e.henting && e.bestillbar) ? `/jul.html?marked=${e.id}#bestill` : kart;
-    const apneNytt = lenke === kart ? ' target="_blank" rel="noopener"' : '';
+    let lenke, apneNytt = '';
+    if (e.erKurs) {
+      lenke = '/kurs.html';
+    } else {
+      const kart = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([e.sted, e.adresse].filter(Boolean).join(', '));
+      lenke = (e.henting && e.bestillbar) ? `/jul.html?marked=${e.id}#bestill` : kart;
+      apneNytt = lenke === kart ? ' target="_blank" rel="noopener"' : '';
+    }
     const tittelAttr = `${esc(e.tittel)} – ${ukedag.charAt(0).toUpperCase() + ukedag.slice(1)}${e.fra ? ` kl. ${e.fra}–${e.til || ''}` : ''}`;
     return `<a class="event-pil${naermest ? ' event-pil-neste' : ''}" href="${lenke}"${apneNytt} title="${tittelAttr}">
       <span class="event-pil-dato">${d.getDate()}. ${mnd}</span>
-      <span class="event-pil-navn">${esc(e.tittel)}</span>
+      <span class="event-pil-navn">${e.erKurs ? '👩‍🍳 ' : ''}${esc(e.tittel)}</span>
       ${e.fra ? `<span class="event-pil-tid">kl. ${e.fra}${e.til ? '–' + e.til : ''}</span>` : ''}
     </a>`;
   }).join('');
