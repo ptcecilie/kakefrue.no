@@ -84,14 +84,15 @@ async function sendCourseConfirmation(course, registration) {
 <html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
 <style>:root{color-scheme:light;supported-color-schemes:light;} @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
-</head><body style="margin:0;">
-  <div style="background-color:#FAF7F4;
+</head><body style="margin:0; background-color:#FAF7F4;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FAF7F4" style="background-color:#FAF7F4;"><tr><td align="center">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FAF7F4" style="max-width:560px;
+              background-color:#FAF7F4;
               background-image:
                 radial-gradient(ellipse 70% 55% at 50% 12%, rgba(255,251,245,0.88) 0%, rgba(255,250,243,0.6) 50%, transparent 85%),
                 linear-gradient(180deg, rgba(255,252,247,0.5) 0%, rgba(255,252,247,0.2) 22%, rgba(250,247,244,0.3) 65%, rgba(250,247,244,0.94) 100%),
                 url('${bilde}');
-              background-size:cover; background-position:center; background-repeat:no-repeat;
-              padding:40px 20px 36px; font-family:'Lato',Arial,sans-serif;">
+              background-size:cover; background-position:center; background-repeat:no-repeat;"><tr><td style="padding:40px 20px 36px; font-family:'Lato',Arial,sans-serif;">
     <div style="max-width:480px; margin:0 auto; text-align:center;">
       <img src="https://kakefrue.no/assets/kakefrue-logo-circle.png" alt="Kakefrue" width="110" style="width:110px; max-width:50%; height:auto; display:inline-block;">
       <p style="font-family:'Playfair Display',serif; font-weight:700; color:#3D2420; font-size:1.5rem; margin:16px 0 0; text-shadow:0 1px 14px rgba(255,252,247,0.9);">Kursplass bekreftet!</p>
@@ -100,7 +101,7 @@ async function sendCourseConfirmation(course, registration) {
       <p style="margin:0 0 18px;">Hei ${registration.full_name},</p>
       <p style="margin:0;">Din påmelding til kurset er bekreftet. Gleder meg til å se deg!</p>
     </div>
-    <div style="max-width:480px; margin:22px auto 0; background:rgba(255,255,255,0.88); border:1px solid rgba(196,149,106,0.3); border-radius:12px; padding:22px 24px;">
+    <div style="max-width:480px; margin:22px auto 0; background-color:#FFFFFF; border:1px solid rgba(196,149,106,0.3); border-radius:12px; padding:22px 24px;">
       <p style="font-family:'Playfair Display',serif; font-weight:700; color:#3D2420; font-size:1.15rem; margin:0 0 12px;">${course.title}</p>
       <p style="color:#3D2420; font-size:0.95rem; margin:0 0 6px;"><strong>Dato:</strong> ${new Date(course.date).toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       <p style="color:#3D2420; font-size:0.95rem; margin:0 0 6px;"><strong>Tid:</strong> ${course.time_start ? course.time_start.substring(0, 5) : 'Avklares'}</p>
@@ -112,7 +113,8 @@ async function sendCourseConfirmation(course, registration) {
       <p style="font-family:'Playfair Display',serif; color:#3D2420; font-size:1.05rem; margin:0;">Ses snart!</p>
       ${kontaktfelt()}
     </div>
-  </div>
+  </td></tr></table>
+  </td></tr></table>
 </body></html>`;
 
   return transporter.sendMail({
@@ -130,14 +132,15 @@ async function sendTastingConfirmation(tasting) {
 <html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
 <style>:root{color-scheme:light;supported-color-schemes:light;} @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
-</head><body style="margin:0;">
-  <div style="background-color:#FAF7F4;
+</head><body style="margin:0; background-color:#FAF7F4;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FAF7F4" style="background-color:#FAF7F4;"><tr><td align="center">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FAF7F4" style="max-width:560px;
+              background-color:#FAF7F4;
               background-image:
                 radial-gradient(ellipse 70% 55% at 50% 12%, rgba(255,251,245,0.88) 0%, rgba(255,250,243,0.6) 50%, transparent 85%),
                 linear-gradient(180deg, rgba(255,252,247,0.5) 0%, rgba(255,252,247,0.2) 22%, rgba(250,247,244,0.3) 65%, rgba(250,247,244,0.94) 100%),
                 url('${bilde}');
-              background-size:cover; background-position:center; background-repeat:no-repeat;
-              padding:40px 20px 36px; font-family:'Lato',Arial,sans-serif;">
+              background-size:cover; background-position:center; background-repeat:no-repeat;"><tr><td style="padding:40px 20px 36px; font-family:'Lato',Arial,sans-serif;">
     <div style="max-width:480px; margin:0 auto; text-align:center;">
       <img src="https://kakefrue.no/assets/kakefrue-logo-circle.png" alt="Kakefrue" width="110" style="width:110px; max-width:50%; height:auto; display:inline-block;">
       <p style="font-family:'Playfair Display',serif; font-weight:700; color:#3D2420; font-size:1.5rem; margin:16px 0 0; text-shadow:0 1px 14px rgba(255,252,247,0.9);">Prøvesmaking registrert!</p>
@@ -146,7 +149,7 @@ async function sendTastingConfirmation(tasting) {
       <p style="margin:0 0 18px;">Hei ${tasting.full_name},</p>
       <p style="margin:0;">Din forespørsel om prøvesmaking er mottatt! Jeg tar kontakt for å bekrefte tid.</p>
     </div>
-    <div style="max-width:480px; margin:22px auto 0; background:rgba(255,255,255,0.88); border:1px solid rgba(196,149,106,0.3); border-radius:12px; padding:22px 24px;">
+    <div style="max-width:480px; margin:22px auto 0; background-color:#FFFFFF; border:1px solid rgba(196,149,106,0.3); border-radius:12px; padding:22px 24px;">
       <p style="font-family:'Playfair Display',serif; font-weight:700; color:#3D2420; font-size:1.15rem; margin:0 0 12px;">Detaljer</p>
       <p style="color:#3D2420; font-size:0.95rem; margin:0 0 6px;"><strong>Ønsket dato:</strong> ${tasting.preferred_date ? new Date(tasting.preferred_date).toLocaleDateString('nb-NO') : 'Fleksibelt'}</p>
       ${tasting.choice_1 ? `<p style="color:#3D2420; font-size:0.95rem; margin:0 0 6px;"><strong>1. valg:</strong> ${tasting.choice_1}</p>` : ''}
@@ -158,7 +161,8 @@ async function sendTastingConfirmation(tasting) {
       <p style="font-family:'Playfair Display',serif; color:#3D2420; font-size:1.05rem; margin:0;">Gleder meg til å møte deg!</p>
       ${kontaktfelt()}
     </div>
-  </div>
+  </td></tr></table>
+  </td></tr></table>
 </body></html>`;
 
   return transporter.sendMail({

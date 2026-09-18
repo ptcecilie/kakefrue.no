@@ -1246,7 +1246,7 @@ app.post('/api/special-request', async (req, res) => {
     }
 
     res.json({ success: true, id: r.insertId,
-               message: 'Din spesialbestilling er mottatt! Vi tar kontakt snart.' });
+               message: 'Din spesialbestilling er mottatt! Jeg tar kontakt snart.' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Serverfeil' });
@@ -1824,26 +1824,28 @@ function internVarselBildeHtml(bilde, emoji, tittel, radHtml) {
 <html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
 <style>:root{color-scheme:light;supported-color-schemes:light;} @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
-</head><body style="margin:0;">
-  <div style="background-color:#FAF7F4;
+</head><body style="margin:0; background-color:#FAF7F4;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FAF7F4" style="background-color:#FAF7F4;"><tr><td align="center">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FAF7F4" style="max-width:560px;
+              background-color:#FAF7F4;
               background-image:
                 radial-gradient(ellipse 70% 55% at 50% 12%, rgba(255,251,245,0.88) 0%, rgba(255,250,243,0.6) 50%, transparent 85%),
                 linear-gradient(180deg, rgba(255,252,247,0.5) 0%, rgba(255,252,247,0.2) 22%, rgba(250,247,244,0.3) 65%, rgba(250,247,244,0.94) 100%),
                 url('${bilde}');
-              background-size:cover; background-position:center; background-repeat:no-repeat;
-              padding:36px 20px 32px; font-family:'Lato',Arial,sans-serif;">
+              background-size:cover; background-position:center; background-repeat:no-repeat;"><tr><td style="padding:36px 20px 32px; font-family:'Lato',Arial,sans-serif;">
     <div style="max-width:480px; margin:0 auto; text-align:center;">
       <div style="font-size:1.6rem; margin-bottom:10px; line-height:1;">${emoji}</div>
       <img src="${nettstedUrl()}/assets/kakefrue-logo-circle.png" alt="Kakefrue" width="90" style="width:90px; max-width:40%; height:auto; display:inline-block;">
     </div>
-    <div style="max-width:460px; margin:20px auto 0; background:rgba(255,255,255,0.88); border:1px solid rgba(196,149,106,0.3); border-radius:12px; padding:22px 24px;">
+    <div style="max-width:460px; margin:20px auto 0; background-color:#FFFFFF; border:1px solid rgba(196,149,106,0.3); border-radius:12px; padding:22px 24px;">
       <p style="font-family:'Playfair Display',serif; font-weight:700; color:#3D2420; font-size:1.2rem; margin:0 0 14px;">${tittel}</p>
-      <table style="width:100%; border-collapse:collapse; color:#3D2420; font-size:0.92rem;">${radHtml}</table>
+      <table role="presentation" style="width:100%; border-collapse:collapse; color:#3D2420; font-size:0.92rem;">${radHtml}</table>
     </div>
     <div style="max-width:460px; margin:18px auto 0; text-align:center;">
       <a href="${nettstedUrl()}/admin.html" style="color:#7A5230; text-decoration:underline; font-size:0.9rem;">Se i adminpanelet →</a>
     </div>
-  </div>
+  </td></tr></table>
+  </td></tr></table>
 </body></html>`;
 }
 
@@ -1855,13 +1857,14 @@ function standardEpostHtml(name, message) {
     .map(p => `<p style="margin:0 0 18px; white-space:pre-wrap;">${p}</p>`).join('');
   return `<!DOCTYPE html>
 <html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
-<style>:root{color-scheme:light;supported-color-schemes:light;} @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
-</head><body style="margin:0;">
-  <div style="background-color:#2A1B14;
+<meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark">
+<style>:root{color-scheme:dark;supported-color-schemes:dark;} @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
+</head><body style="margin:0; background-color:#2A1B14;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#2A1B14" style="background-color:#2A1B14;"><tr><td align="center">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#2A1B14" style="max-width:560px;
+              background-color:#2A1B14;
               background-image:linear-gradient(180deg, rgba(42,27,20,0.38) 0%, rgba(42,27,20,0.62) 40%, rgba(42,27,20,0.82) 100%), url('https://kakefrue.no/assets/forside-hero.jpg');
-              background-size:cover; background-position:center; background-repeat:no-repeat;
-              padding:40px 20px 36px; font-family:'Lato',Arial,sans-serif;">
+              background-size:cover; background-position:center; background-repeat:no-repeat;"><tr><td style="padding:40px 20px 36px; font-family:'Lato',Arial,sans-serif;">
     <div style="max-width:480px; margin:0 auto; text-align:center;">
       <img src="https://kakefrue.no/assets/kakefrue-logo-circle.png" alt="Kakefrue" width="110" style="width:110px; max-width:50%; height:auto; display:inline-block;">
       <p style="font-style:italic; color:rgba(250,247,244,0.7); font-size:0.8rem; letter-spacing:0.04em; margin:12px 0 0;">Håndlagde kaker i Porsgrunn</p>
@@ -1874,7 +1877,8 @@ function standardEpostHtml(name, message) {
     <div style="max-width:480px; margin:20px auto 0; text-align:center;">
       <p style="color:rgba(250,247,244,0.55); font-size:0.76rem; margin:0;">Porsgrunn · cecilie@kakefrue.no</p>
     </div>
-  </div>
+  </td></tr></table>
+  </td></tr></table>
 </body></html>`;
 }
 
