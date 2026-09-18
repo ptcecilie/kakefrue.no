@@ -864,10 +864,10 @@ html[style*="--side-foto"] body .info-boks {
 }
 .eventer-strip-heading {
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 4px 10px;
+  gap: 4px;
 }
 .eventer-strip-label {
   flex-shrink: 0;

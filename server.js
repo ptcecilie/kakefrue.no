@@ -1769,7 +1769,7 @@ function julEpostHtml(name, message) {
               padding:40px 20px 36px;">
     <div style="max-width:500px; margin:0 auto; text-align:center;">
       <div style="font-size:1.9rem; margin-bottom:14px; line-height:1;">🎄</div>
-      <img src="https://kakefrue.no/assets/kakefrue-logo-circle.png" alt="Kakefrue" width="130" style="width:130px; max-width:55%; height:auto; display:inline-block;">
+      <img src="https://kakefrue.no/assets/kakefrue-logo-jul-circle.png" alt="Kakefrue" width="130" style="width:130px; max-width:55%; height:auto; display:inline-block;">
       <p style="font-family:'Dancing Script',cursive; color:#DDAD88; font-size:1.6rem; margin:14px 0 0; font-weight:700;">God jul!</p>
     </div>
     <div style="max-width:480px; margin:18px auto 0;">
@@ -1800,7 +1800,7 @@ function internVarselJulHtml(o, total, produktlisteHtml, leveringstekst) {
               padding:36px 20px 32px; font-family:'Lato',Arial,sans-serif;">
     <div style="max-width:480px; margin:0 auto; text-align:center;">
       <div style="font-size:1.6rem; margin-bottom:10px; line-height:1;">🎄</div>
-      <img src="https://kakefrue.no/assets/kakefrue-logo-circle.png" alt="Kakefrue" width="90" style="width:90px; max-width:40%; height:auto; display:inline-block;">
+      <img src="https://kakefrue.no/assets/kakefrue-logo-jul-circle.png" alt="Kakefrue" width="90" style="width:90px; max-width:40%; height:auto; display:inline-block;">
     </div>
     <div style="max-width:460px; margin:20px auto 0; background:rgba(35,13,10,0.35); border:1px solid rgba(243,233,210,0.18); border-radius:12px; padding:22px 24px;">
       <p style="font-family:'Playfair Display',serif; font-weight:700; color:#F3E9D2; font-size:1.2rem; margin:0 0 14px;">Ny julebestilling – betalt med Vipps</p>
