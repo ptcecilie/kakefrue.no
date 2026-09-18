@@ -25,6 +25,12 @@
 /* Reset */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
+html, body {
+  /* Safari "gummistrekker" (rubber-band) hele siden sidelengs nar man drar i et
+     scrollbart element inni, selv med overflow-x:hidden pa body - dette hindrer
+     at dra-bevegelsen "smitter" fra eventer-stripen og opp til hele siden. */
+  overscroll-behavior-x: none;
+}
 body {
   font-family: var(--font-body);
   background: var(--cream);
@@ -908,6 +914,10 @@ html[style*="--side-foto"] body .info-boks {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 2px;
+    /* Fanger dra-bevegelsen i selve stripen sa den ikke slipper videre opp
+       til hele siden (Safari rubber-band-bug, se html/body over). */
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
   }
   /* Instagram/Facebook-knappene stablet under hverandre pa smale skjermer
      (flex-wrap:wrap matte plass mangle) - gjort kompakte sa de alltid
