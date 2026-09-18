@@ -1127,6 +1127,37 @@ async function loadPageViews() {
         <div id="chartByPage"></div>
       </div>
 
+      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;margin-bottom:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+          <h3 style="margin:0;">Bla i en enkelt dag</h3>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-outline btn-sm" onclick="flyttDagvisning(-1)">← Forrige</button>
+            <input type="date" id="dagVelger" class="form-input" style="max-width:170px;" onchange="lastDagvisning()">
+            <button class="btn btn-outline btn-sm" onclick="flyttDagvisning(1)">Neste →</button>
+          </div>
+        </div>
+        <div id="dagvisningInnhold" style="opacity:0.5;">Laster...</div>
+      </div>
+
+      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;margin-bottom:24px;">
+        <h3 style="margin-bottom:4px;">Detaljert statistikk</h3>
+        <p id="detaljerStatus" style="font-size:0.8rem;opacity:0.55;margin-bottom:20px;"></p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
+          <div>
+            <h4 style="font-size:0.9rem;margin-bottom:12px;opacity:0.8;">Kilde (hvor de kom fra)</h4>
+            <div id="chartKilde"></div>
+          </div>
+          <div>
+            <h4 style="font-size:0.9rem;margin-bottom:12px;opacity:0.8;">Enhet</h4>
+            <div id="chartEnhet"></div>
+          </div>
+        </div>
+        <div style="margin-top:24px;">
+          <h4 style="font-size:0.9rem;margin-bottom:12px;opacity:0.8;">Tid på døgnet</h4>
+          <div id="chartTidDogn"></div>
+        </div>
+      </div>
+
       <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 28px;">
         <h3 style="margin-bottom:14px;">Dine egne besøk</h3>
         <p id="sporStatus" style="font-size:0.9rem;margin-bottom:16px;"></p>
@@ -1154,6 +1185,85 @@ async function loadPageViews() {
     renderBarChart('chartPageViews', days, v => v, '#8B72BE');
     const pageTotal = pv.byPage.reduce((s, p) => s + parseInt(p.count), 0) || 1;
     renderPillList('chartByPage', Object.fromEntries(pv.byPage.map(p => [p.page, parseInt(p.count)])), pageTotal);
+
+    if (!document.getElementById('dagVelger').value) {
+      document.getElementById('dagVelger').value = new Date().toISOString().slice(0, 10);
+    }
+    lastDagvisning();
+    lastDetaljertStatistikk();
+  } catch (e) { console.error(e); }
+}
+
+function flyttDagvisning(delta) {
+  const felt = document.getElementById('dagVelger');
+  const d = new Date(felt.value + 'T12:00:00');
+  d.setDate(d.getDate() + delta);
+  felt.value = d.toISOString().slice(0, 10);
+  lastDagvisning();
+}
+
+async function lastDagvisning() {
+  const dato = document.getElementById('dagVelger').value;
+  const el = document.getElementById('dagvisningInnhold');
+  el.style.opacity = '0.5';
+  try {
+    const d = await api('/api/admin/pageviews/dag?dato=' + dato);
+    const datoTekst = new Date(dato + 'T12:00:00').toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    if (!d.byPage.length) {
+      el.innerHTML = `<p style="opacity:0.6;">Ingen registrerte besøk ${datoTekst}.</p>`;
+    } else {
+      el.innerHTML = `
+        <p style="margin-bottom:14px;"><strong>${d.total}</strong> sidevisninger ${datoTekst}</p>
+        ${d.byPage.map(p => `
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.05);font-size:0.9rem;">
+            <span>${p.page}</span><span style="font-weight:700;">${p.count}</span>
+          </div>
+        `).join('')}
+      `;
+    }
+    el.style.opacity = '1';
+  } catch (e) { el.innerHTML = '<p style="opacity:0.5;">Kunne ikke laste.</p>'; }
+}
+
+async function lastDetaljertStatistikk() {
+  try {
+    const d = await api('/api/admin/pageviews/detaljer');
+    document.getElementById('detaljerStatus').textContent = d.total
+      ? `Basert på ${d.total} besøk, registrert fra ${new Date(d.forste).toLocaleDateString('nb-NO')} (data finnes kun fra denne datoen og fremover, ikke bakover i tid).`
+      : 'Ingen detaljerte data ennå.';
+
+    const kildeData = Object.fromEntries(d.kilde.map(k => [k.kilde, parseInt(k.count)]));
+    const kildeTotal = d.kilde.reduce((s, k) => s + parseInt(k.count), 0) || 1;
+    renderPillList('chartKilde', kildeData, kildeTotal);
+
+    const enhetData = Object.fromEntries(d.enhet.map(k => [k.enhet, parseInt(k.count)]));
+    const enhetTotal = d.enhet.reduce((s, k) => s + parseInt(k.count), 0) || 1;
+    renderPillList('chartEnhet', enhetData, enhetTotal);
+
+    // Slar de 24 timene sammen til lesbare deler av dognet
+    const bolker = { 'Natt (00–05)': 0, 'Morgen (06–09)': 0, 'Formiddag (10–13)': 0, 'Ettermiddag (14–17)': 0, 'Kveld (18–21)': 0, 'Sen kveld (22–23)': 0 };
+    d.timer.forEach(t => {
+      const time = parseInt(t.time), count = parseInt(t.count);
+      if (time <= 5) bolker['Natt (00–05)'] += count;
+      else if (time <= 9) bolker['Morgen (06–09)'] += count;
+      else if (time <= 13) bolker['Formiddag (10–13)'] += count;
+      else if (time <= 17) bolker['Ettermiddag (14–17)'] += count;
+      else if (time <= 21) bolker['Kveld (18–21)'] += count;
+      else bolker['Sen kveld (22–23)'] += count;
+    });
+    // Egen (usortert) rendering her - renderPillList sorterer etter storst
+    // forst, men for tid pa dognet skal rekkefolgen vaere kronologisk.
+    const tidTotal = Object.values(bolker).reduce((a, b) => a + b, 0) || 1;
+    const tidColors = ['#8B72BE','#7A9E82','#D4A96A','#D8CCEE','#B5C9A8','#F0D5A0'];
+    document.getElementById('chartTidDogn').innerHTML = Object.entries(bolker).map(([k, v], i) => {
+      const pct = Math.round((v / tidTotal) * 100);
+      return `<div style="margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;"><span>${k}</span><span style="opacity:0.6;">${v} (${pct}%)</span></div>
+        <div style="background:rgba(0,0,0,0.06); border-radius:100px; height:8px; overflow:hidden;">
+          <div style="width:${pct}%; background:${tidColors[i % tidColors.length]}; height:100%; border-radius:100px; transition:width 0.4s;"></div>
+        </div>
+      </div>`;
+    }).join('');
   } catch (e) { console.error(e); }
 }
 

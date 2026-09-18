@@ -38,6 +38,23 @@ function settIkkeSpor(res) {
     `kf_ikkespor=1; Max-Age=${ETT_AR / 1000}; Path=/; SameSite=Lax`);
 }
 
+// Kilde og enhet regnes ut fra headere serveren allerede far - ingen ekstra
+// sporings-script trengs pa sidene.
+function klassifiserKilde(referer) {
+  if (!referer) return 'Direkte';
+  try {
+    const host = new URL(referer).hostname.replace(/^www\./, '');
+    if (/(^|\.)instagram\.com$/.test(host) || /(^|\.)l\.instagram\.com$/.test(host)) return 'Instagram';
+    if (/(^|\.)facebook\.com$/.test(host) || /(^|\.)fb\.com$/.test(host) || /(^|\.)l\.facebook\.com$/.test(host)) return 'Facebook';
+    if (/(^|\.)google\./.test(host)) return 'Google';
+    if (host === 'kakefrue.no') return 'Internt (egen side)';
+    return host;
+  } catch (e) { return 'Direkte'; }
+}
+function klassifiserEnhet(userAgent) {
+  return /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent || '') ? 'Mobil' : 'PC';
+}
+
 app.use((req, res, next) => {
   // Egen lenke for aa slaa det av paa en ny enhet, f.eks. mobilen
   if (req.query.ikkespor === '1') settIkkeSpor(res);
@@ -49,6 +66,10 @@ app.use((req, res, next) => {
       `INSERT INTO page_views (page, view_date, count) VALUES (?, ?, 1)
        ON DUPLICATE KEY UPDATE count = count + 1`,
       [page, today]
+    ).catch(() => {});
+    pool.query(
+      `INSERT INTO page_events (page, kilde, enhet) VALUES (?, ?, ?)`,
+      [page, klassifiserKilde(req.headers.referer), klassifiserEnhet(req.headers['user-agent'])]
     ).catch(() => {});
   }
   next();
@@ -79,6 +100,7 @@ app.post('/api/admin/ikke-spor', requireAdmin, (req, res) => {
 app.delete('/api/admin/pageviews', requireAdmin, async (req, res) => {
   try {
     await pool.query(`DELETE FROM page_views`);
+    await pool.query(`DELETE FROM page_events`);
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -1410,6 +1432,46 @@ app.get('/api/admin/pageviews', requireAdmin, async (req, res) => {
     `);
 
     res.json({ total, daily, byPage, this_month, last_month });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// GET /api/admin/pageviews/dag?dato=YYYY-MM-DD - sidevisninger for en spesifikk dag,
+// slik at Cecilie kan bla seg gjennom hver enkelt dag i stedet for bare 30-dagers-summen.
+app.get('/api/admin/pageviews/dag', requireAdmin, async (req, res) => {
+  const dato = /^\d{4}-\d{2}-\d{2}$/.test(req.query.dato) ? req.query.dato : new Date().toISOString().slice(0, 10);
+  try {
+    const [rows] = await pool.query(
+      `SELECT page, count FROM page_views WHERE view_date = ? ORDER BY count DESC`,
+      [dato]
+    );
+    const total = rows.reduce((s, r) => s + r.count, 0);
+    res.json({ dato, total, byPage: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// GET /api/admin/pageviews/detaljer - kilde (Instagram/Facebook/Google/direkte),
+// enhet (mobil/PC) og tid pa dognet - basert pa page_events (finnes kun for besok
+// registrert etter at denne funksjonen ble bygget, ikke retroaktivt).
+app.get('/api/admin/pageviews/detaljer', requireAdmin, async (req, res) => {
+  try {
+    const [kilde] = await pool.query(
+      `SELECT kilde, COUNT(*) as count FROM page_events GROUP BY kilde ORDER BY count DESC`
+    );
+    const [enhet] = await pool.query(
+      `SELECT enhet, COUNT(*) as count FROM page_events GROUP BY enhet ORDER BY count DESC`
+    );
+    const [timer] = await pool.query(
+      `SELECT HOUR(visited_at) as time, COUNT(*) as count FROM page_events GROUP BY HOUR(visited_at)`
+    );
+    const [[{ total }]] = await pool.query(`SELECT COUNT(*) as total FROM page_events`);
+    const [[{ forste }]] = await pool.query(`SELECT MIN(visited_at) as forste FROM page_events`);
+    res.json({ total, forste, kilde, enhet, timer });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Serverfeil' });

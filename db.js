@@ -247,6 +247,20 @@ async function initDB() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
 
+    // Detaljert versjon av page_views - ett rad pr besok (ikke bare daglig sum),
+    // med kilde (Instagram/Facebook/Google/Direkte) og enhet (Mobil/PC) -
+    // grunnlaget for den mer detaljerte statistikken (som FB/Insta har).
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS page_events (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        page VARCHAR(100) NOT NULL,
+        visited_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        kilde VARCHAR(40) NOT NULL,
+        enhet VARCHAR(10) NOT NULL,
+        INDEX idx_visited_at (visited_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
     await conn.query(`
       CREATE TABLE IF NOT EXISTS pricing (
         id INT PRIMARY KEY AUTO_INCREMENT,
