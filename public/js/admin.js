@@ -1653,10 +1653,21 @@ async function loadTastings() {
         <td>${r.choice_1 || '—'}</td>
         <td>${statusBadge(r.status)}</td>
         <td>${r.paid ? '<span style="color:var(--sage);">✓</span>' : '—'}</td>
-        <td><button class="btn btn-outline btn-sm" onclick="openTastingModal(${JSON.stringify(r).replace(/"/g,'&quot;')})">Rediger</button></td>
+        <td style="display:flex;gap:6px;">
+          <button class="btn btn-outline btn-sm" onclick="openTastingModal(${JSON.stringify(r).replace(/"/g,'&quot;')})">Rediger</button>
+          <button class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828;" onclick="deleteTasting(${r.id})">Slett</button>
+        </td>
       </tr>
     `).join('');
   } catch {}
+}
+
+async function deleteTasting(id) {
+  if (!confirm('Slette denne prøvesmakingen?')) return;
+  try {
+    await api('/api/admin/tastings/' + id, { method: 'DELETE' });
+    loadTastings();
+  } catch (e) { alert('Kunne ikke slette: ' + e.message); }
 }
 
 function openTastingModal(t) {
@@ -1674,7 +1685,7 @@ function openTastingModal(t) {
           <option value="cancelled" ${t.status==='cancelled'?'selected':''}>Avlyst</option>
         </select>
       </div>
-      <div class="form-group"><label class="form-label" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="m-t-paid" ${t.paid?'checked':''}> Betalt (kr 400)</label></div>
+      <div class="form-group"><label class="form-label" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="m-t-paid" ${t.paid?'checked':''}> Betalt (kr 500)</label></div>
       <div class="form-group"><label class="form-label" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="m-t-deducted" ${t.deposit_deducted?'checked':''}> Trukket fra bryllupskake</label></div>
       <div class="form-group"><label class="form-label">Notater</label><textarea class="form-textarea" id="m-t-notes" rows="3">${t.notes || ''}</textarea></div>
     </div>
@@ -2217,7 +2228,7 @@ async function loadSettings() {
     const s = await api('/api/admin/settings');
     if ($('set-deposit')) $('set-deposit').value = s.deposit_percentage || 30;
     if ($('set-delivery')) $('set-delivery').value = s.delivery_fee || 200;
-    if ($('set-tasting')) $('set-tasting').value = s.tasting_price || 400;
+    if ($('set-tasting')) $('set-tasting').value = s.tasting_price || 500;
   } catch {}
 }
 

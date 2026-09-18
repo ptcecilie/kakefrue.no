@@ -1668,7 +1668,8 @@ function julEpostHtml(name, message) {
 
   return `<!DOCTYPE html>
 <html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Dancing+Script:wght@700&display=swap');</style>
+<meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark">
+<style>:root{color-scheme:dark;supported-color-schemes:dark;} @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Dancing+Script:wght@700&display=swap');</style>
 </head><body style="margin:0;">
   <div style="background-color:#230D0A;
               background-image:linear-gradient(180deg, rgba(35,13,10,0.30) 0%, rgba(35,13,10,0.55) 35%, rgba(35,13,10,0.68) 100%), url('https://kakefrue.no/assets/jul-hero.jpg');
@@ -1698,7 +1699,8 @@ function julEpostHtml(name, message) {
 function internVarselJulHtml(o, total, produktlisteHtml, leveringstekst) {
   return `<!DOCTYPE html>
 <html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
+<meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark">
+<style>:root{color-scheme:dark;supported-color-schemes:dark;} @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
 </head><body style="margin:0;">
   <div style="background-color:#230D0A;
               background-image:linear-gradient(180deg, rgba(35,13,10,0.55) 0%, rgba(35,13,10,0.72) 40%, rgba(35,13,10,0.85) 100%), url('https://kakefrue.no/assets/jul-hero.jpg');
@@ -1723,12 +1725,13 @@ function internVarselJulHtml(o, total, produktlisteHtml, leveringstekst) {
 }
 
 // Delt mal for de andre interne varslene (kurspameldning, kurs-interesse,
-// provesmaking) - samme "bilde + mork gradient"-stil som julevarselet over,
-// men med det aktuelle sidens eget bilde i stedet for jul-hero.jpg.
+// provesmaking) - lys "bilde + krem-slor"-stil som matcher selve siden
+// (kurs.html/provesmaking.html), med det aktuelle sidens eget bilde.
 function internVarselBildeHtml(bilde, emoji, tittel, radHtml) {
   return `<!DOCTYPE html>
 <html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+<style>:root{color-scheme:light;supported-color-schemes:light;} @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
 </head><body style="margin:0;">
   <div style="background-color:#FAF7F4;
               background-image:
@@ -1760,7 +1763,8 @@ function standardEpostHtml(name, message) {
     .map(p => `<p style="margin:0 0 18px; white-space:pre-wrap;">${p}</p>`).join('');
   return `<!DOCTYPE html>
 <html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+<style>:root{color-scheme:light;supported-color-schemes:light;} @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
 </head><body style="margin:0;">
   <div style="background-color:#2A1B14;
               background-image:linear-gradient(180deg, rgba(42,27,20,0.38) 0%, rgba(42,27,20,0.62) 40%, rgba(42,27,20,0.82) 100%), url('https://kakefrue.no/assets/forside-hero.jpg');
@@ -1831,6 +1835,17 @@ app.put('/api/admin/tastings/:id', requireAdmin, async (req, res) => {
     if (!fields.length) return res.status(400).json({ error: 'Ingen felter' });
     values.push(req.params.id);
     await pool.query(`UPDATE tastings SET ${fields.join(', ')} WHERE id = ?`, values);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// DELETE /api/admin/tastings/:id
+app.delete('/api/admin/tastings/:id', requireAdmin, async (req, res) => {
+  try {
+    const [r] = await pool.query(`DELETE FROM tastings WHERE id = ?`, [req.params.id]);
+    if (!r.affectedRows) return res.status(404).json({ error: 'Fant ikke prøvesmakingen' });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Serverfeil' });

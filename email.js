@@ -82,7 +82,8 @@ async function sendCourseConfirmation(course, registration) {
   const bilde = absoluttBilde(course.image_url, 'https://kakefrue.no/assets/kurs-hero.jpg');
   const html = `<!DOCTYPE html>
 <html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+<style>:root{color-scheme:light;supported-color-schemes:light;} @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
 </head><body style="margin:0;">
   <div style="background-color:#FAF7F4;
               background-image:
@@ -127,7 +128,8 @@ async function sendTastingConfirmation(tasting) {
   const bilde = 'https://kakefrue.no/assets/provesmaking-hero.jpg';
   const html = `<!DOCTYPE html>
 <html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+<style>:root{color-scheme:light;supported-color-schemes:light;} @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap');</style>
 </head><body style="margin:0;">
   <div style="background-color:#FAF7F4;
               background-image:
@@ -150,7 +152,7 @@ async function sendTastingConfirmation(tasting) {
       ${tasting.choice_1 ? `<p style="color:#3D2420; font-size:0.95rem; margin:0 0 6px;"><strong>1. valg:</strong> ${tasting.choice_1}</p>` : ''}
       ${tasting.choice_2 ? `<p style="color:#3D2420; font-size:0.95rem; margin:0 0 6px;"><strong>2. valg:</strong> ${tasting.choice_2}</p>` : ''}
       ${tasting.choice_3 ? `<p style="color:#3D2420; font-size:0.95rem; margin:0 0 6px;"><strong>3. valg:</strong> ${tasting.choice_3}</p>` : ''}
-      <p style="color:#3D2420; font-size:0.95rem; margin:0;"><strong>Pris:</strong> kr 400,- (trekkes fra bryllupskake)</p>
+      <p style="color:#3D2420; font-size:0.95rem; margin:0;"><strong>Pris:</strong> kr 500,- (trekkes fra bryllupskake)</p>
     </div>
     <div style="max-width:480px; margin:24px auto 0; text-align:center; text-shadow:0 1px 10px rgba(255,252,247,0.6);">
       <p style="font-family:'Playfair Display',serif; color:#3D2420; font-size:1.05rem; margin:0;">Gleder meg til å møte deg!</p>
