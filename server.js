@@ -433,6 +433,37 @@ app.get('/api/admin/course-interests', requireAdmin, async (req, res) => {
   }
 });
 
+// GET /api/admin/course-registrations - alle betalte pameldinger, pa tvers av kurs
+app.get('/api/admin/course-registrations', requireAdmin, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT cr.*, c.title as course_title, c.price as course_price
+      FROM course_registrations cr
+      JOIN courses c ON cr.course_id = c.id
+      ORDER BY c.id ASC, cr.created_at DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// DELETE /api/admin/course-registrations/:id
+app.delete('/api/admin/course-registrations/:id', requireAdmin, async (req, res) => {
+  try {
+    const [[reg]] = await pool.query(`SELECT * FROM course_registrations WHERE id = ?`, [req.params.id]);
+    if (!reg) return res.status(404).json({ error: 'Fant ikke påmeldingen' });
+    await pool.query(`DELETE FROM course_registrations WHERE id = ?`, [req.params.id]);
+    // Frigjor plassen igjen - med mindre den allerede er telt tilbake via refusjon
+    if (!reg.vipps_refunded_at) {
+      await pool.query(`UPDATE courses SET current_participants = GREATEST(current_participants - 1, 0) WHERE id = ?`, [reg.course_id]);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
 // DELETE /api/admin/course-interests/:id
 app.delete('/api/admin/course-interests/:id', requireAdmin, async (req, res) => {
   try {
@@ -1814,12 +1845,12 @@ app.get('/api/admin/courses', requireAdmin, async (req, res) => {
 });
 
 app.post('/api/admin/courses', requireAdmin, async (req, res) => {
-  const { title, description, date, time_start, duration_hours, price, max_participants, what_to_bring, image_url } = req.body;
+  const { title, description, date, time_start, duration_hours, price, max_participants, what_to_bring, image_url, address } = req.body;
   if (!title) return res.status(400).json({ error: 'Tittel er påkrevd' });
   try {
     const [result] = await pool.query(
-      `INSERT INTO courses (title, description, date, time_start, duration_hours, price, max_participants, what_to_bring, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [title, description || null, date || null, time_start || null, duration_hours || 3, price || null, max_participants || 8, what_to_bring || null, image_url || null]
+      `INSERT INTO courses (title, description, date, time_start, duration_hours, price, max_participants, what_to_bring, image_url, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [title, description || null, date || null, time_start || null, duration_hours || 3, price || null, max_participants || 8, what_to_bring || null, image_url || null, address || null]
     );
     res.json({ id: result.insertId });
   } catch (err) {
@@ -1828,11 +1859,11 @@ app.post('/api/admin/courses', requireAdmin, async (req, res) => {
 });
 
 app.put('/api/admin/courses/:id', requireAdmin, async (req, res) => {
-  const { title, description, date, time_start, duration_hours, price, max_participants, what_to_bring, active, image_url } = req.body;
+  const { title, description, date, time_start, duration_hours, price, max_participants, what_to_bring, active, image_url, address } = req.body;
   try {
     await pool.query(
-      `UPDATE courses SET title=?, description=?, date=?, time_start=?, duration_hours=?, price=?, max_participants=?, what_to_bring=?, active=?, image_url=? WHERE id=?`,
-      [title, description || null, date || null, time_start || null, duration_hours || 3, price || null, max_participants || 8, what_to_bring || null, active !== false, image_url || null, req.params.id]
+      `UPDATE courses SET title=?, description=?, date=?, time_start=?, duration_hours=?, price=?, max_participants=?, what_to_bring=?, active=?, image_url=?, address=? WHERE id=?`,
+      [title, description || null, date || null, time_start || null, duration_hours || 3, price || null, max_participants || 8, what_to_bring || null, active !== false, image_url || null, address || null, req.params.id]
     );
     res.json({ success: true });
   } catch (err) {

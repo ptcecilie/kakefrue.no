@@ -118,7 +118,7 @@ function loadPanel(panel) {
     case 'bestillinger': loadBookings(); clearBadge('bestillinger'); break;
     case 'ufullstendige': loadAbandoned(); clearBadge('ufullstendige'); break;
     case 'provesmaking': loadTastings(); clearBadge('provesmaking'); break;
-    case 'kurs': loadCourses(); loadCourseInterests(); break;
+    case 'kurs': loadCourses(); loadCourseRegistrations(); loadCourseInterests(); break;
     case 'anbefalinger': loadReviews(); break;
     case 'priser': loadPricing(); break;
     case 'kunder': loadCustomers(); break;
@@ -1703,6 +1703,56 @@ async function updateTasting(id) {
 }
 
 // ── Courses ────────────────────────────────────────────────
+async function loadCourseRegistrations() {
+  try {
+    const rows = await api('/api/admin/course-registrations');
+    const container = $('courseRegistrationsList');
+    if (!rows.length) {
+      container.innerHTML = '<p style="opacity:0.5;">Ingen påmeldinger ennå.</p>';
+      return;
+    }
+    const byCourse = {};
+    rows.forEach(r => {
+      if (!byCourse[r.course_title]) byCourse[r.course_title] = [];
+      byCourse[r.course_title].push(r);
+    });
+    container.innerHTML = Object.entries(byCourse).map(([title, people]) => `
+      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h4 style="margin:0;">${title}</h4>
+          <span class="tag tag-sage">${people.length} påmeldt</span>
+        </div>
+        <table class="data-table" style="width:100%;">
+          <thead><tr><th>Navn</th><th>Kontakt</th><th>Betaling</th><th>Dato</th><th></th></tr></thead>
+          <tbody>
+            ${people.map(p => `
+              <tr>
+                <td><strong>${p.full_name}</strong></td>
+                <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <a href="tel:${p.phone}" class="btn btn-outline btn-sm">📞 ${p.phone}</a>
+                  <button class="btn btn-outline btn-sm" data-email="${p.email}" data-name="${p.full_name.replace(/"/g,'&quot;')}" onclick="openEmailModal(this.dataset.email,this.dataset.name)">✉️</button>
+                </td>
+                <td><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">${kursVippsMerke(p)}</div></td>
+                <td>${formatDate(p.created_at)}</td>
+                <td><button class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828;" onclick="deleteCourseRegistration(${p.id})">Slett</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+async function deleteCourseRegistration(id) {
+  if (!confirm('Slette denne påmeldingen? Husk å refundere i Vipps FØRST hvis den er betalt - sletting alene gir ikke pengene tilbake til kunden.')) return;
+  try {
+    await api('/api/admin/course-registrations/' + id, { method: 'DELETE' });
+    loadCourseRegistrations();
+    loadCourses();
+  } catch (e) { alert('Kunne ikke slette: ' + e.message); }
+}
+
 async function loadCourseInterests() {
   try {
     const rows = await api('/api/admin/course-interests');
@@ -1812,6 +1862,7 @@ function openCourseModal(id = null) {
         <div class="form-group"><label class="form-label">Pris (kr)</label><input class="form-input" id="m-c-price" type="number" value="${c ? (c.price||'') : ''}"></div>
         <div class="form-group"><label class="form-label">Maks deltakere</label><input class="form-input" id="m-c-max" type="number" value="${c ? c.max_participants : 4}" style="max-width:100px;"></div>
       </div>
+      <div class="form-group"><label class="form-label">Adresse (møtested)</label><input class="form-input" id="m-c-address" type="text" placeholder="Vises kun i bekreftelses-e-posten, ikke offentlig" value="${c ? (c.address||'') : ''}"></div>
       <div class="form-group"><label class="form-label">Ta med</label><input class="form-input" id="m-c-bring" type="text" value="${c ? (c.what_to_bring||'') : ''}"></div>
       ${c ? `<div class="form-group"><label class="form-label" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="m-c-active" ${c.active?'checked':''}> Aktiv (synlig på nettside)</label></div>` : ''}
     </div>
@@ -1851,6 +1902,7 @@ async function saveCourse(id) {
     price: parseFloat($('m-c-price').value) || null,
     max_participants: parseInt($('m-c-max').value) || 4,
     what_to_bring: $('m-c-bring').value || null,
+    address: $('m-c-address').value || null,
     active: $('m-c-active') ? $('m-c-active').checked : true,
     image_url
   };
@@ -1892,6 +1944,7 @@ async function kursVippsTrekk(id, btn) {
     const r = await api('/api/admin/course-registrations/' + id + '/vipps-trekk', { method: 'POST' });
     showAlert(r.trukket ? 'Beløpet er trukket' : 'Ingenting å trekke – betalingen er ikke godkjent eller allerede trukket', r.trukket ? 'success' : 'info');
     if (window._kursRegModalId) viewRegistrations(window._kursRegModalId, window._kursRegModalTitle);
+    loadCourseRegistrations();
   } catch (e) {
     alert('Kunne ikke trekke beløpet: ' + e.message);
     btn.disabled = false;
@@ -1905,6 +1958,7 @@ async function kursVippsRefunder(id, btn) {
     await api('/api/admin/course-registrations/' + id + '/vipps-refunder', { method: 'POST' });
     showAlert('Refundert/frigjort i Vipps', 'success');
     if (window._kursRegModalId) viewRegistrations(window._kursRegModalId, window._kursRegModalTitle);
+    loadCourseRegistrations();
     loadCourses();
   } catch (e) {
     alert('Vipps sa nei: ' + e.message);

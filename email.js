@@ -88,7 +88,8 @@ async function sendCourseConfirmation(course, registration) {
       <p style="font-family:'Playfair Display',serif; font-weight:700; color:#FAF7F4; font-size:1.15rem; margin:0 0 12px;">${course.title}</p>
       <p style="color:#FAF7F4; font-size:0.95rem; margin:0 0 6px;"><strong>Dato:</strong> ${new Date(course.date).toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       <p style="color:#FAF7F4; font-size:0.95rem; margin:0 0 6px;"><strong>Tid:</strong> ${course.time_start ? course.time_start.substring(0, 5) : 'Avklares'}</p>
-      <p style="color:#FAF7F4; font-size:0.95rem; margin:0${course.what_to_bring ? ' 0 6px' : ''};"><strong>Varighet:</strong> ${course.duration_hours} timer</p>
+      <p style="color:#FAF7F4; font-size:0.95rem; margin:0 0 6px;"><strong>Varighet:</strong> ${course.duration_hours} timer</p>
+      ${course.address ? `<p style="color:#FAF7F4; font-size:0.95rem; margin:0${course.what_to_bring ? ' 0 6px' : ''};"><strong>Adresse:</strong> ${course.address}</p>` : ''}
       ${course.what_to_bring ? `<p style="color:#FAF7F4; font-size:0.95rem; margin:0;"><strong>Ta med:</strong> ${course.what_to_bring}</p>` : ''}
     </div>
     <div style="max-width:480px; margin:24px auto 0; text-align:center;">
