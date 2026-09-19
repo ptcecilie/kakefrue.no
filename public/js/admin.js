@@ -1036,7 +1036,12 @@ async function deletePhoto(id) {
 
 // ── Statistikk ─────────────────────────────────────────────
 async function loadStatistikk() {
-  loadPageViews();
+  // Ta vare pa valgt dato fra forrige gang, siden loadPageViews() bygger
+  // #dagVelger pa nytt hver gang (uten verdi) - ellers hopper valgt dag
+  // tilbake til i dag hver gang man trykker "Oppdater".
+  const forrigeDato = document.getElementById('dagVelger')?.value;
+  await loadPageViews();
+  if (forrigeDato) document.getElementById('dagVelger').value = forrigeDato;
 
   try {
     const [stats, bookings] = await Promise.all([
