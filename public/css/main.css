@@ -30,6 +30,11 @@ html, body {
      scrollbart element inni, selv med overflow-x:hidden pa body - dette hindrer
      at dra-bevegelsen "smitter" fra eventer-stripen og opp til hele siden. */
   overscroll-behavior-x: none;
+  /* touch-action er mer palitelig stottet enn overscroll-behavior pa iOS Safari -
+     sier eksplisitt at drag som starter UTENFOR eventer-stripen kun far lov til
+     a scrolle siden vertikalt, aldri sidelengs. .eventer-liste under overstyrer
+     dette til pan-x for akkurat den stripen. */
+  touch-action: pan-y;
 }
 body {
   font-family: var(--font-body);
