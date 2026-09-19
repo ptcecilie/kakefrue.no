@@ -261,6 +261,15 @@ async function initDB() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
 
+    // Kilde-til-konvertering: hvilken kilde (Instagram/Facebook/Google/direkte) forste-gangs-
+    // besoket kom fra, husket i en cookie og lagret pa selve bestillingen/pameldingen nar den
+    // fullfores - sa Cecilie kan se hvilken kilde som FAKTISK gir kunder, ikke bare besok.
+    try { await conn.query(`ALTER TABLE bookings ADD COLUMN kilde VARCHAR(40) NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE course_registrations ADD COLUMN kilde VARCHAR(40) NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE tastings ADD COLUMN kilde VARCHAR(40) NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE christmas_orders ADD COLUMN kilde VARCHAR(40) NULL`); } catch (e) {}
+    try { await conn.query(`ALTER TABLE course_interests ADD COLUMN kilde VARCHAR(40) NULL`); } catch (e) {}
+
     await conn.query(`
       CREATE TABLE IF NOT EXISTS pricing (
         id INT PRIMARY KEY AUTO_INCREMENT,

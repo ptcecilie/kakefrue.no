@@ -55,6 +55,13 @@ function klassifiserEnhet(userAgent) {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent || '') ? 'Mobil' : 'PC';
 }
 
+// Enkel cookie-leser - samme mønster som harIkkeSporKapsel, ingen ny avhengighet.
+function lesCookie(req, navn) {
+  const funnet = (req.headers.cookie || '').split(';').map(c => c.trim()).find(c => c.startsWith(navn + '='));
+  return funnet ? decodeURIComponent(funnet.slice(navn.length + 1)) : null;
+}
+const TRETTI_DAGER = 30 * 24 * 60 * 60;
+
 app.use((req, res, next) => {
   // Egen lenke for aa slaa det av paa en ny enhet, f.eks. mobilen
   if (req.query.ikkespor === '1') settIkkeSpor(res);
@@ -67,10 +74,17 @@ app.use((req, res, next) => {
        ON DUPLICATE KEY UPDATE count = count + 1`,
       [page, today]
     ).catch(() => {});
+    const kilde = klassifiserKilde(req.headers.referer);
     pool.query(
       `INSERT INTO page_events (page, kilde, enhet) VALUES (?, ?, ?)`,
-      [page, klassifiserKilde(req.headers.referer), klassifiserEnhet(req.headers['user-agent'])]
+      [page, kilde, klassifiserEnhet(req.headers['user-agent'])]
     ).catch(() => {});
+    // Forste-gangs-kilde huskes i en cookie sa den kan kobles til en eventuell
+    // bestilling/pamelding senere i besoket - IKKE overskriv hvis allerede satt.
+    if (!lesCookie(req, 'kf_kilde')) {
+      res.setHeader('Set-Cookie',
+        `kf_kilde=${encodeURIComponent(kilde)}; Max-Age=${TRETTI_DAGER}; Path=/; SameSite=Lax`);
+    }
   }
   next();
 });
@@ -314,14 +328,15 @@ app.post('/api/bookings', async (req, res) => {
       `INSERT INTO bookings
         (customer_id, booking_date, occasion, occasion_custom, guest_count,
          delivery_type, delivery_address, allergens, design_level,
-         deposit_amount, total_amount)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         deposit_amount, total_amount, kilde)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         customer_id, booking_date, occasion, occasion_custom || null,
         guest_count || null, delivery_type || 'henting',
         delivery_address || null,
         allergens ? JSON.stringify(allergens) : null,
-        design_level || null, deposit_amount || null, total_amount || null
+        design_level || null, deposit_amount || null, total_amount || null,
+        lesCookie(req, 'kf_kilde')
       ]
     );
     const bookingId = result.insertId;
@@ -412,8 +427,8 @@ app.post('/api/course-interests', async (req, res) => {
   if (!course_id || !full_name || !phone) return res.status(400).json({ error: 'Navn og telefon er påkrevd' });
   try {
     await pool.query(
-      `INSERT INTO course_interests (course_id, full_name, phone) VALUES (?, ?, ?)`,
-      [course_id, full_name.trim(), phone.trim()]
+      `INSERT INTO course_interests (course_id, full_name, phone, kilde) VALUES (?, ?, ?, ?)`,
+      [course_id, full_name.trim(), phone.trim(), lesCookie(req, 'kf_kilde')]
     );
 
     try {
@@ -582,8 +597,8 @@ app.post('/api/course-registrations', async (req, res) => {
     if (!course.price) return res.status(400).json({ error: 'Kurset mangler pris - kontakt Kakefrue' });
 
     const [result] = await pool.query(
-      `INSERT INTO course_registrations (course_id, full_name, phone, email) VALUES (?, ?, ?, ?)`,
-      [course_id, full_name.trim(), phone.trim(), email.trim()]
+      `INSERT INTO course_registrations (course_id, full_name, phone, email, kilde) VALUES (?, ?, ?, ?, ?)`,
+      [course_id, full_name.trim(), phone.trim(), email.trim(), lesCookie(req, 'kf_kilde')]
     );
     await pool.query(`UPDATE courses SET current_participants = current_participants + 1 WHERE id = ?`, [course_id]);
     const reg = { id: result.insertId, phone: phone.trim() };
@@ -718,8 +733,8 @@ app.post('/api/tastings', async (req, res) => {
 
   try {
     const [result] = await pool.query(
-      `INSERT INTO tastings (full_name, phone, email, preferred_date, choice_1, choice_2, choice_3) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [full_name.trim(), phone.trim(), email.trim(), preferred_date || null, choice_1 || null, choice_2 || null, choice_3 || null]
+      `INSERT INTO tastings (full_name, phone, email, preferred_date, choice_1, choice_2, choice_3, kilde) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [full_name.trim(), phone.trim(), email.trim(), preferred_date || null, choice_1 || null, choice_2 || null, choice_3 || null, lesCookie(req, 'kf_kilde')]
     );
     const tasting = { id: result.insertId, phone: phone.trim() };
     const belop = await provesmakingPris();
@@ -905,10 +920,10 @@ app.post('/api/christmas-orders', async (req, res) => {
     const { linjer, frakt, total } = await prisBestilling(products, delivery, delivery_cost);
     const leveringsmate = ['levering', 'marked'].includes(delivery) ? delivery : 'henting';
     const [result] = await pool.query(
-      `INSERT INTO christmas_orders (full_name, phone, email, delivery, address, products, note, delivery_cost, total_kr, event_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO christmas_orders (full_name, phone, email, delivery, address, products, note, delivery_cost, total_kr, event_id, kilde) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [full_name.trim(), phone.trim(), email?.trim() || null, leveringsmate,
        leveringsmate === 'marked' ? hentested : (leveringsmate === 'levering' ? address?.trim() || null : null),
-       JSON.stringify(linjer), note?.trim() || null, frakt, total, eventId]
+       JSON.stringify(linjer), note?.trim() || null, frakt, total, eventId, lesCookie(req, 'kf_kilde')]
     );
     const o = { id: result.insertId, phone: phone.trim() };
 
@@ -1472,6 +1487,33 @@ app.get('/api/admin/pageviews/detaljer', requireAdmin, async (req, res) => {
     const [[{ total }]] = await pool.query(`SELECT COUNT(*) as total FROM page_events`);
     const [[{ forste }]] = await pool.query(`SELECT MIN(visited_at) as forste FROM page_events`);
     res.json({ total, forste, kilde, enhet, timer });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Serverfeil' });
+  }
+});
+
+// GET /api/admin/konvertering-kilde - hvor mange bestillinger/pameldinger/interesser
+// hver kilde faktisk ga (ikke bare hvor mange besok), pa tvers av alle fem typer.
+app.get('/api/admin/konvertering-kilde', requireAdmin, async (req, res) => {
+  try {
+    const tabeller = [
+      { tabell: 'bookings', navn: 'Kakebestillinger' },
+      { tabell: 'course_registrations', navn: 'Kurspåmeldinger' },
+      { tabell: 'tastings', navn: 'Prøvesmakinger' },
+      { tabell: 'christmas_orders', navn: 'Julebestillinger' },
+      { tabell: 'course_interests', navn: 'Kurs-interesser' }
+    ];
+    const perType = {};
+    const totalPerKilde = {};
+    for (const { tabell, navn } of tabeller) {
+      const [rows] = await pool.query(
+        `SELECT COALESCE(kilde, 'Ukjent (før sporing ble bygget)') as kilde, COUNT(*) as count FROM ${tabell} GROUP BY kilde ORDER BY count DESC`
+      );
+      perType[navn] = rows;
+      rows.forEach(r => { totalPerKilde[r.kilde] = (totalPerKilde[r.kilde] || 0) + parseInt(r.count); });
+    }
+    res.json({ perType, totalPerKilde });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Serverfeil' });

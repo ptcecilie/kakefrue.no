@@ -1163,6 +1163,12 @@ async function loadPageViews() {
         </div>
       </div>
 
+      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;margin-bottom:24px;">
+        <h3 style="margin-bottom:4px;">Kilde → faktiske bestillinger</h3>
+        <p style="font-size:0.8rem;opacity:0.55;margin-bottom:20px;">Ikke bare hvor mange som besøker fra hver kilde, men hvor mange som faktisk bestiller/melder seg på/interesserer seg - på tvers av kakebestilling, kurs, prøvesmaking og julebestilling.</p>
+        <div id="chartKonvertering"></div>
+      </div>
+
       <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 28px;">
         <h3 style="margin-bottom:14px;">Dine egne besøk</h3>
         <p id="sporStatus" style="font-size:0.9rem;margin-bottom:16px;"></p>
@@ -1196,6 +1202,7 @@ async function loadPageViews() {
     }
     lastDagvisning();
     lastDetaljertStatistikk();
+    lastKonverteringKilde();
   } catch (e) { console.error(e); }
 }
 
@@ -1228,6 +1235,14 @@ async function lastDagvisning() {
     }
     el.style.opacity = '1';
   } catch (e) { el.innerHTML = '<p style="opacity:0.5;">Kunne ikke laste.</p>'; }
+}
+
+async function lastKonverteringKilde() {
+  try {
+    const d = await api('/api/admin/konvertering-kilde');
+    const total = Object.values(d.totalPerKilde).reduce((a, b) => a + b, 0) || 1;
+    renderPillList('chartKonvertering', d.totalPerKilde, total);
+  } catch (e) { console.error(e); }
 }
 
 async function lastDetaljertStatistikk() {

@@ -47,6 +47,10 @@
     <p>Fortell meg om anledningen, så finner vi kaken sammen.</p>
   </div>
 
+  <p id="trustBadge" class="hidden" style="text-align:center; margin:20px 0 0; font-size:0.9rem; opacity:0.75;">
+    <span style="color:#C4956A;">★★★★★</span> <span id="trustBadgeTekst"></span>
+  </p>
+
   <!-- Progress Bar -->
   <div class="booking-progress" id="bookingProgress">
     <div class="progress-inner">
@@ -593,6 +597,12 @@
 const hamburger = document.getElementById('hamburger');
 const mobileMenu = document.getElementById('mobileMenu');
 hamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+
+fetch('/api/reviews').then(r => r.json()).then(reviews => {
+  if (!reviews.length) return;
+  document.getElementById('trustBadgeTekst').textContent = `${reviews.length} anmeldelser fra fornøyde kunder`;
+  document.getElementById('trustBadge').classList.remove('hidden');
+}).catch(() => {});
 </script>
 </body>
 </html>
